@@ -6,6 +6,8 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
+  <include file="permissions.zcml" />
+
   <!-- load "imio.pm.locales" and "communesplone.layout" first so translations are overrided -->
   <include package="imio.pm.locales" />
   <include package="communesplone.layout" />
@@ -64,19 +66,6 @@
   <include file="vocabularies.zcml" />
   <includeOverrides file="overrides.zcml" />
   <includeOverrides file="ftw_labels/overrides.zcml" />
-
-  <permission id="PloneMeeting.AddMeeting"
-              title="PloneMeeting: Add Meeting" />
-  <permission id="PloneMeeting.AddAdvice"
-              title="PloneMeeting: Add advice" />
-  <permission id="PloneMeeting.AddAnnex"
-              title="PloneMeeting: Add annex" />
-  <permission id="PloneMeeting.AddAnnexDecision"
-              title="PloneMeeting: Add annexDecision" />
-  <permission id="PloneMeeting.manage_internal_organization_fields"
-              title="PloneMeeting: Manage internal organization fields" />
-  <permission id="PloneMeeting.manage_item_category_fields"
-              title="PloneMeeting: Manage item category fields" />
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"

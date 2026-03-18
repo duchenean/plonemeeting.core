@@ -5,6 +5,8 @@
 
 from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
+from imio.esign.utils import get_file_info
+from imio.esign.utils import get_sessions_for
 from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
 from plone.rfc822.interfaces import IPrimaryFieldInfo
@@ -15,9 +17,18 @@ from Products.PloneMeeting.utils import reindex_object
 from zope.i18n import translate
 
 
-def get_item_esign_signatories(obj, listify=False, signature_numbers=['1', '2'], **kwargs):
+def get_item_esign_signatories(obj, listify=False, signature_numbers=['1', '2'], certified=True, **kwargs):
     """Helper to get "item" signatories respecting the esign expected format."""
-    return obj.getCertifiedSignatures(listify=listify, signature_numbers=signature_numbers, *kwargs)
+    if certified:
+        # certified signatures
+        return obj.getCertifiedSignatures(listify=listify, signature_numbers=signature_numbers, *kwargs)
+    else:
+        # item meeting signatures
+        signers = obj.get_item_signatories(the_objects=True)
+        # sort and keep given p_signature_numbers
+        sorted_signers = [signer[0] for signer in sorted(signers.items(), key=lambda x: int(x[1]))
+                          if not signature_numbers or signer[1] in signature_numbers]
+        return get_esign_signatories(sorted_signers, signature_numbers=signature_numbers)
 
 
 def get_meeting_esign_signatories(obj, signature_numbers=['1', '2'], **kwargs):
@@ -25,7 +36,7 @@ def get_meeting_esign_signatories(obj, signature_numbers=['1', '2'], **kwargs):
     # use meeting.get_signatories that keeps order
     signers = obj.get_signatories(the_objects=True)
     # sort and keep given p_signature_numbers
-    sorted_signers = [signer[0] for signer in sorted(signers.items(), key=lambda x:int(x[1]))
+    sorted_signers = [signer[0] for signer in sorted(signers.items(), key=lambda x: int(x[1]))
                       if not signature_numbers or signer[1] in signature_numbers]
     return get_esign_signatories(sorted_signers, signature_numbers=signature_numbers)
 
@@ -69,19 +80,41 @@ def is_pdf(annex):
 
 def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is_pdf=True, show_msg=False):
     """ """
-    if check_is_pdf:
-        correct_annexes = []
-        for annex in annexes:
-            if not is_pdf(annex):
+    context_uid = obj.UID()
+    # check that file is PDF and that annex is not already in a esign session in state "draft"
+    correct_annexes = []
+    for annex in annexes:
+        if check_is_pdf and not is_pdf(annex):
+            api.portal.show_message(
+                translate(
+                    'annex_not_pdf_error',
+                    domain="PloneMeeting",
+                    mapping={'annex_title': safe_unicode(annex.Title())},
+                    default="Annex \"${annex_title}\" must be PDF to be added to a session!"),
+                type="warning",
+                request=obj.REQUEST)
+            continue
+        already_in_draft_session = False
+        for session_id, session in get_sessions_for(context_uid).items():
+            if session['state'] == "draft" and \
+               get_file_info(session_id, annex.UID()):
                 api.portal.show_message(
-                    translate('annex_not_pdf_error',
-                              domain="PloneMeeting",
-                              mapping={'annex_url': annex.absolute_url()}),
+                    translate(
+                        'annex_already_in_draft_session_error',
+                        domain="PloneMeeting",
+                        mapping={'annex_title': safe_unicode(annex.Title()),
+                                 'session_id': session_id},
+                        default="Annex \"${annex_title}\" is already in draft session \"${session_id}\"!"),
                     type="warning",
                     request=obj.REQUEST)
-            else:
-                correct_annexes.append(annex)
+                already_in_draft_session = True
+                break
+        if not already_in_draft_session:
+            correct_annexes.append(annex)
         annexes = correct_annexes
+
+    if not annexes:
+        return
 
     # add a scan_id to each annex if not already the case
     for annex in annexes:
@@ -112,6 +145,8 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
         api.portal.show_message(
             translate('annex_added_to_session',
                       domain="PloneMeeting",
-                      mapping={'annex_title': annex.Title()}),
+                      mapping={'annex_title': safe_unicode(annex.Title()),
+                               'session_id': session_id},
+                      default="Annex \"${annex_title}\"added to session \"${session_id}\"."),
             request=obj.REQUEST)
     return session_id, session

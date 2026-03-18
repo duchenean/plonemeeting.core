@@ -10,6 +10,7 @@ from Products.PloneMeeting.browser.batchactions import get_pod_template_infos
 from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from zope.i18n import translate
 
 
 class PMSignersAdapter(object):
@@ -17,20 +18,21 @@ class PMSignersAdapter(object):
 
     def __init__(self, context):
         self.context = context
+        self.request = context.REQUEST
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _get_template_infos(self):
         """ """
         template, template_uid = None, None
-        template_uid = self.context.REQUEST.form.get('template_uid') or \
-            self.context.REQUEST.form.get('form.widgets.template_uid')
+        template_uid = self.request.form.get('template_uid') or \
+            self.request.form.get('form.widgets.template_uid')
         if template_uid is not None:
             template = uuidToObject(template_uid)
         else:
             # try with pod_template
-            pod_template_value = self.context.REQUEST.form.get('pod_template') or \
-                self.context.REQUEST.form.get('form.widgets.pod_template') or \
+            pod_template_value = self.request.form.get('pod_template') or \
+                self.request.form.get('form.widgets.pod_template') or \
                 pod_template_default(self.context)
             if pod_template_value:
                 template, output_format = get_pod_template_infos(pod_template_value, self.cfg)
@@ -79,38 +81,59 @@ class PMSignersAdapter(object):
             userid = email = ''
             # a held_position to get a userid is mandatory
             if not signer_info["held_position"]:
-                raise ValueError(
-                    u"No held position for signer number \"{0}\" ({1})!".format(
-                        signature_number,
-                        u" - ".join(
-                            (signer_info['name'], signer_info['function']))))
+                msg = translate(
+                    msgid=u"No held position for signer number \"${signature_number}\" (${signer})!",
+                    domain="PloneMeeting",
+                    mapping={'signature_number': signature_number,
+                             'signer': u"{0} - {1}".format(
+                                signer_info['name'], signer_info['function'])},
+                    context=self.request)
+                raise ValueError(msg)
             person = signer_info["held_position"].get_person()
             userid = person.userid
             if userid is None:
-                raise ValueError("No userid for person at {0}!".format(
-                    person.absolute_url()))
+                msg = translate(
+                    msgid=u"No userid for person at \"${person_url}\"!",
+                    domain="PloneMeeting",
+                    mapping={'person_url': person.absolute_url()},
+                    context=self.request)
+                raise ValueError(msg)
             # can not have several same userid
             if userid in userids:
-                raise ValueError(
-                    "Same userid for signers \"{0}\" and \"{1}\"!".format(
-                    userids[userid].absolute_url(), person.absolute_url()))
+                msg = translate(
+                    msgid=u"Same userid for signers \"${person1_url}\" and \"${person2_url}\"!",
+                    domain="PloneMeeting",
+                    mapping={'person1_url': userids[userid].absolute_url(),
+                             'person2_url': person.absolute_url()},
+                    context=self.request)
+                raise ValueError(msg)
             user = api.user.get(userid)
             if user is None:
-                raise ValueError(
-                    "Could not find a user with userid \"{0}\" defined on "
-                    "person at {1}!".format(
-                        userid, person.absolute_url()
-                ))
+                msg = translate(
+                    msgid=u"Could not find a user with userid \"${userid}\" defined on person at \"${person_url}\"!",
+                    domain="PloneMeeting",
+                    mapping={'userid': userid,
+                             'person_url': person.absolute_url()},
+                    context=self.request)
+                raise ValueError(msg)
             email = user.getProperty("email")
             if not email:
-                raise ValueError(
-                    "User \"{0}\" does not have an email address!".format(
-                        user.getId()))
+                msg = translate(
+                    msgid=u"User \"${userid}\" does not have an email address!",
+                    domain="PloneMeeting",
+                    mapping={'userid': userid},
+                    context=self.request)
+                raise ValueError(msg)
             email = email.strip()
             # can not have several same email
             if email in emails:
-                raise ValueError("Same email address for users \"{0}\" and \"{1}\"!".format(
-                    emails[email].getId(), user.getId()))
+                msg = translate(
+                    msgid=u"Same email address for users \"${userid1}\" and \"${userid2}\"!",
+                    domain="PloneMeeting",
+                    mapping={'userid1': emails[email].getId(),
+                             'userid2': userid},
+                    context=self.request)
+                raise ValueError(msg)
 
             # save infos to manage duplicates of userid and email
             userids[userid] = person

@@ -44,7 +44,7 @@
             name="remove-from-esign-session"
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             class="imio.esign.browser.actions.RemoveFromSessionView"
-            permission="cmf.ManagePortal"
+            permission="PloneMeeting.write_marginal_notes"
             i18n:domain="imio.esign"
             allowed_attributes="available"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
@@ -53,7 +53,7 @@
             name="remove-item-from-esign-session"
             for="imio.annex.content.annex.IAnnex"
             class="imio.esign.browser.actions.RemoveItemFromSessionView"
-            permission="cmf.ManagePortal"
+            permission="PloneMeeting.write_marginal_notes"
             i18n:domain="imio.esign"
             allowed_attributes="available"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
