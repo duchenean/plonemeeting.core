@@ -2030,8 +2030,9 @@ def print_votes(item,
     return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
-def _get_contact_from_position_type(obj, userid, position_types):
-    """ """
+def get_contact_from_position_type(obj=None, userid=None, position_types=[]):
+    """Get the person for the given userid (or obj.Creator()) and return the hp corresponding to the given position_types.
+       Parameter obj or userid must be given."""
     hp = None
     person = get_person_from_userid(userid or obj.Creator())
     if person:
@@ -2042,7 +2043,7 @@ def _get_contact_from_position_type(obj, userid, position_types):
                 hp = person.get_held_position_by_type(position_type)
                 if hp:
                     break
-    return person, hp
+    return hp
 
 
 def get_contact_infos(obj, position_types=[], userid=None):
@@ -2062,7 +2063,10 @@ def get_contact_infos(obj, position_types=[], userid=None):
              'label_prefix_to': None,
              'held_position_prefixed_label_to': None,
              }
-    person, hp = _get_contact_from_position_type(obj, userid, position_types=position_types)
+    hp = get_contact_from_position_type(obj, userid, position_types=position_types)
+    person = None
+    if hp:
+        person = hp.get_person()
     if person:
         infos['person'] = person
         infos['person_title'] = person.get_title()

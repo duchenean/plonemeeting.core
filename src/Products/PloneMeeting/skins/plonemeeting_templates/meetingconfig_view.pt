@@ -1518,7 +1518,8 @@
                       <div class="discreet"
                            tal:define="esign_signers_expr python: obj.esign_signers_expr"
                            tal:condition="esign_signers_expr">
-                         <label i18n:translate=""
+                         <label i18n:domain="collective.documentgenerator"
+                                i18n:translate="esign_signers_expr"
                                 class="horizontal">esign signer TAL expr</label>
                          <div>
                            <span class="text-widget textline-field"

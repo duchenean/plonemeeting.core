@@ -5,7 +5,6 @@
 
 from collective.eeafaceted.batchactions import _ as _CEBA
 from plone import api
-from plone.autoform.directives import widget
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.batchactions import compute_signers
 from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider

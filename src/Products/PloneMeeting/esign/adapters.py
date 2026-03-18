@@ -149,6 +149,12 @@ class PMSignersAdapter(object):
                 "email": email,
             }
             res.append(data)
+        if not res:
+            msg = translate(
+                msgid=u"Could not get any signers, please check configuration!",
+                domain="PloneMeeting",
+                context=self.request)
+            raise ValueError(msg)
         return res
 
     def get_files_uids(self):

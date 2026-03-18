@@ -11,7 +11,7 @@ from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
 from plone.rfc822.interfaces import IPrimaryFieldInfo
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.browser.views import _get_contact_from_position_type
+from Products.PloneMeeting.browser.views import get_contact_from_position_type
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import reindex_object
 from zope.i18n import translate
@@ -43,7 +43,7 @@ def get_meeting_esign_signatories(obj, signature_numbers=['1', '2'], **kwargs):
 
 def get_advice_esign_signatories(obj, userid, signature_numbers=['1', '2'], position_types=[], **kwargs):
     """Helper to get "advice" signatories respecting the esign expected format."""
-    person, hp = _get_contact_from_position_type(obj, userid, position_types=position_types)
+    hp = get_contact_from_position_type(obj, userid, position_types=position_types)
     return get_esign_signatories([hp], signature_numbers=signature_numbers)
 
 
@@ -90,7 +90,8 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
                     'annex_not_pdf_error',
                     domain="PloneMeeting",
                     mapping={'annex_title': safe_unicode(annex.Title())},
-                    default="Annex \"${annex_title}\" must be PDF to be added to a session!"),
+                    default="Annex \"${annex_title}\" must be PDF to be added to a session!",
+                    context=obj.REQUEST),
                 type="warning",
                 request=obj.REQUEST)
             continue
@@ -104,7 +105,8 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
                         domain="PloneMeeting",
                         mapping={'annex_title': safe_unicode(annex.Title()),
                                  'session_id': session_id},
-                        default="Annex \"${annex_title}\" is already in draft session \"${session_id}\"!"),
+                        default="Annex \"${annex_title}\" is already in draft session \"${session_id}\"!",
+                        context=obj.REQUEST),
                     type="warning",
                     request=obj.REQUEST)
                 already_in_draft_session = True
@@ -143,10 +145,12 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
         create_session_custom_data=create_session_custom_data)
     for annex in annexes:
         api.portal.show_message(
-            translate('annex_added_to_session',
-                      domain="PloneMeeting",
-                      mapping={'annex_title': safe_unicode(annex.Title()),
-                               'session_id': session_id},
-                      default="Annex \"${annex_title}\"added to session \"${session_id}\"."),
+            translate(
+                'annex_added_to_session',
+                domain="PloneMeeting",
+                mapping={'annex_title': safe_unicode(annex.Title()),
+                         'session_id': session_id},
+                default="Annex \"${annex_title}\" was added to session \"${session_id}\".",
+                context=obj.REQUEST),
             request=obj.REQUEST)
     return session_id, session
