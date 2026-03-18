@@ -5760,10 +5760,12 @@ class testMeetingItem(PloneMeetingTestCase):
             {'1': {'function': 'Function1',
                    'held_position': held_pos1,
                    'name': u'Person1FirstName Person1LastName',
+                   'shortfunction': u'Administrateur',
                    'shortname': u'P1 Person1LastName'},
              '2': {'function': u"L'Administratrice",
                    'held_position': held_pos2,
                    'name': 'Name2',
+                   'shortfunction': u'Administratrice',
                    'shortname': u'P2 Person2LastName'}
              }
         )
