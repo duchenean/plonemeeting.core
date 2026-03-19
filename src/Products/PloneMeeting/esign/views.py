@@ -10,6 +10,7 @@ from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from zope.i18n import translate
 
 
 class PMSessionsListingView(SessionsListingView):
@@ -64,13 +65,21 @@ class PMSessionsListingView(SessionsListingView):
 class PMSessionFilesView(SessionFilesView):
 
     def get_file_link(self, ctx, obj):
+        more_infos_link = "&nbsp;<a class='' href='{0}/@@categorized-annexes'><img src='{1}/++resource++collective.iconifiedcategory.images/more_infos.png' /> <span>{2}</span></a>".format(
+            ctx.absolute_url(),
+            api.portal.get().absolute_url(),
+            translate(
+                "More infos",
+                domain="collective.iconifiedcategory",
+                context=self.request),
+            )
         if ctx.getTagName() == 'MeetingItem':
             return ctx.getPrettyLink(
                 contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
-                u" ➔ " + IPrettyLink(obj).getLink()
+                u" ➔ " + IPrettyLink(obj).getLink() + more_infos_link
         elif ctx.getTagName() == 'Meeting':
             return ctx.get_pretty_link(prefixed=True, short=False, showContentIcon=True) + \
-                u" ➔ " + IPrettyLink(obj).getLink()
+                u" ➔ " + IPrettyLink(obj).getLink() + more_infos_link
 
 
 class PMSessionDeleteView(SessionDeleteView):
