@@ -81,7 +81,7 @@ def is_pdf(annex):
 def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is_pdf=True, show_msg=False):
     """ """
     context_uid = obj.UID()
-    # check that file is PDF and that annex is not already in a esign session in state "draft"
+    # check that file is PDF and that annex is not already in a esign session not in state "finalized"
     correct_annexes = []
     for annex in annexes:
         if check_is_pdf and not is_pdf(annex):
@@ -97,15 +97,15 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
             continue
         already_in_draft_session = False
         for session_id, session in get_sessions_for(context_uid).items():
-            if session['state'] == "draft" and \
+            if session['state'] != "finalized" and \
                get_file_info(session_id, annex.UID()):
                 api.portal.show_message(
                     translate(
-                        'annex_already_in_draft_session_error',
+                        'annex_already_in_not_finalized_session_error',
                         domain="PloneMeeting",
                         mapping={'annex_title': safe_unicode(annex.Title()),
                                  'session_id': session_id},
-                        default="Annex \"${annex_title}\" is already in draft session \"${session_id}\"!",
+                        default="Annex \"${annex_title}\" is already in session \"${session_id}\" that is not finalized!",
                         context=obj.REQUEST),
                     type="warning",
                     request=obj.REQUEST)
