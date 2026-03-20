@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc3 (unreleased)
+4.2.29rc3 (2026-03-20)
 ----------------------
 
 - Fixed `PMZ3CFormWidgetSettings.setupAjaxSave` to not init on portal, it avoid
