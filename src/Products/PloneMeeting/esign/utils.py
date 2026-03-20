@@ -113,7 +113,7 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
                 break
         if not already_in_draft_session:
             correct_annexes.append(annex)
-        annexes = correct_annexes
+    annexes = correct_annexes
 
     if not annexes:
         return

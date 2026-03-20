@@ -5,8 +5,10 @@ Changelog
 4.2.29rc4 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Avoid double message when `annex stored/annex added to session`.
+  [gbastien]
+- Fixed non annex PDF added to session when there was only one wrong annex.
+  [gbastien]
 
 4.2.29rc3 (2026-03-20)
 ----------------------

@@ -1321,7 +1321,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     self.context, annexes_to_sign, self.cfg, signers=signers, show_msg=not return_portal_msg_code)
 
         if not return_portal_msg_code:
-            if store_generated_document:
+            # avoid double message as a message will be added by imio.esign when added to session
+            if store_generated_document and not add_to_sign_session:
                 msg = translate('stored_single_item_template_as_annex',
                                 domain="PloneMeeting",
                                 context=self.request)
