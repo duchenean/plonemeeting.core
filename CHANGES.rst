@@ -5,8 +5,9 @@ Changelog
 4.2.29rc3 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `PMZ3CFormWidgetSettings.setupAjaxSave` to not init on portal, it avoid
+  error when a `RichText` feld is used in a control panel, like `imio.esign`.
+  [gbastien]
 
 4.2.29rc2 (2026-03-20)
 ----------------------
