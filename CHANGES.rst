@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc2 (unreleased)
+4.2.29rc2 (2026-03-20)
 ----------------------
 
 - Do not break if an error occurs in the rest request done in `iA.Vision` form
