@@ -8,6 +8,8 @@ Changelog
 - Do not break if an error occurs in the rest request done in `iA.Vision` form
   vocabularies, manage the error and display a warning in the form.
   [gbastien]
+- Continue integrate `imio.esign`.
+  [gbastien]
 
 4.2.29rc1 (2026-02-06)
 ----------------------
