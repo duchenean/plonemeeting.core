@@ -7,7 +7,7 @@ Changelog
 
 - Avoid double message when `annex stored/annex added to session`.
   [gbastien]
-- Fixed non annex PDF added to session when there was only one wrong annex.
+- Fixed not PDF annex added to session when there was only one wrong annex.
   [gbastien]
 
 4.2.29rc3 (2026-03-20)
