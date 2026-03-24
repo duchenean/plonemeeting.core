@@ -1331,9 +1331,15 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _get_filename(self, store_as_annex=False):
         """Override to take into account store_as_annex_empty_file."""
-        if store_as_annex and \
-           self.pod_template.store_as_annex_empty_file is True:
-            return "empty_file.txt"
+        if store_as_annex:
+            if self.pod_template.store_as_annex_empty_file is True:
+                return "empty_file.txt"
+            else:
+                # do not prepend pod template title when annex is stored
+                # XXX waiting new release docgen
+                # return super(PMDocumentGenerationView, self)._get_filename(
+                #    prepend_pod_title=False)
+                return super(PMDocumentGenerationView, self)._get_filename()
         else:
             return super(PMDocumentGenerationView, self)._get_filename()
 
