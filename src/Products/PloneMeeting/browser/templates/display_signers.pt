@@ -1,4 +1,4 @@
-<div class="display-signers" i18n:domain="PloneMeeting">
+<div class="display-signers" i18n:domain="PloneMeeting" tal:condition="python: view.show_esign">
   <label class="horizontal" i18n:translate="">Signers that will be used in the generated document:</label>
   <table class="vertical listing">
     <tr>
