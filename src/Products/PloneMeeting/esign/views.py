@@ -74,12 +74,14 @@ class PMSessionFilesView(SessionFilesView):
                 context=self.request),
             )
         if ctx.getTagName() == 'MeetingItem':
-            return ctx.getPrettyLink(
-                contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
-                u" ➔ " + IPrettyLink(obj).getLink() + more_infos_link
+            pretty_link = ctx.getPrettyLink(
+                contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True))
+
         elif ctx.getTagName() == 'Meeting':
-            return ctx.get_pretty_link(prefixed=True, short=False, showContentIcon=True) + \
-                u" ➔ " + IPrettyLink(obj).getLink() + more_infos_link
+            pretty_link = ctx.get_pretty_link(
+                prefixed=True, short=False, showContentIcon=True)
+        return pretty_link + u"<p class='file_link_file'>➔ " + \
+            IPrettyLink(obj).getLink() + more_infos_link + "</p>"
 
 
 class PMSessionDeleteView(SessionDeleteView):
