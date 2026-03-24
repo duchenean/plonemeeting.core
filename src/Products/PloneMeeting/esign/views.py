@@ -23,7 +23,8 @@ class PMSessionsListingView(SessionsListingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def available(self):
-        return self.tool.isManager(realManagers=True) or bool(self._get_access_groups())
+        if super(PMSessionsListingView, self).available():
+            return self.tool.isManager(realManagers=True) or bool(self._get_access_groups())
 
     def get_dashboard_link(self, session):
         # if a cfg could not be initialized, we get it from the session first element
