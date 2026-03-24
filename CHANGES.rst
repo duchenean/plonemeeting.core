@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc4 (unreleased)
+4.2.29rc4 (2026-03-24)
 ----------------------
 
 - Avoid double message when `annex stored/annex added to session`.
