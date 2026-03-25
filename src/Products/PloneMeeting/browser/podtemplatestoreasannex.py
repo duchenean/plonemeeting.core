@@ -4,6 +4,7 @@
 #
 
 from collective.eeafaceted.batchactions import _ as _CEBA
+from imio.helpers.content import uuidToObject
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.batchactions import compute_signers
@@ -131,7 +132,8 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         super(PodTemplateStoreAsAnnexForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
-        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(self.context)
+        self.pod_template = uuidToObject(self.widgets['template_uid'].value)
+        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(self.context, self.pod_template)
         self.output_format = self.widgets['output_format'].value
         self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
         # hide esign related fields if not available

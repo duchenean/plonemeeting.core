@@ -74,7 +74,9 @@ class DisplaySignersProvider(ContentProviderBase):
         self.raw_signers = self.__parent__.form.raw_signers
         self.show_esign = self.__parent__.form.show_esign
         self.output_format = self.__parent__.form.output_format
-        # only available when output_format is 'pdf'
+        self.pod_template = self.__parent__.form.pod_template
+        # only available when no error and
+        # esign expr defined and output_format is 'pdf'
         if self.__parent__.form.signers_error_msg is not None:
             error_msg = translate(
                 msgid='store_podtemplate_as_annex_signers_error',
@@ -82,7 +84,7 @@ class DisplaySignersProvider(ContentProviderBase):
                 domain='PloneMeeting',
                 context=self.request,
                 default="Not able to get signer, error is: \"${msg}\".")
-        elif self.output_format != u'pdf':
+        elif self.pod_template.esign_signers_expr and self.output_format != u'pdf':
             error_msg = translate(
                 msgid='store_podtemplate_as_annex_output_format_error',
                 mapping={'outputformat': self.output_format},
@@ -95,17 +97,18 @@ class DisplaySignersProvider(ContentProviderBase):
         return self.template()
 
 
-def compute_signers(obj):
+def compute_signers(obj, pod_template):
     """ """
     signers = []
     raw_signers = {}
-    esign_enabled = get_registry_enabled()
+    # esign is enabled if globally enabled and if configured for pod_template
+    esign_enabled = get_registry_enabled() and pod_template.esign_signers_expr
     signers_error_msg = None
-    # raw signers
-    raw_signers = ISignable(obj).get_raw_signers()
     # eSign signers
     if esign_enabled:
         try:
+            # raw signers
+            raw_signers = ISignable(obj).get_raw_signers()
             signers = ISignable(obj).get_signers()
         except ValueError as msg:
             signers_error_msg = msg
@@ -176,8 +179,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         self.signers_error_msg = None
         if self.brains:
             item = brains[0].getObject()
-            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(item)
-            pod_template, self.output_format = get_pod_template_infos(pod_template_default(self.context), self.cfg)
+            self.pod_template, self.output_format = get_pod_template_infos(pod_template_default(self.context), self.cfg)
+            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(item, self.pod_template)
 
         self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
         self.fields += Fields(schema.Choice(
