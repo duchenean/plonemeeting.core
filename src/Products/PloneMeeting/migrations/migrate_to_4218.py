@@ -24,6 +24,23 @@ class Migrate_To_4218(Migrator):
             cfg._createOrUpdateAllPloneGroups()
         # disable it by default
         set_registry_enabled(False)
+        # update held_positions that should be "signer":
+        # if having a signture_number
+        # if used in MeetingConfig.certifiedSignatures
+        hp_in_all_cfg_certifiedSignatures = []
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            hp_in_cfg_certifiedSignatures = [
+                row['held_position'] for row in cfg.getCertifiedSignatures()
+                if row['held_position'] not in ('_none_', '')]
+            hp_in_all_cfg_certifiedSignatures += hp_in_cfg_certifiedSignatures
+        for brain in self.catalog(portal_type='held_position'):
+            hp = brain.getObject()
+            if 'signer' in hp.usages:
+                continue
+            if hp.signature_number is not None or \
+               hp.UID() in hp_in_all_cfg_certifiedSignatures:
+                hp.usages = hp.usages + ['signer']
+                logger.info("Usage \"signer\" was added to held position at %s" % hp.absolute_url())
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

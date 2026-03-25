@@ -55,6 +55,7 @@ class IPMHeldPosition(IHeldPosition):
     form.widget('usages', PMCheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
+        description=_("descr_usages"),
         value_type=zope.schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary"),
         required=False,
