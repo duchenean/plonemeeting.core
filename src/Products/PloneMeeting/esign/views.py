@@ -81,8 +81,8 @@ class PMSessionFilesView(SessionFilesView):
         elif ctx.getTagName() == 'Meeting':
             pretty_link = ctx.get_pretty_link(
                 prefixed=True, short=False, showContentIcon=True)
-        return pretty_link + u"<p class='file_link_file'>➔ " + \
-            IPrettyLink(obj).getLink() + more_infos_link + "</p>"
+        return pretty_link + u"<br><span class='file_link_file'>➔ " + \
+            IPrettyLink(obj).getLink() + more_infos_link + "</span>"
 
 
 class PMSessionDeleteView(SessionDeleteView):
