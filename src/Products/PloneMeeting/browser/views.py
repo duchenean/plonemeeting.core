@@ -20,6 +20,7 @@ from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_ordinal_clusters
 from imio.zamqp.core.utils import scan_id_barcode
+from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
@@ -812,10 +813,7 @@ class BaseDGHV(object):
                 self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
                 return annex.scan_id
         # no annex found we get the next_scan_id
-        # we import here because imio.zamqp.core could not be there
-        # as amqp is activated when necessary
-        from imio.zamqp.core.utils import next_scan_id
-        scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        scan_id = next_scan_id_pm()
         # append a special value to scan_id stored in REQUEST if it is not a stored value
         if self.request.get('store_as_annex', '0') != '1':
             temp_qr_code_msg = translate(
