@@ -5,8 +5,14 @@ Changelog
 4.2.29rc5 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Continue `imio.esign` integration:
 
+  - Make `pod_template` available in esign related tal expressions;
+  - Migrate `hp.usages` to select signer when relevant;
+  - Use `imio.zamqp.pm.utils.next_scan_id_pm` instead `imio.zamqp.core.utils.next_scan_id`;
+  - Adapt UI when `imio.esign` installed but not `enabled`.
+
+  [gbastien]
 
 4.2.29rc4 (2026-03-24)
 ----------------------
