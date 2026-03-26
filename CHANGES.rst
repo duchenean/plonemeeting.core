@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc5 (unreleased)
+4.2.29rc5 (2026-03-26)
 ----------------------
 
 - Continue `imio.esign` integration:
