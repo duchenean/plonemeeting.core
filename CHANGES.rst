@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc6 (unreleased)
+4.2.29rc6 (2026-03-26)
 ----------------------
 
 - Fixed `Migrate_To_4218` that installs `imio.esign` by reconfiguring
