@@ -49,8 +49,8 @@ class PMSignersAdapter(object):
             template, template_uid = pod_template, pod_template.UID()
         return _base_extra_expr_ctx(
             self.context,
-            {'template': template,
-             'template_uid': template_uid})
+            {'pod_template': template,
+             'pod_template_uid': template_uid})
 
     def get_raw_signers(self, pod_template=None):
         """ """
@@ -60,7 +60,7 @@ class PMSignersAdapter(object):
         extra_expr_ctx = self._get_base_extra_expr_ctx(pod_template=pod_template)
         signer_infos = _evaluateExpression(
             self.context,
-            expression=extra_expr_ctx['template'].esign_signers_expr or '',
+            expression=extra_expr_ctx['pod_template'].esign_signers_expr or '',
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
@@ -69,7 +69,7 @@ class PMSignersAdapter(object):
 
     def get_signers(self, pod_template=None):
         """Return the list of signers for the element.
-           We use configuration field MeetingConfig.eSignSignersTALExpr."""
+           We use configuration field PODTemplate.esign_signers_expr."""
         signer_infos = self.get_raw_signers(pod_template=pod_template)
         # now we have to return a list of ordered signers
         # with 'userid', 'email', 'fullname' and 'position' all as text
@@ -180,12 +180,14 @@ class PMSignersAdapter(object):
         # manage duplicates
         return list(set(watcher_emails))
 
-    def get_discriminators(self, annex):
+    def get_discriminators(self, annex, pod_template=None):
         """
         Discriminate based on MeetingConfig.eSignDiscriminatorsTALExpr.
         """
-        extra_expr_ctx = self._get_base_extra_expr_ctx()
-        extra_expr_ctx.update({'obj': self.context, 'annex': annex, })
+        extra_expr_ctx = self._get_base_extra_expr_ctx(pod_template=pod_template)
+        extra_expr_ctx.update(
+            {'obj': self.context,
+             'annex': annex})
         # will return a list of strings
         discriminators = _evaluateExpression(
             self.context,

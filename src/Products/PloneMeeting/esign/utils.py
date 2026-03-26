@@ -78,7 +78,7 @@ def is_pdf(annex):
     return file_obj.contentType == 'application/pdf'
 
 
-def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is_pdf=True, show_msg=False):
+def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=None, check_is_pdf=True, show_msg=False):
     """ """
     context_uid = obj.UID()
     # check that file is PDF and that annex is not already in a esign session not in state "finalized"
@@ -132,7 +132,7 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, signers, seal=None, check_is
     files_uids = [annex.UID() for annex in annexes]
     title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
         cfg.Title(include_config_group=True)))
-    discriminators = ISignable(obj).get_discriminators(annex)
+    discriminators = ISignable(obj).get_discriminators(annex, pod_template)
     watchers = ISignable(obj).get_watchers()
     create_session_custom_data = {'cfg_id': cfg.getId()}
     session_id, session = add_files_to_session(

@@ -1306,7 +1306,13 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             if add_to_sign_session:
                 seal = get_registry_seal_code() if pod_template.esign_include_seal else None
                 _add_annexes_to_sign_session(
-                    self.context, [annex], self.cfg, signers, seal=seal, show_msg=not return_portal_msg_code)
+                    self.context,
+                    [annex],
+                    self.cfg,
+                    pod_template,
+                    signers,
+                    seal=seal,
+                    show_msg=not return_portal_msg_code)
 
         # add annexes to session if relevant
         if add_annexes_to_sign_session:
@@ -1318,7 +1324,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 annexes_to_sign.remove(annex)
             if annexes_to_sign:
                 _add_annexes_to_sign_session(
-                    self.context, annexes_to_sign, self.cfg, signers=signers, show_msg=not return_portal_msg_code)
+                    self.context,
+                    annexes_to_sign,
+                    self.cfg,
+                    pod_template,
+                    signers=signers,
+                    show_msg=not return_portal_msg_code)
 
         if not return_portal_msg_code:
             # avoid double message as a message will be added by imio.esign when added to session
