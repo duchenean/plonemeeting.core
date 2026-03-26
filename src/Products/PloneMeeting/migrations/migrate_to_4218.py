@@ -2,6 +2,7 @@
 
 from imio.esign.config import set_registry_enabled
 from imio.helpers.setup import load_type_from_package
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -11,12 +12,17 @@ class Migrate_To_4218(Migrator):
     def _configureEsign(self):
         """Configure imio.esign."""
         logger.info('Configuring imio.esign...')
-        # install imio.esign
-        self.reinstall(['profile-imio.esign:default'])
+        # install imio.esign, but do not reinstall imio.fpaudit
+        # because of difference between installed profile and profile name (install-base)
+        # collective.documentgenerator is reinstalled, so re-configure it
+        self.reinstall(['profile-imio.esign:default'], dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+        # re-apply ConfigurablePODTemplate to add esign_signers_expr field
+        load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
+        load_type_from_package('StyleTemplate', 'Products.PloneMeeting:default')
+        # hide document-generation-link default viewlet
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'viewlets')
         # add searchitemsinesignsessions
         self.addNewSearches()
-        # update type ConfigurablePODTemplate to add esign_signers_expr field
-        load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         # re-apply actions.xml to manage add_to_session/remove_from_session actions
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
         # create esignwatchers group per MeetingConfig
@@ -27,18 +33,18 @@ class Migrate_To_4218(Migrator):
         # update held_positions that should be "signer":
         # if having a signture_number
         # if used in MeetingConfig.certifiedSignatures
-        hp_in_all_cfg_certifiedSignatures = []
+        hp_in_all_cfg_certified_signatures = []
         for cfg in self.tool.objectValues('MeetingConfig'):
-            hp_in_cfg_certifiedSignatures = [
+            hp_in_cfg_certified_signatures = [
                 row['held_position'] for row in cfg.getCertifiedSignatures()
                 if row['held_position'] not in ('_none_', '')]
-            hp_in_all_cfg_certifiedSignatures += hp_in_cfg_certifiedSignatures
+            hp_in_all_cfg_certified_signatures += hp_in_cfg_certified_signatures
         for brain in self.catalog(portal_type='held_position'):
             hp = brain.getObject()
             if 'signer' in hp.usages:
                 continue
             if hp.signature_number is not None or \
-               hp.UID() in hp_in_all_cfg_certifiedSignatures:
+               hp.UID() in hp_in_all_cfg_certified_signatures:
                 hp.usages = hp.usages + ['signer']
                 logger.info("Usage \"signer\" was added to held position at %s" % hp.absolute_url())
         logger.info('Done.')

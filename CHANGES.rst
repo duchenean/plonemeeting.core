@@ -5,8 +5,9 @@ Changelog
 4.2.29rc6 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4218` that installs `imio.esign` by reconfiguring
+  `collective.documentgenerator` that is reinstalled by `imio.esign`.
+  [gbastien]
 
 4.2.29rc5 (2026-03-26)
 ----------------------
