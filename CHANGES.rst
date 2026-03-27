@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc7 (unreleased)
+4.2.29rc7 (2026-03-27)
 ----------------------
 
 - Added event to disable/enable `imio.esign` related actions when
