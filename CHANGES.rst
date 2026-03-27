@@ -5,8 +5,13 @@ Changelog
 4.2.29rc7 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Added event to disable/enable `imio.esign` related actions when
+  `imio.esign` is enabled/disabled.
+  [gbastien]
+- Display signed status icon in files column.
+  [gbastien]
+- Adapted calls to `imio.esign` registry config functions that were renamed.
+  [gbastien]
 
 4.2.29rc6 (2026-03-26)
 ----------------------
