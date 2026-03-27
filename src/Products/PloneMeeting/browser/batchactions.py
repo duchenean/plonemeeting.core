@@ -13,7 +13,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.esign.adapters import ISignable
-from imio.esign.config import get_registry_enabled
+from imio.esign.config import get_esign_registry_enabled
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from plone import api
@@ -102,7 +102,7 @@ def compute_signers(obj, pod_template):
     signers = []
     raw_signers = {}
     # esign is enabled if globally enabled and if configured for pod_template
-    esign_enabled = get_registry_enabled() and pod_template.esign_signers_expr
+    esign_enabled = get_esign_registry_enabled() and pod_template.esign_signers_expr
     signers_error_msg = None
     # eSign signers
     if esign_enabled:

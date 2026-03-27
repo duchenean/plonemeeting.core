@@ -26,7 +26,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
-from imio.esign.config import get_registry_seal_code
+from imio.esign.config import get_esign_registry_seal_code
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
@@ -1304,7 +1304,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # add to eSign session if necessary
             # now that signers and annex is correct, we can add it to session
             if add_to_sign_session:
-                seal = get_registry_seal_code() if pod_template.esign_include_seal else None
+                seal = get_esign_registry_seal_code() if pod_template.esign_include_seal else None
                 _add_annexes_to_sign_session(
                     self.context,
                     [annex],
