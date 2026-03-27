@@ -40,6 +40,7 @@
             permission="zope2.View"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
+        <!-- Protect by "PloneMeeting.write_marginal_notes" permission -->
         <browser:view
             name="remove-from-esign-session"
             for="Products.PloneMeeting.interfaces.IMeetingContent"
@@ -76,5 +77,8 @@
             class="Products.PloneMeeting.esign.viewlets.PMItemSessionInfoViewlet"
             permission="zope2.View" />
     </configure>
+
+    <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
+                handler=".events.onRegistryModified" />
 
 </configure>

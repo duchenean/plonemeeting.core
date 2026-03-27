@@ -66,14 +66,6 @@ class PMSessionsListingView(SessionsListingView):
 class PMSessionFilesView(SessionFilesView):
 
     def get_file_link(self, ctx, obj):
-        more_infos_link = "&nbsp;<a class='' href='{0}/@@categorized-annexes'><img src='{1}/++resource++collective.iconifiedcategory.images/more_infos.png' /> <span>{2}</span></a>".format(
-            ctx.absolute_url(),
-            api.portal.get().absolute_url(),
-            translate(
-                "More infos",
-                domain="collective.iconifiedcategory",
-                context=self.request),
-            )
         if ctx.getTagName() == 'MeetingItem':
             pretty_link = ctx.getPrettyLink(
                 contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True))
@@ -81,8 +73,23 @@ class PMSessionFilesView(SessionFilesView):
         elif ctx.getTagName() == 'Meeting':
             pretty_link = ctx.get_pretty_link(
                 prefixed=True, short=False, showContentIcon=True)
+
+        child_infos_view = obj.restrictedTraverse('categorized-childs-infos')
+        element = ctx.categorized_elements[obj.UID()]
+        signed_info = u"&nbsp;<div class='tooltipster-categorized-elements' style='display: inline;'><span class='{0}' title='{1}' /></div>".format(
+            child_infos_view.get_css_classses_for('signed', element),
+            translate(child_infos_view.get_tag_title_for('signed', element), domain='collective.iconifiedcategory', context=self.request))
+
+        more_infos_link = "&nbsp;<a href='{0}/@@categorized-annexes'><img style='vertical-align: middle;' src='{1}/++resource++collective.iconifiedcategory.images/more_infos.png' /> <span>{2}</span></a>".format(
+            ctx.absolute_url(),
+            api.portal.get().absolute_url(),
+            translate(
+                "More infos",
+                domain="collective.iconifiedcategory",
+                context=self.request), )
+
         return pretty_link + u"<br><span class='file_link_file'>➔ " + \
-            IPrettyLink(obj).getLink() + more_infos_link + "</span>"
+            IPrettyLink(obj).getLink() + signed_info + more_infos_link + "</span>"
 
 
 class PMSessionDeleteView(SessionDeleteView):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from imio.esign.config import set_registry_enabled
+from imio.esign.config import set_esign_registry_enabled
 from imio.helpers.setup import load_type_from_package
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import logger
@@ -25,11 +25,13 @@ class Migrate_To_4218(Migrator):
         self.addNewSearches()
         # re-apply actions.xml to manage add_to_session/remove_from_session actions
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
+        # re-apply rolemap to give "imio.esign: Manage Sessions" to MeetingManager
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'rolemap')
         # create esignwatchers group per MeetingConfig
         for cfg in self.tool.objectValues('MeetingConfig'):
             cfg._createOrUpdateAllPloneGroups()
         # disable it by default
-        set_registry_enabled(False)
+        set_esign_registry_enabled(False)
         # update held_positions that should be "signer":
         # if having a signture_number
         # if used in MeetingConfig.certifiedSignatures

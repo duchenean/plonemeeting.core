@@ -474,6 +474,7 @@ def onRegistryModified(event):
     """
         Manage our record changes
     """
+    # collective.contact.plonegroup
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
