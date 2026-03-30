@@ -5,8 +5,8 @@ Changelog
 4.2.29rc8 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed access to sessions and viewlet to esign watchers group.
+  [gbastien]
 
 4.2.29rc7 (2026-03-27)
 ----------------------
