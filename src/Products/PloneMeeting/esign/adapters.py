@@ -6,6 +6,7 @@
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.helpers.content import uuidToObject
 from plone import api
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.batchactions import get_pod_template_infos
 from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
@@ -86,7 +87,7 @@ class PMSignersAdapter(object):
                     domain="PloneMeeting",
                     mapping={'signature_number': signature_number,
                              'signer': u"{0} - {1}".format(
-                                signer_info['name'], signer_info['function'])},
+                                safe_unicode(signer_info['name']), safe_unicode(signer_info['function']))},
                     context=self.request)
                 raise ValueError(msg)
             person = signer_info["held_position"].get_person()

@@ -7,6 +7,10 @@ Changelog
 
 - Fixed access to sessions and viewlet to esign watchers group.
   [gbastien]
+- Avoid `UnicodeDecodeError` in `PMSignersAdapter.get_signers` when rendering
+  errors if certified signature custom function or name
+  contains special characters.
+  [gbastien]
 
 4.2.29rc7 (2026-03-27)
 ----------------------
