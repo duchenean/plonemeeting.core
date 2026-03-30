@@ -11,6 +11,9 @@ Changelog
   errors if certified signature custom function or name
   contains special characters.
   [gbastien]
+- Disable esign on store to annex if generated document
+  annex type is not to sign by default.
+  [gbastien]
 
 4.2.29rc7 (2026-03-27)
 ----------------------

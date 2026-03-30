@@ -85,9 +85,11 @@ class PMSignersAdapter(object):
                 msg = translate(
                     msgid=u"No held position for signer number \"${signature_number}\" (${signer})!",
                     domain="PloneMeeting",
-                    mapping={'signature_number': signature_number,
-                             'signer': u"{0} - {1}".format(
-                                safe_unicode(signer_info['name']), safe_unicode(signer_info['function']))},
+                    mapping={
+                        'signature_number': signature_number,
+                        'signer': u"{0} - {1}".format(
+                           safe_unicode(signer_info['name']),
+                           safe_unicode(signer_info['function']))},
                     context=self.request)
                 raise ValueError(msg)
             person = signer_info["held_position"].get_person()
