@@ -5,8 +5,9 @@ Changelog
 4.2.29rc9 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `...-belonging-to-a-given-session` adapters, do not break if no `cfg`
+  and use a different ram.cache name.
+  [gbastien]
 
 4.2.29rc8 (2026-04-01)
 ----------------------

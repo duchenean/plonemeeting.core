@@ -215,21 +215,25 @@ class ItemsBelongingToAGivenSession(CompoundCriterionBaseAdapter, FilesBelonging
     """ """
 
     @property
-    def query_session_files(self):
+    def query_item_session_files(self):
+        if not self.cfg:
+            return {}
         query = super(ItemsBelongingToAGivenSession, self).query_session_files
         query['portal_type'] = {'query': self.cfg.getItemTypeName()}
         return query
 
-    query = query_session_files
+    query = query_item_session_files
 
 
 class MeetingsBelongingToAGivenSession(CompoundCriterionBaseAdapter, FilesBelongingToAGivenSession):
     """ """
 
     @property
-    def query_session_files(self):
+    def query_meeting_session_files(self):
+        if not self.cfg:
+            return {}
         query = super(MeetingsBelongingToAGivenSession, self).query_session_files
         query['portal_type'] = {'query': self.cfg.getMeetingTypeName()}
         return query
 
-    query = query_session_files
+    query = query_meeting_session_files
