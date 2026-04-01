@@ -1168,14 +1168,14 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         elif self.request.get('store_as_annex', '0') == '1':
             return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             add_to_sign_session = kwargs.get('add_to_sign_session', False)
-            add_annexes_to_sign_session = kwargs.get('add_annexes_to_sign_session', False)
+            annex_ids_to_add_to_session = kwargs.get('annex_ids_to_add_to_session', False)
             store_generated_document = kwargs.get('store_generated_document', True)
             return self.storePodTemplateAsAnnex(
                 generated_template,
                 pod_template,
                 output_format,
                 add_to_sign_session=add_to_sign_session,
-                add_annexes_to_sign_session=add_annexes_to_sign_session,
+                annex_ids_to_add_to_session=annex_ids_to_add_to_session,
                 store_generated_document=store_generated_document,
                 return_portal_msg_code=return_portal_msg_code)
         else:
@@ -1201,7 +1201,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                 output_format,
                                 store_generated_document=True,
                                 add_to_sign_session=False,
-                                add_annexes_to_sign_session=False,
+                                annex_ids_to_add_to_session=[],
                                 return_portal_msg_code=False):
         '''Store given p_generated_template_data as annex using p_pod_template.store_as_annex annex_type uid.'''
         # first check if current member is able to store_as_annex
@@ -1294,7 +1294,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
             # proceed, add annex and redirect user to the annexes table view
-            annex = self._store_pod_template_as_annex(
+            stored_annex = self._store_pod_template_as_annex(
                 pod_template,
                 output_format,
                 generated_template_data,
@@ -1307,7 +1307,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 seal = get_esign_registry_seal_code() if pod_template.esign_include_seal else None
                 _add_annexes_to_sign_session(
                     self.context,
-                    [annex],
+                    [stored_annex],
                     self.cfg,
                     pod_template,
                     signers,
@@ -1315,13 +1315,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     show_msg=not return_portal_msg_code)
 
         # add annexes to session if relevant
-        if add_annexes_to_sign_session:
-            # we will select annexes that are "to_sign" and include a scan_id if relevant
-            annexes_to_sign = get_categorized_elements(
-                self.context, result_type='objects', filters={'to_sign': True, 'signed': False})
-            # do not add freshly added generated document again
-            if store_generated_document and add_to_sign_session:
-                annexes_to_sign.remove(annex)
+        if add_to_sign_session and annex_ids_to_add_to_session:
+            annexes_to_sign = [self.context.get(annex_id) for annex_id in annex_ids_to_add_to_session]
             if annexes_to_sign:
                 _add_annexes_to_sign_session(
                     self.context,

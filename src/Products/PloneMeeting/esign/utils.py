@@ -7,9 +7,9 @@ from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_file_info
 from imio.esign.utils import get_sessions_for
+from imio.helpers.utils import is_pdf
 from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
-from plone.rfc822.interfaces import IPrimaryFieldInfo
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.views import get_contact_from_position_type
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
@@ -81,13 +81,6 @@ def esign_access_groups():
         suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
 
 
-def is_pdf(annex):
-    """ """
-    file_field_name = IPrimaryFieldInfo(annex).fieldname
-    file_obj = getattr(annex, file_field_name)
-    return file_obj.contentType == 'application/pdf'
-
-
 def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=None, check_is_pdf=True, show_msg=False):
     """ """
     context_uid = obj.UID()
@@ -106,9 +99,10 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
                 request=obj.REQUEST)
             continue
         already_in_draft_session = False
+        annex_uid = annex.UID()
         for session_id, session in get_sessions_for(context_uid).items():
             if session['state'] != "finalized" and \
-               get_file_info(session_id, annex.UID()):
+               get_file_info(session_id, annex_uid):
                 api.portal.show_message(
                     translate(
                         'annex_already_in_not_finalized_session_error',

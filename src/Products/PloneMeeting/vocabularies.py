@@ -35,6 +35,8 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.esign.utils import get_file_info
+from imio.esign.utils import get_sessions_for
 from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
@@ -3072,7 +3074,7 @@ class BaseContainedAnnexesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, portal_type='annex', prefixed=False):
+    def __call__(self, context, portal_type='annex', prefixed=False, filters={}):
         """ """
         portal = api.portal.get()
         portal_url = portal.absolute_url()
@@ -3081,7 +3083,7 @@ class BaseContainedAnnexesVocabulary(object):
         sort_on = 'getObjPositionInParent' if \
             get_sort_categorized_tab() is False else None
         annex_infos = get_categorized_elements(
-            context, portal_type=portal_type, sort_on=sort_on)
+            context, portal_type=portal_type, sort_on=sort_on, filters=filters)
         if annex_infos:
             categories_vocab = get_vocab(
                 context,
@@ -3131,7 +3133,6 @@ class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
         if term.disabled is False:
             # check if user able to keep this annex :
             # - annex may not hold a scan_id
-            term.disabled = False
             annex_obj = getattr(context, annex_info['id'])
             if getattr(annex_obj, 'scan_id', None):
                 term.disabled = True
@@ -3206,6 +3207,44 @@ class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
 
 
 ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
+
+
+class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
+    """ """
+
+    def __call__(self, context, portal_type='annex', prefixed=True, filters={'to_sign': True, 'signed': False}):
+        annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
+            context, portal_type=portal_type, prefixed=prefixed, filters=filters)
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
+        decision_annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
+            context, portal_type='annexDecision', prefixed=prefixed, filters=filters)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
+        return SimpleVocabulary(annexes_terms._terms + decision_annexes_terms._terms)
+
+    def _check_disable_term(self, context, annex_info, categories_vocab, term):
+        super(ContainedAnnexesToSignVocabulary, self)._check_disable_term(
+            context, annex_info, categories_vocab, term)
+        if term.disabled is False:
+            # check if annex is PDF
+            annex_obj = getattr(context, annex_info['id'])
+            if annex_obj.file.contentType != 'application/pdf':
+                term.disabled = True
+                term.title += translate(' [PDF required]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            # check not already in a "draft" esign session
+            else:
+                context_uid = context.UID()
+                for session_id, session in get_sessions_for(context_uid).items():
+                    if session['state'] != "finalized" and \
+                    get_file_info(session_id, annex_info['UID']):
+                        term.disabled = True
+                        term.title += translate(' [already_in_esign_session]',
+                                                domain='PloneMeeting',
+                                                context=context.REQUEST)
+
+
+ContainedAnnexesToSignVocabularyFactory = ContainedAnnexesToSignVocabulary()
 
 
 class GenerablePODTemplatesVocabulary(object):
