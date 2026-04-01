@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc8 (unreleased)
+4.2.29rc8 (2026-04-01)
 ----------------------
 
 - Fixed access to sessions and viewlet to esign watchers group.
