@@ -21,6 +21,12 @@ class ExternalView(BrowserView):
       This manage functionnality around iA.Vision
     """
 
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
     def __call__(self):
         """ """
         if not self.context.isDefinedInTool():
@@ -53,12 +59,10 @@ class ExternalView(BrowserView):
            - can edit the item;
            - MeetingManager;
            - proposing group editor."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         return _checkPermission(ModifyPortalContent, self.context) or \
-            tool.isManager(cfg) or \
-            is_proposing_group_editor(self.context.getProposingGroup(), cfg)
+            self.tool.isManager(self.cfg) or \
+            is_proposing_group_editor(self.context.getProposingGroup(), self.cfg)
 
     def show_section(self):
         """Display the "External linked elements" on the item view?"""
-        return bool(SSO_APPS_USER_USERNAME)
+        return self.cfg.getId() in self.tool.getShowExternalLinksSection()

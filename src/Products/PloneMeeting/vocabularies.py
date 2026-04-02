@@ -3424,3 +3424,27 @@ class ItemFieldsConfigVocabulary(object):
 
 
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
+
+
+class EveryConfigsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, only_active=False):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        terms = []
+        if only_active:
+            cfgs = tool.getActiveConfigs()
+        else:
+            cfgs = tool.objectValues('MeetingConfig')
+        for cfg in cfgs:
+            term_id = cfg.getId()
+            term_title = safe_unicode(cfg.Title())
+            terms.append(SimpleTerm(term_id, term_id, term_title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+EveryConfigsVocabularyFactory = EveryConfigsVocabulary()

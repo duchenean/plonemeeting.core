@@ -276,6 +276,20 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDeferParentReindexes',
     ),
+    LinesField(
+        name='showExternalLinksSection',
+        default=defValues.showExternalLinksSection,
+        widget=MultiSelectionWidget(
+            description="ShowExternalLinksSection",
+            description_msgid="show_external_links_section_descr",
+            format="checkbox",
+            label='Showexternallinkssection',
+            label_msgid='PloneMeeting_label_showExternalLinksSection',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary_factory='PMEveryConfigs',
+    ),
     DataGridField(
         name='advisersConfig',
         widget=DataGridField._properties['widget'](

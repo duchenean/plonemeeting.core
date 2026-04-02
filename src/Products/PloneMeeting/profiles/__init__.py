@@ -993,6 +993,7 @@ class PloneMeetingConfiguration(Descriptor):
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
+        self.showExternalLinksSection = ()
         self.advisersConfig = ()
 
         # non stored values
