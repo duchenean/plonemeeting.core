@@ -12,6 +12,9 @@ Changelog
   the `backToProposed` action on a `validated` item when
   `reviewers_take_back_validated_item` is used.
   [gbastien]
+- Added `ToolPloneMeeting.showExternalLinksSection` to be able to enable
+  the `External links` collapsible on items on a per `MeetingConfig` basis.
+  [gbastien]
 
 4.2.29rc8 (2026-04-01)
 ----------------------

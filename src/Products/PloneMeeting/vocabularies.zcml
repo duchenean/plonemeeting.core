@@ -149,6 +149,8 @@
            component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
   <utility name="EnabledItemActions"
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
+  <utility component=".vocabularies.EveryConfigsVocabularyFactory"
+           name="PMEveryConfigs" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

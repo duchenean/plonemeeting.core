@@ -183,6 +183,13 @@
             </td>
           </tr>
           <tr valign="top">
+            <td tal:define="field python:here.getField('showExternalLinksSection')">
+                <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr valign="top">
             <td colspan="3" tal:define="field python:here.getField('advisersConfig')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
