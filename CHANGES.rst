@@ -8,6 +8,10 @@ Changelog
 - Fixed `...-belonging-to-a-given-session` adapters, do not break if no `cfg`
   and use a different ram.cache name.
   [gbastien]
+- Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
+  the `backToProposed` action on a `validated` item when
+  `reviewers_take_back_validated_item` is used.
+  [gbastien]
 
 4.2.29rc8 (2026-04-01)
 ----------------------
