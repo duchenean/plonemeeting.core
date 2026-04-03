@@ -151,6 +151,8 @@
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
   <utility component=".vocabularies.EveryConfigsVocabularyFactory"
            name="PMEveryConfigs" />
+  <utility component=".vocabularies.ConfigCssTransformsActionsVocabularyFactory"
+           name="ConfigCssTransformsActions" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
