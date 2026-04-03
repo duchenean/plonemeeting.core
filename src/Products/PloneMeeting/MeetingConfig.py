@@ -964,6 +964,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='enabledItemActions',
+        default=defValues.enabledItemActions,
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            label='enableditemactions',
+            label_msgid='PloneMeeting_label_enabledItemActions',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        vocabulary_factory='EnabledItemActions',
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='annexToPrintMode',
         default=defValues.annexToPrintMode,
@@ -1022,7 +1036,7 @@ schema = Schema((
                                col_description="Css transform replace new content descr"),
                      'replace_new_css_class':
                         Column("Css transform replace new css class",
-                               col_description="Css transform replace new content descr"),
+                               col_description="Css transform replace new css class descr"),
                      'powerobservers':
                         MultiSelectColumn("Css transform powerobservers",
                                           vocabulary='listPowerObserversTypes',
@@ -1038,20 +1052,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
         columns=('css_class', 'action', 'replace_new_content', 'replace_new_css_class', 'powerobservers'),
         allow_empty_rows=False,
-    ),
-    LinesField(
-        name='enabledItemActions',
-        default=defValues.enabledItemActions,
-        widget=MultiSelectionWidget(
-            format="checkbox",
-            label='enableditemactions',
-            label_msgid='PloneMeeting_label_enabledItemActions',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        vocabulary_factory='EnabledItemActions',
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='itemWorkflow',
