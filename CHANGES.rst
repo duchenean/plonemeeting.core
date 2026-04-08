@@ -17,6 +17,9 @@ Changelog
   new field manage `CSS removal` and `content replacement` based on a CSS class,
   this will be used to anonymize content for selected power observers.
   [gbastien]
+- Added possibilty to display a `description` when using the `PMCheckBoxWidget`
+  by defining a `description` on the `vocabulary term`.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------
