@@ -4044,7 +4044,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAnnexesBatchActions(self):
         """Vocabulary for the MeetingConfig.enabledAnnexesBatchActions field."""
         res = []
-        for annex_ba in ['delete', 'download-annexes']:
+        for annex_ba in ['delete', 'download-annexes', 'insert-barcode']:
             res.append((annex_ba,
                         translate('{0}-batch-action-but'.format(annex_ba),
                                   domain='collective.eeafaceted.batchactions',
