@@ -5124,8 +5124,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self._activate_wfas(('item_validation_shortcuts', ))
         self._enablePrevalidation(self.meetingConfig)
         # make pmReviewer1 a creator and prereviewer (already reviewer)
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
         actions_panel = item.restrictedTraverse('@@actions_panel')
@@ -7516,34 +7516,46 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEqual(item_modified, item.modified())
         self.assertTrue(self.catalog(SearchableText='specific2'))
 
-    def test_pm_HideCssClasses(self):
-        """ """
+    def test_pm_CssTransforms(self):
+        """Config defined in MeetingConfig.CssTransforms will remove or
+           replace (used to anonymize) content for selected powerobservers. """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setHideCssClassesTo(('powerobservers', ))
+        cfg.setCssTransforms(
+            (
+                {'action': 'remove',
+                 'css_class': 'highlight',
+                 'replace_new_content': '',
+                 'replace_new_css_class': '',
+                 'powerobservers': ['powerobservers']},
+                {'action': 'replace',
+                 'css_class': 'pm-anonymize',
+                 'replace_new_content': 'Data were hidden',
+                 'replace_new_css_class': 'pm-anonymized',
+                 'powerobservers': ['restrictedpowerobservers']},
+             )
+        )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))
-        self.assertTrue('highlight' in cfg.getCssClassesToHide().split('\n'))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        TEXT = '<p>Text <span class="highlight">Highlighted text</span> some text</p>'
+        TEXT = '<p>Text <span class="highlight">Highlighted text</span> some text<span class="pm-anonymize">Anonymized content</span></p>'
         item.setDecision(TEXT)
         # the creator will have the correct text
         self.assertEqual(item.getDecision(), TEXT)
-        # a power observer will not get the classes
+        # a power observer will not get the highlight class but have anonymized content
         self.changeUser('powerobserver1')
-        self.assertEqual(item.getDecision(),
-                         '<p>Text <span>Highlighted text</span> some text</p>')
-        # a restricted power observer will get the classes
+        self.assertEqual(
+            item.getDecision(),
+            '<p>Text <span>Highlighted text</span> some text<span class="pm-anonymize">Anonymized content</span></p>')
+        # a restricted power observer will get the highlight class but not the anonymized content
         self.changeUser('restrictedpowerobserver1')
-        self.assertEqual(item.getDecision(), TEXT)
+        self.assertEqual(
+            item.getDecision(),
+            '<p>Text <span class="highlight">Highlighted text</span> some text<span class="pm-anonymized">Data were hidden</span></p>')
 
-        # test as Anonymous
-        logout()
-        self.assertEqual(item.getDecision(), TEXT)
-
-        # nevertheless, if powerobserver1 may edit the item, he will see the classes
+        # nevertheless, if powerobserver1 may edit the item, he will get the original text
         # add powerobserver1 to 'developers_creators' then check
         self._addPrincipalToGroup('powerobserver1', self.developers_creators)
         self.changeUser('powerobserver1')

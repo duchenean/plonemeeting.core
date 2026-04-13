@@ -3022,6 +3022,7 @@ class BaseContainedAnnexesVocabulary(object):
                 if annex_info['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
                 term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
+                term.description = annex_info['description'].replace('\n', '<br>')
                 # check if need to disable term
                 self._check_disable_term(context, annex_info, categories_vocab, term)
                 terms.append(term)
@@ -3484,3 +3485,46 @@ class ItemFieldsConfigVocabulary(object):
 
 
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
+
+
+class ConfigCssTransformsActionsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for v in ['remove', 'replace']:
+            term_title = translate('css_transform_action_' + v,
+                                   domain='PloneMeeting',
+                                   context=context.REQUEST)
+            terms.append(SimpleTerm(v, v, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
+
+
+class EveryConfigsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, only_active=False):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        terms = []
+        if only_active:
+            cfgs = tool.getActiveConfigs()
+        else:
+            cfgs = tool.objectValues('MeetingConfig')
+        for cfg in cfgs:
+            term_id = cfg.getId()
+            term_title = safe_unicode(cfg.Title())
+            terms.append(SimpleTerm(term_id, term_id, term_title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+EveryConfigsVocabularyFactory = EveryConfigsVocabulary()

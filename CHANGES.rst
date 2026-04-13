@@ -2,11 +2,102 @@ Changelog
 =========
 
 
-4.2.28.3 (unreleased)
+4.2.28.11 (unreleased)
+----------------------
+
+- Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
+  the `backToProposed` action on a `validated` item when
+  `reviewers_take_back_validated_item` is used.
+  [gbastien]
+- Added `ToolPloneMeeting.showExternalLinksSection` to be able to enable
+  the `External links` collapsible on items on a per `MeetingConfig` basis.
+  [gbastien]
+- Added new datagrid field `MeetingConfig.CssTransforms` in replacement for
+  fields `MeetingConfig.cssClassesToHide` and `MeetingConfig.hideCssClassesTo`,
+  new field manage `CSS removal` and `content replacement` based on a CSS class,
+  this will be used to anonymize content for selected power observers.
+  [gbastien]
+- Added possibilty to display a `description` when using the `PMCheckBoxWidget`
+  by defining a `description` on the `vocabulary term`.
+  [gbastien]
+- Added new batch action `Insert barcode` on annexes and decision annexes.
+  [gbastien]
+
+4.2.28.10 (2026-03-13)
+----------------------
+
+- Added `imio.helpers.xhtml.removeCssClasses` to `safe_utils` so it is available
+  in TAL expressions, Python scripts and POD templates.
+  [gbastien]
+- Do not break if an error occurs in the rest request done in `iA.Vision` form
+  vocabularies, manage the error and display a warning in the form.
+  [gbastien]
+- Restrict creation/modification of any kind of POD templates to the Zope admin.
+  Renamed `ToolPloneMeeting.show_add_config` to `ToolPloneMeeting.is_zope_admin`.
+  [gbastien]
+- Highlight `Yes` value in red in `MeetingConfig.labelsConfig` datagrid field.
+  [gbastien]
+- Fixed `ftw.labels` viewlet error when rendered on an item template, now item
+  templates managers can select any labels on item templates and viewlet.
+  [gbastien]
+
+4.2.28.9 (2026-01-27)
 ---------------------
 
-- Nothing changed yet.
+- In `ExternalView.available`, be defensive when managing response error
+  in case response can not be decoded to `json`.
+  [gbastien]
+- Override `PMFTWLabelsLabelingViewlet` template (`labeling.pt`) to not call
+  `can_edit` and `can_personal_edit` when viewlet is not `available`, this leaded
+  to an error rendering the viewlet when labels are not enabled.
+  [gbastien]
 
+4.2.28.8 (2026-01-16)
+---------------------
+
+- Fixed external link to `iA.Vision`.
+  [gbastien]
+
+4.2.28.7 (2026-01-14)
+---------------------
+
+- Adapted code to use `imio.helpers.ws.get_auth_token` and
+  `imio.helpers.ws.send_json_request`.
+  [gbastien]
+
+4.2.28.6 (2026-01-13)
+---------------------
+
+- Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
+  from package `Products.PloneMeeting:default` after upgrade of
+  `collective.dms.scanbehavior` so `add_permission` is correct.
+  [gbastien]
+- Use `requests` to manage external link authentication token.
+  [gbastien]
+- `ToolPloneMeeting.get_extra_adviser_infos` is no more an adaptable method.
+  [gbastien]
+- Hide `Add advice` batch action if current user is an adviser but not able to
+  add an advice of portal_type `meetingadvice` as this action only manage this
+  `portal_type` of advice.
+  [gbastien]
+
+4.2.28.5 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.4 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.3 (2026-01-08)
+---------------------
+
+- Use new `SSO/Vision` env var names for external link to `iA.Vision`.
+  [gbastien]
 
 4.2.28.2 (2026-01-05)
 ---------------------

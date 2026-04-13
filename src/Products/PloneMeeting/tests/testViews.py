@@ -2334,6 +2334,7 @@ class testViews(PloneMeetingTestCase):
         viewlet = self._get_viewlet(
             context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
+        self.assertEqual(viewlet.render().strip(), u'')
 
         # get the labeljar, that is actually the MeetingConfig
         labeljar = getAdapter(item, ILabelJar)
@@ -2349,6 +2350,50 @@ class testViews(PloneMeetingTestCase):
         labeljar.add('Label', 'green', False)
         self.cleanMemoize()
         self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+
+    def test_pm_ftw_labels_viewlet_available_item_template(self):
+        """Available on item templates to Managers and item templates managers."""
+        cfg = self.meetingConfig
+        self._enableField('labels')
+        # Manager
+        self.changeUser('siteadmin')
+        item_templates = cfg.getItemTemplates(filtered=True)
+        item_template = item_templates[0].getObject()
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # item templates manager can access every labels
+        self.changeUser('templatemanager1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # a user that would access it would access no labels
+        self.changeUser('pmCreator1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
+        # MeetingManager
+        self.changeUser('pmManager')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
 
     def test_pm_ftw_labels_viewlet_can_edit(self):
         """can_edit when user has Modify portal content permission."""
@@ -3811,6 +3856,27 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             form.widgets['advice_group'].field.description,
             u'No common or available advice group. Modify your selection.')
+        # action is only available if current user able to add advices using
+        # the default advice portal_type "meetingadvice"
+        # setup dummy tool.advisersConfig, make vendors advisers not using
+        # advice portal_type "meetingadvice" and so not able to use the action
+        self.tool.setAdvisersConfig(
+            ({'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'dummymeetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []},))
+        self.changeUser('pmAdviser1')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertTrue(form.available())
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertFalse(form.available())
+
 
 
 def test_suite():

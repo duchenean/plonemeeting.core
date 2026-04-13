@@ -488,8 +488,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
         self.removeAnnexesPreviewsOnMeetingClosure = False
-        self.cssClassesToHide = 'highlight\nhighlight-red'
-        self.hideCssClassesTo = ()
+        self.cssTransforms = []
         self.enabledItemActions = ('duplication', 'export_pdf')
         self.enabledAnnexesBatchActions = ['download-annexes']
 
@@ -997,6 +996,7 @@ class PloneMeetingConfiguration(Descriptor):
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
+        self.showExternalLinksSection = ()
         self.advisersConfig = ()
 
         # non stored values

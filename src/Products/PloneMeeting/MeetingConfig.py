@@ -964,6 +964,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='enabledItemActions',
+        default=defValues.enabledItemActions,
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            label='enableditemactions',
+            label_msgid='PloneMeeting_label_enabledItemActions',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        vocabulary_factory='EnabledItemActions',
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='annexToPrintMode',
         default=defValues.annexToPrintMode,
@@ -1005,51 +1019,39 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    TextField(
-        name='cssClassesToHide',
-        default=defValues.cssClassesToHide,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            description="CssClassesToHide",
-            description_msgid="css_classes_to_hide_descr",
-            label='Cssclassestohide',
-            label_msgid='PloneMeeting_label_cssClassesToHide',
+    DataGridField(
+        name='cssTransforms',
+        widget=DataGridField._properties['widget'](
+            description="CssTransforms",
+            description_msgid="css_transforms_descr",
+            columns={'css_class':
+                        Column("Css transform css class",
+                               col_description="Css transform css class descr"),
+                     'action':
+                        SelectColumn("Css transform action",
+                                     vocabulary_factory=u'ConfigCssTransformsActions',
+                                     col_description="Css transform action descr"),
+                     'replace_new_content':
+                        Column("Css transform replace new content",
+                               col_description="Css transform replace new content descr"),
+                     'replace_new_css_class':
+                        Column("Css transform replace new css class",
+                               col_description="Css transform replace new css class descr"),
+                     'powerobservers':
+                        MultiSelectColumn("Css transform powerobservers",
+                                          vocabulary='listPowerObserversTypes',
+                                          col_description="Css transform powerobservers descr"),
+                     },
+            label='Csstransforms',
+            label_msgid='PloneMeeting_label_cssTransforms',
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
-        default_content_type='text/plain',
+        default=defValues.cssTransforms,
+        allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='hideCssClassesTo',
-        widget=MultiSelectionWidget(
-            description="HideCssClassesTo",
-            description_msgid="hide_css_classes_to_descr",
-            format="checkbox",
-            label='Hidecssclassesto',
-            label_msgid='PloneMeeting_label_hideCssClassesTo',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listPowerObserversTypes',
-        default=defValues.hideCssClassesTo,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='enabledItemActions',
-        default=defValues.enabledItemActions,
-        widget=MultiSelectionWidget(
-            format="checkbox",
-            label='enableditemactions',
-            label_msgid='PloneMeeting_label_enabledItemActions',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        vocabulary_factory='EnabledItemActions',
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
+        columns=('css_class', 'action', 'replace_new_content', 'replace_new_css_class', 'powerobservers'),
+        allow_empty_rows=False,
     ),
     StringField(
         name='itemWorkflow',
@@ -4119,7 +4121,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAnnexesBatchActions(self):
         """Vocabulary for the MeetingConfig.enabledAnnexesBatchActions field."""
         res = []
-        for annex_ba in ['delete', 'download-annexes']:
+        for annex_ba in ['delete', 'download-annexes', 'insert-barcode']:
             res.append((annex_ba,
                         translate('{0}-batch-action-but'.format(annex_ba),
                                   domain='collective.eeafaceted.batchactions',
@@ -7113,7 +7115,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            if something is defined in ToolPloneMeeting.advisersConfig."""
         tool = api.portal.get_tool('portal_plonemeeting')
         res = []
-        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        for org_uid, adviser_infos in tool.get_extra_adviser_infos().items():
             if adviser_infos['portal_type'] == meeting_advice_portal_type:
                 res = adviser_infos['advice_types']
                 break
