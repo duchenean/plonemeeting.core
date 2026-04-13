@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2+provbw1 (unreleased)
+4.2+provbw1 (2026-04-13)
 ------------------------
 
 - Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
