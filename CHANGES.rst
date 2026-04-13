@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2+provbw1 (unreleased)
-------------------------
+4.2.21rc2 (unreleased)
+----------------------
 
 - Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
   the `backToProposed` action on a `validated` item when
