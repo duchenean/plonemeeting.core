@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.esign.config import get_esign_registry_vat_number
 from imio.esign.config import set_esign_registry_enabled
 from imio.helpers.setup import load_type_from_package
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
@@ -37,8 +38,9 @@ class Migrate_To_4218(Migrator):
         # create esignwatchers group per MeetingConfig
         for cfg in self.tool.objectValues('MeetingConfig'):
             cfg._createOrUpdateAllPloneGroups()
-        # disable it by default
-        set_esign_registry_enabled(False)
+        # disable it by default, check if not already configured
+        if not get_esign_registry_vat_number():
+            set_esign_registry_enabled(False)
         # update held_positions that should be "signer":
         # if having a signture_number
         # if used in MeetingConfig.certifiedSignatures
