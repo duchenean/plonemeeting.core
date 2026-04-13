@@ -965,6 +965,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='enabledItemActions',
+        default=defValues.enabledItemActions,
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            label='enableditemactions',
+            label_msgid='PloneMeeting_label_enabledItemActions',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        vocabulary_factory='EnabledItemActions',
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='annexToPrintMode',
         default=defValues.annexToPrintMode,
@@ -1023,7 +1037,7 @@ schema = Schema((
                                col_description="Css transform replace new content descr"),
                      'replace_new_css_class':
                         Column("Css transform replace new css class",
-                               col_description="Css transform replace new content descr"),
+                               col_description="Css transform replace new css class descr"),
                      'powerobservers':
                         MultiSelectColumn("Css transform powerobservers",
                                           vocabulary='listPowerObserversTypes',
@@ -1049,10 +1063,12 @@ schema = Schema((
             label_msgid='PloneMeeting_label_enabledItemActions',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
-        vocabulary_factory='EnabledItemActions',
         schemata="data",
+        default=defValues.cssTransforms,
+        allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
+        columns=('css_class', 'action', 'replace_new_content', 'replace_new_css_class', 'powerobservers'),
+        allow_empty_rows=False,
     ),
     StringField(
         name='itemWorkflow',
@@ -4098,7 +4114,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAnnexesBatchActions(self):
         """Vocabulary for the MeetingConfig.enabledAnnexesBatchActions field."""
         res = []
-        for annex_ba in ['delete', 'download-annexes']:
+        for annex_ba in ['delete', 'download-annexes', 'insert-barcode']:
             res.append((annex_ba,
                         translate('{0}-batch-action-but'.format(annex_ba),
                                   domain='collective.eeafaceted.batchactions',

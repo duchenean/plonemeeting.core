@@ -3108,6 +3108,7 @@ class BaseContainedAnnexesVocabulary(object):
                 if annex_info['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
                 term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
+                term.description = annex_info['description'].replace('\n', '<br>')
                 # check if need to disable term
                 self._check_disable_term(context, annex_info, categories_vocab, term)
                 terms.append(term)

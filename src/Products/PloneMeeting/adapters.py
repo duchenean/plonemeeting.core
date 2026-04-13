@@ -104,6 +104,17 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
+    def _may_delete_decision_annex(self, parent):
+        """A 'Owner' may still remove an 'annexDecision' if enabled
+           in the cfg and if still able to add 'annexDecision'."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg.getOwnerMayDeleteAnnexDecision() and \
+           _checkPermission(AddAnnexDecision, parent):
+            member = api.user.get_current()
+            if 'Owner' in member.getRolesInContext(self.context):
+                return True
+
     def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
@@ -113,17 +124,8 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
             # able to delete an annex/annexDecision if able to edit the parent
             if _checkPermission(ModifyPortalContent, parent):
                 return True
-
-            # a 'Owner' may still remove an 'annexDecision' if enabled
-            # in the cfg and if still able to add 'annexDecision'
             elif self.context.portal_type == 'annexDecision':
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self.context)
-                if cfg.getOwnerMayDeleteAnnexDecision() and \
-                   _checkPermission(AddAnnexDecision, parent):
-                    member = api.user.get_current()
-                    if 'Owner' in member.getRolesInContext(self.context):
-                        return True
+                return self._may_delete_decision_annex(parent)
         return mayDelete
 
 
