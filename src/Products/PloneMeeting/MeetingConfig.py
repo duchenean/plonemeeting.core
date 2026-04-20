@@ -1054,22 +1054,6 @@ schema = Schema((
         columns=('css_class', 'action', 'replace_new_content', 'replace_new_css_class', 'powerobservers'),
         allow_empty_rows=False,
     ),
-    LinesField(
-        name='enabledItemActions',
-        default=defValues.enabledItemActions,
-        widget=MultiSelectionWidget(
-            format="checkbox",
-            label='enableditemactions',
-            label_msgid='PloneMeeting_label_enabledItemActions',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        default=defValues.cssTransforms,
-        allow_oddeven=True,
-        write_permission="PloneMeeting: Write risky config",
-        columns=('css_class', 'action', 'replace_new_content', 'replace_new_css_class', 'powerobservers'),
-        allow_empty_rows=False,
-    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
