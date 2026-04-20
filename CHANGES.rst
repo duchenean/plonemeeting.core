@@ -5,8 +5,11 @@ Changelog
 4.2.21rc3 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
 
 4.2.21rc2 (2026-04-13)
 ----------------------
@@ -27,11 +30,6 @@ Changelog
   by defining a `description` on the `vocabulary term`.
   [gbastien]
 - Added new batch action `Insert barcode` on annexes and decision annexes.
-  [gbastien]
-- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
-  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
-  action that was failing when using WFA `only_creator_may_delete` and item was
-  no more in state `itemcreated`.
   [gbastien]
 
 4.2.28.10 (2026-03-13)
