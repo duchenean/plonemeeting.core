@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc3 (unreleased)
+4.2.21rc3 (2026-04-20)
 ----------------------
 
 - Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
