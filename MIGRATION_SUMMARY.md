@@ -1,0 +1,531 @@
+# Migration Summary
+
+## MeetingConfig
+
+Step executed: **1 - AT schema to Dexterity schema translation**.
+
+Implemented in `src/Products/PloneMeeting/content/meeting_config.py` as an unregistered Dexterity schema. No FTI, ZCML schema policy, GenericSetup profile, or content migrator was added in this step.
+
+### Field Renames
+
+- `folderTitle` -> `folder_title`
+- `shortName` -> `short_name`
+- `isDefault` -> `is_default`
+- `itemIconColor` -> `item_icon_color`
+- `configGroup` -> `config_group`
+- `places` -> `places`
+- `lastMeetingNumber` -> `last_meeting_number`
+- `yearlyInitMeetingNumbers` -> `yearly_init_meeting_numbers`
+- `budgetDefault` -> `budget_default`
+- `configVersion` -> `config_version`
+- `assembly` -> `assembly`
+- `assemblyStaves` -> `assembly_staves`
+- `signatures` -> `signatures`
+- `certifiedSignatures` -> `certified_signatures`
+- `orderedContacts` -> `ordered_contacts`
+- `orderedItemInitiators` -> `ordered_item_initiators`
+- `selectableRedefinedPositionTypes` -> `selectable_redefined_position_types`
+- `usedItemAttributes` -> `used_item_attributes`
+- `historizedItemAttributes` -> `historized_item_attributes`
+- `recordItemHistoryStates` -> `record_item_history_states`
+- `usedMeetingAttributes` -> `used_meeting_attributes`
+- `orderedAssociatedOrganizations` -> `ordered_associated_organizations`
+- `orderedGroupsInCharge` -> `ordered_groups_in_charge`
+- `includeGroupsInChargeDefinedOnProposingGroup` -> `include_groups_in_charge_defined_on_proposing_group`
+- `includeGroupsInChargeDefinedOnCategory` -> `include_groups_in_charge_defined_on_category`
+- `toDiscussSetOnItemInsert` -> `to_discuss_set_on_item_insert`
+- `toDiscussDefault` -> `to_discuss_default`
+- `toDiscussLateDefault` -> `to_discuss_late_default`
+- `itemReferenceFormat` -> `item_reference_format`
+- `computeItemReferenceForItemsOutOfMeeting` -> `compute_item_reference_for_items_out_of_meeting`
+- `insertingMethodsOnAddItem` -> `inserting_methods_on_add_item`
+- `selectablePrivacies` -> `selectable_privacies`
+- `allItemTags` -> `all_item_tags`
+- `sortAllItemTags` -> `sort_all_item_tags`
+- `itemFieldsToKeepConfigSortingFor` -> `item_fields_to_keep_config_sorting_for`
+- `listTypes` -> `list_types`
+- `xhtmlTransformFields` -> `xhtml_transform_fields`
+- `xhtmlTransformTypes` -> `xhtml_transform_types`
+- `validationDeadlineDefault` -> `validation_deadline_default`
+- `freezeDeadlineDefault` -> `freeze_deadline_default`
+- `meetingConfigsToCloneTo` -> `meeting_configs_to_clone_to`
+- `itemAutoSentToOtherMCStates` -> `item_auto_sent_to_other_mc_states`
+- `itemManualSentToOtherMCStates` -> `item_manual_sent_to_other_mc_states`
+- `contentsKeptOnSentToOtherMC` -> `contents_kept_on_sent_to_other_mc`
+- `advicesKeptOnSentToOtherMC` -> `advices_kept_on_sent_to_other_mc`
+- `enabledItemActions` -> `enabled_item_actions`
+- `annexToPrintMode` -> `annex_to_print_mode`
+- `keepOriginalToPrintOfClonedItems` -> `keep_original_to_print_of_cloned_items`
+- `removeAnnexesPreviewsOnMeetingClosure` -> `remove_annexes_previews_on_meeting_closure`
+- `cssTransforms` -> `css_transforms`
+- `itemWorkflow` -> `item_workflow`
+- `itemConditionsInterface` -> `item_conditions_interface`
+- `itemActionsInterface` -> `item_actions_interface`
+- `meetingWorkflow` -> `meeting_workflow`
+- `meetingConditionsInterface` -> `meeting_conditions_interface`
+- `meetingActionsInterface` -> `meeting_actions_interface`
+- `workflowAdaptations` -> `workflow_adaptations`
+- `itemWFValidationLevels` -> `item_wf_validation_levels`
+- `transitionsToConfirm` -> `transitions_to_confirm`
+- `onTransitionFieldTransforms` -> `on_transition_field_transforms`
+- `onMeetingTransitionItemActionToExecute` -> `on_meeting_transition_item_action_to_execute`
+- `meetingPresentItemWhenNoCurrentMeetingStates` -> `meeting_present_item_when_no_current_meeting_states`
+- `itemPreferredMeetingStates` -> `item_preferred_meeting_states`
+- `itemColumns` -> `item_columns`
+- `availableItemsListVisibleColumns` -> `available_items_list_visible_columns`
+- `itemsListVisibleColumns` -> `items_list_visible_columns`
+- `itemActionsColumnConfig` -> `item_actions_column_config`
+- `meetingColumns` -> `meeting_columns`
+- `enabledAnnexesBatchActions` -> `enabled_annexes_batch_actions`
+- `displayAvailableItemsTo` -> `display_available_items_to`
+- `redirectToNextMeeting` -> `redirect_to_next_meeting`
+- `itemsVisibleFields` -> `items_visible_fields`
+- `itemsNotViewableVisibleFields` -> `items_not_viewable_visible_fields`
+- `itemsNotViewableVisibleFieldsTALExpr` -> `items_not_viewable_visible_fields_tal_expr`
+- `itemsListVisibleFields` -> `items_list_visible_fields`
+- `maxShownMeetings` -> `max_shown_meetings`
+- `toDoListSearches` -> `to_do_list_searches`
+- `dashboardItemsListingsFilters` -> `dashboard_items_listings_filters`
+- `dashboardMeetingAvailableItemsFilters` -> `dashboard_meeting_available_items_filters`
+- `dashboardMeetingLinkedItemsFilters` -> `dashboard_meeting_linked_items_filters`
+- `dashboardMeetingsListingsFilters` -> `dashboard_meetings_listings_filters`
+- `groupsHiddenInDashboardFilter` -> `groups_hidden_in_dashboard_filter`
+- `usersHiddenInDashboardFilter` -> `users_hidden_in_dashboard_filter`
+- `maxShownListings` -> `max_shown_listings`
+- `maxShownAvailableItems` -> `max_shown_available_items`
+- `maxShownMeetingItems` -> `max_shown_meeting_items`
+- `mailMode` -> `mail_mode`
+- `mailItemEvents` -> `mail_item_events`
+- `mailMeetingEvents` -> `mail_meeting_events`
+- `useAdvices` -> `use_advices`
+- `usedAdviceTypes` -> `used_advice_types`
+- `defaultAdviceType` -> `default_advice_type`
+- `selectableAdvisers` -> `selectable_advisers`
+- `selectableAdviserUsers` -> `selectable_adviser_users`
+- `itemAdviceStates` -> `item_advice_states`
+- `itemAdviceEditStates` -> `item_advice_edit_states`
+- `itemAdviceViewStates` -> `item_advice_view_states`
+- `keepAccessToItemWhenAdvice` -> `keep_access_to_item_when_advice`
+- `enableAdviceInvalidation` -> `enable_advice_invalidation`
+- `itemAdviceInvalidateStates` -> `item_advice_invalidate_states`
+- `adviceStyle` -> `advice_style`
+- `enableAdviceProposingGroupComment` -> `enable_advice_proposing_group_comment`
+- `enforceAdviceMandatoriness` -> `enforce_advice_mandatoriness`
+- `defaultAdviceHiddenDuringRedaction` -> `default_advice_hidden_during_redaction`
+- `transitionsReinitializingDelays` -> `transitions_reinitializing_delays`
+- `historizeItemDataWhenAdviceIsGiven` -> `historize_item_data_when_advice_is_given`
+- `historizeAdviceIfGivenAndItemModified` -> `historize_advice_if_given_and_item_modified`
+- `itemWithGivenAdviceIsNotDeletable` -> `item_with_given_advice_is_not_deletable`
+- `inheritedAdviceRemoveableByAdviser` -> `inherited_advice_removeable_by_adviser`
+- `enableAddQuickAdvice` -> `enable_add_quick_advice`
+- `customAdvisers` -> `custom_advisers`
+- `powerAdvisersGroups` -> `power_advisers_groups`
+- `powerObservers` -> `power_observers`
+- `itemBudgetInfosStates` -> `item_budget_infos_states`
+- `itemGroupsInChargeStates` -> `item_groups_in_charge_states`
+- `itemObserversStates` -> `item_observers_states`
+- `selectableCopyGroups` -> `selectable_copy_groups`
+- `itemCopyGroupsStates` -> `item_copy_groups_states`
+- `selectableRestrictedCopyGroups` -> `selectable_restricted_copy_groups`
+- `itemRestrictedCopyGroupsStates` -> `item_restricted_copy_groups_states`
+- `hideHistoryTo` -> `hide_history_to`
+- `hideItemHistoryCommentsToUsersOutsideProposingGroup` -> `hide_item_history_comments_to_users_outside_proposing_group`
+- `hideNotViewableLinkedItemsTo` -> `hide_not_viewable_linked_items_to`
+- `restrictAccessToSecretItems` -> `restrict_access_to_secret_items`
+- `restrictAccessToSecretItemsTo` -> `restrict_access_to_secret_items_to`
+- `annexRestrictShownAndEditableAttributes` -> `annex_restrict_shown_and_editable_attributes`
+- `ownerMayDeleteAnnexDecision` -> `owner_may_delete_annex_decision`
+- `annexEditorMayInsertBarcode` -> `annex_editor_may_insert_barcode`
+- `itemAnnexConfidentialVisibleFor` -> `item_annex_confidential_visible_for`
+- `adviceAnnexConfidentialVisibleFor` -> `advice_annex_confidential_visible_for`
+- `meetingAnnexConfidentialVisibleFor` -> `meeting_annex_confidential_visible_for`
+- `enableAdviceConfidentiality` -> `enable_advice_confidentiality`
+- `adviceConfidentialityDefault` -> `advice_confidentiality_default`
+- `adviceConfidentialFor` -> `advice_confidential_for`
+- `labelsConfig` -> `labels_config`
+- `itemInternalNotesEditableBy` -> `item_internal_notes_editable_by`
+- `itemFieldsConfig` -> `item_fields_config`
+- `usingGroups` -> `using_groups`
+- `orderedCommitteeContacts` -> `ordered_committee_contacts`
+- `itemCommitteesStates` -> `item_committees_states`
+- `itemCommitteesViewStates` -> `item_committees_view_states`
+- `committees` -> `committees`
+- `useVotes` -> `use_votes`
+- `votesEncoder` -> `votes_encoder`
+- `usedPollTypes` -> `used_poll_types`
+- `defaultPollType` -> `default_poll_type`
+- `usedVoteValues` -> `used_vote_values`
+- `firstLinkedVoteUsedVoteValues` -> `first_linked_vote_used_vote_values`
+- `nextLinkedVotesUsedVoteValues` -> `next_linked_votes_used_vote_values`
+- `voteCondition` -> `vote_condition`
+- `votesResultTALExpr` -> `votes_result_tal_expr`
+- `displayVotingGroup` -> `display_voting_group`
+- `meetingItemTemplatesToStoreAsAnnex` -> `meeting_item_templates_to_store_as_annex`
+
+### Accessor Changes
+
+- `getFolderTitle()` -> `obj.folder_title`; `setFolderTitle(value)` -> `obj.folder_title = value`
+- `getShortName()` -> `obj.short_name`; `setShortName(value)` -> `obj.short_name = value`
+- `getIsDefault()` -> `obj.is_default`; `setIsDefault(value)` -> `obj.is_default = value`
+- `getItemIconColor()` -> `obj.item_icon_color`; `setItemIconColor(value)` -> `obj.item_icon_color = value`
+- `getConfigGroup()` -> `obj.config_group`; `setConfigGroup(value)` -> `obj.config_group = value`
+- `getPlaces()` -> `obj.places`; `setPlaces(value)` -> `obj.places = value`
+- `getLastMeetingNumber()` -> `obj.last_meeting_number`; `setLastMeetingNumber(value)` -> `obj.last_meeting_number = value`
+- `getYearlyInitMeetingNumbers()` -> `obj.yearly_init_meeting_numbers`; `setYearlyInitMeetingNumbers(value)` -> `obj.yearly_init_meeting_numbers = value`
+- `getBudgetDefault()` -> `obj.budget_default`; `setBudgetDefault(value)` -> `obj.budget_default = value`
+- `getConfigVersion()` -> `obj.config_version`; `setConfigVersion(value)` -> `obj.config_version = value`
+- `getAssembly()` -> `obj.assembly`; `setAssembly(value)` -> `obj.assembly = value`
+- `getAssemblyStaves()` -> `obj.assembly_staves`; `setAssemblyStaves(value)` -> `obj.assembly_staves = value`
+- `getSignatures()` -> `obj.signatures`; `setSignatures(value)` -> `obj.signatures = value`
+- `getCertifiedSignatures()` -> `obj.certified_signatures`; `setCertifiedSignatures(value)` -> `obj.certified_signatures = value`
+- `getOrderedContacts()` -> `obj.ordered_contacts`; `setOrderedContacts(value)` -> `obj.ordered_contacts = value`
+- `getOrderedItemInitiators()` -> `obj.ordered_item_initiators`; `setOrderedItemInitiators(value)` -> `obj.ordered_item_initiators = value`
+- `getSelectableRedefinedPositionTypes()` -> `obj.selectable_redefined_position_types`; `setSelectableRedefinedPositionTypes(value)` -> `obj.selectable_redefined_position_types = value`
+- `getUsedItemAttributes()` -> `obj.used_item_attributes`; `setUsedItemAttributes(value)` -> `obj.used_item_attributes = value`
+- `getHistorizedItemAttributes()` -> `obj.historized_item_attributes`; `setHistorizedItemAttributes(value)` -> `obj.historized_item_attributes = value`
+- `getRecordItemHistoryStates()` -> `obj.record_item_history_states`; `setRecordItemHistoryStates(value)` -> `obj.record_item_history_states = value`
+- `getUsedMeetingAttributes()` -> `obj.used_meeting_attributes`; `setUsedMeetingAttributes(value)` -> `obj.used_meeting_attributes = value`
+- `getOrderedAssociatedOrganizations()` -> `obj.ordered_associated_organizations`; `setOrderedAssociatedOrganizations(value)` -> `obj.ordered_associated_organizations = value`
+- `getOrderedGroupsInCharge()` -> `obj.ordered_groups_in_charge`; `setOrderedGroupsInCharge(value)` -> `obj.ordered_groups_in_charge = value`
+- `getIncludeGroupsInChargeDefinedOnProposingGroup()` -> `obj.include_groups_in_charge_defined_on_proposing_group`; `setIncludeGroupsInChargeDefinedOnProposingGroup(value)` -> `obj.include_groups_in_charge_defined_on_proposing_group = value`
+- `getIncludeGroupsInChargeDefinedOnCategory()` -> `obj.include_groups_in_charge_defined_on_category`; `setIncludeGroupsInChargeDefinedOnCategory(value)` -> `obj.include_groups_in_charge_defined_on_category = value`
+- `getToDiscussSetOnItemInsert()` -> `obj.to_discuss_set_on_item_insert`; `setToDiscussSetOnItemInsert(value)` -> `obj.to_discuss_set_on_item_insert = value`
+- `getToDiscussDefault()` -> `obj.to_discuss_default`; `setToDiscussDefault(value)` -> `obj.to_discuss_default = value`
+- `getToDiscussLateDefault()` -> `obj.to_discuss_late_default`; `setToDiscussLateDefault(value)` -> `obj.to_discuss_late_default = value`
+- `getItemReferenceFormat()` -> `obj.item_reference_format`; `setItemReferenceFormat(value)` -> `obj.item_reference_format = value`
+- `getComputeItemReferenceForItemsOutOfMeeting()` -> `obj.compute_item_reference_for_items_out_of_meeting`; `setComputeItemReferenceForItemsOutOfMeeting(value)` -> `obj.compute_item_reference_for_items_out_of_meeting = value`
+- `getInsertingMethodsOnAddItem()` -> `obj.inserting_methods_on_add_item`; `setInsertingMethodsOnAddItem(value)` -> `obj.inserting_methods_on_add_item = value`
+- `getSelectablePrivacies()` -> `obj.selectable_privacies`; `setSelectablePrivacies(value)` -> `obj.selectable_privacies = value`
+- `getAllItemTags()` -> `obj.all_item_tags`; `setAllItemTags(value)` -> `obj.all_item_tags = value`
+- `getSortAllItemTags()` -> `obj.sort_all_item_tags`; `setSortAllItemTags(value)` -> `obj.sort_all_item_tags = value`
+- `getItemFieldsToKeepConfigSortingFor()` -> `obj.item_fields_to_keep_config_sorting_for`; `setItemFieldsToKeepConfigSortingFor(value)` -> `obj.item_fields_to_keep_config_sorting_for = value`
+- `getListTypes()` -> `obj.list_types`; `setListTypes(value)` -> `obj.list_types = value`
+- `getXhtmlTransformFields()` -> `obj.xhtml_transform_fields`; `setXhtmlTransformFields(value)` -> `obj.xhtml_transform_fields = value`
+- `getXhtmlTransformTypes()` -> `obj.xhtml_transform_types`; `setXhtmlTransformTypes(value)` -> `obj.xhtml_transform_types = value`
+- `getValidationDeadlineDefault()` -> `obj.validation_deadline_default`; `setValidationDeadlineDefault(value)` -> `obj.validation_deadline_default = value`
+- `getFreezeDeadlineDefault()` -> `obj.freeze_deadline_default`; `setFreezeDeadlineDefault(value)` -> `obj.freeze_deadline_default = value`
+- `getMeetingConfigsToCloneTo()` -> `obj.meeting_configs_to_clone_to`; `setMeetingConfigsToCloneTo(value)` -> `obj.meeting_configs_to_clone_to = value`
+- `getItemAutoSentToOtherMCStates()` -> `obj.item_auto_sent_to_other_mc_states`; `setItemAutoSentToOtherMCStates(value)` -> `obj.item_auto_sent_to_other_mc_states = value`
+- `getItemManualSentToOtherMCStates()` -> `obj.item_manual_sent_to_other_mc_states`; `setItemManualSentToOtherMCStates(value)` -> `obj.item_manual_sent_to_other_mc_states = value`
+- `getContentsKeptOnSentToOtherMC()` -> `obj.contents_kept_on_sent_to_other_mc`; `setContentsKeptOnSentToOtherMC(value)` -> `obj.contents_kept_on_sent_to_other_mc = value`
+- `getAdvicesKeptOnSentToOtherMC()` -> `obj.advices_kept_on_sent_to_other_mc`; `setAdvicesKeptOnSentToOtherMC(value)` -> `obj.advices_kept_on_sent_to_other_mc = value`
+- `getEnabledItemActions()` -> `obj.enabled_item_actions`; `setEnabledItemActions(value)` -> `obj.enabled_item_actions = value`
+- `getAnnexToPrintMode()` -> `obj.annex_to_print_mode`; `setAnnexToPrintMode(value)` -> `obj.annex_to_print_mode = value`
+- `getKeepOriginalToPrintOfClonedItems()` -> `obj.keep_original_to_print_of_cloned_items`; `setKeepOriginalToPrintOfClonedItems(value)` -> `obj.keep_original_to_print_of_cloned_items = value`
+- `getRemoveAnnexesPreviewsOnMeetingClosure()` -> `obj.remove_annexes_previews_on_meeting_closure`; `setRemoveAnnexesPreviewsOnMeetingClosure(value)` -> `obj.remove_annexes_previews_on_meeting_closure = value`
+- `getCssTransforms()` -> `obj.css_transforms`; `setCssTransforms(value)` -> `obj.css_transforms = value`
+- `getItemWorkflow()` -> `obj.item_workflow`; `setItemWorkflow(value)` -> `obj.item_workflow = value`
+- `getItemConditionsInterface()` -> `obj.item_conditions_interface`; `setItemConditionsInterface(value)` -> `obj.item_conditions_interface = value`
+- `getItemActionsInterface()` -> `obj.item_actions_interface`; `setItemActionsInterface(value)` -> `obj.item_actions_interface = value`
+- `getMeetingWorkflow()` -> `obj.meeting_workflow`; `setMeetingWorkflow(value)` -> `obj.meeting_workflow = value`
+- `getMeetingConditionsInterface()` -> `obj.meeting_conditions_interface`; `setMeetingConditionsInterface(value)` -> `obj.meeting_conditions_interface = value`
+- `getMeetingActionsInterface()` -> `obj.meeting_actions_interface`; `setMeetingActionsInterface(value)` -> `obj.meeting_actions_interface = value`
+- `getWorkflowAdaptations()` -> `obj.workflow_adaptations`; `setWorkflowAdaptations(value)` -> `obj.workflow_adaptations = value`
+- `getItemWFValidationLevels()` -> `obj.item_wf_validation_levels`; `setItemWFValidationLevels(value)` -> `obj.item_wf_validation_levels = value`
+- `getTransitionsToConfirm()` -> `obj.transitions_to_confirm`; `setTransitionsToConfirm(value)` -> `obj.transitions_to_confirm = value`
+- `getOnTransitionFieldTransforms()` -> `obj.on_transition_field_transforms`; `setOnTransitionFieldTransforms(value)` -> `obj.on_transition_field_transforms = value`
+- `getOnMeetingTransitionItemActionToExecute()` -> `obj.on_meeting_transition_item_action_to_execute`; `setOnMeetingTransitionItemActionToExecute(value)` -> `obj.on_meeting_transition_item_action_to_execute = value`
+- `getMeetingPresentItemWhenNoCurrentMeetingStates()` -> `obj.meeting_present_item_when_no_current_meeting_states`; `setMeetingPresentItemWhenNoCurrentMeetingStates(value)` -> `obj.meeting_present_item_when_no_current_meeting_states = value`
+- `getItemPreferredMeetingStates()` -> `obj.item_preferred_meeting_states`; `setItemPreferredMeetingStates(value)` -> `obj.item_preferred_meeting_states = value`
+- `getItemColumns()` -> `obj.item_columns`; `setItemColumns(value)` -> `obj.item_columns = value`
+- `getAvailableItemsListVisibleColumns()` -> `obj.available_items_list_visible_columns`; `setAvailableItemsListVisibleColumns(value)` -> `obj.available_items_list_visible_columns = value`
+- `getItemsListVisibleColumns()` -> `obj.items_list_visible_columns`; `setItemsListVisibleColumns(value)` -> `obj.items_list_visible_columns = value`
+- `getItemActionsColumnConfig()` -> `obj.item_actions_column_config`; `setItemActionsColumnConfig(value)` -> `obj.item_actions_column_config = value`
+- `getMeetingColumns()` -> `obj.meeting_columns`; `setMeetingColumns(value)` -> `obj.meeting_columns = value`
+- `getEnabledAnnexesBatchActions()` -> `obj.enabled_annexes_batch_actions`; `setEnabledAnnexesBatchActions(value)` -> `obj.enabled_annexes_batch_actions = value`
+- `getDisplayAvailableItemsTo()` -> `obj.display_available_items_to`; `setDisplayAvailableItemsTo(value)` -> `obj.display_available_items_to = value`
+- `getRedirectToNextMeeting()` -> `obj.redirect_to_next_meeting`; `setRedirectToNextMeeting(value)` -> `obj.redirect_to_next_meeting = value`
+- `getItemsVisibleFields()` -> `obj.items_visible_fields`; `setItemsVisibleFields(value)` -> `obj.items_visible_fields = value`
+- `getItemsNotViewableVisibleFields()` -> `obj.items_not_viewable_visible_fields`; `setItemsNotViewableVisibleFields(value)` -> `obj.items_not_viewable_visible_fields = value`
+- `getItemsNotViewableVisibleFieldsTALExpr()` -> `obj.items_not_viewable_visible_fields_tal_expr`; `setItemsNotViewableVisibleFieldsTALExpr(value)` -> `obj.items_not_viewable_visible_fields_tal_expr = value`
+- `getItemsListVisibleFields()` -> `obj.items_list_visible_fields`; `setItemsListVisibleFields(value)` -> `obj.items_list_visible_fields = value`
+- `getMaxShownMeetings()` -> `obj.max_shown_meetings`; `setMaxShownMeetings(value)` -> `obj.max_shown_meetings = value`
+- `getToDoListSearches()` -> `obj.to_do_list_searches`; `setToDoListSearches(value)` -> `obj.to_do_list_searches = value`
+- `getDashboardItemsListingsFilters()` -> `obj.dashboard_items_listings_filters`; `setDashboardItemsListingsFilters(value)` -> `obj.dashboard_items_listings_filters = value`
+- `getDashboardMeetingAvailableItemsFilters()` -> `obj.dashboard_meeting_available_items_filters`; `setDashboardMeetingAvailableItemsFilters(value)` -> `obj.dashboard_meeting_available_items_filters = value`
+- `getDashboardMeetingLinkedItemsFilters()` -> `obj.dashboard_meeting_linked_items_filters`; `setDashboardMeetingLinkedItemsFilters(value)` -> `obj.dashboard_meeting_linked_items_filters = value`
+- `getDashboardMeetingsListingsFilters()` -> `obj.dashboard_meetings_listings_filters`; `setDashboardMeetingsListingsFilters(value)` -> `obj.dashboard_meetings_listings_filters = value`
+- `getGroupsHiddenInDashboardFilter()` -> `obj.groups_hidden_in_dashboard_filter`; `setGroupsHiddenInDashboardFilter(value)` -> `obj.groups_hidden_in_dashboard_filter = value`
+- `getUsersHiddenInDashboardFilter()` -> `obj.users_hidden_in_dashboard_filter`; `setUsersHiddenInDashboardFilter(value)` -> `obj.users_hidden_in_dashboard_filter = value`
+- `getMaxShownListings()` -> `obj.max_shown_listings`; `setMaxShownListings(value)` -> `obj.max_shown_listings = value`
+- `getMaxShownAvailableItems()` -> `obj.max_shown_available_items`; `setMaxShownAvailableItems(value)` -> `obj.max_shown_available_items = value`
+- `getMaxShownMeetingItems()` -> `obj.max_shown_meeting_items`; `setMaxShownMeetingItems(value)` -> `obj.max_shown_meeting_items = value`
+- `getMailMode()` -> `obj.mail_mode`; `setMailMode(value)` -> `obj.mail_mode = value`
+- `getMailItemEvents()` -> `obj.mail_item_events`; `setMailItemEvents(value)` -> `obj.mail_item_events = value`
+- `getMailMeetingEvents()` -> `obj.mail_meeting_events`; `setMailMeetingEvents(value)` -> `obj.mail_meeting_events = value`
+- `getUseAdvices()` -> `obj.use_advices`; `setUseAdvices(value)` -> `obj.use_advices = value`
+- `getUsedAdviceTypes()` -> `obj.used_advice_types`; `setUsedAdviceTypes(value)` -> `obj.used_advice_types = value`
+- `getDefaultAdviceType()` -> `obj.default_advice_type`; `setDefaultAdviceType(value)` -> `obj.default_advice_type = value`
+- `getSelectableAdvisers()` -> `obj.selectable_advisers`; `setSelectableAdvisers(value)` -> `obj.selectable_advisers = value`
+- `getSelectableAdviserUsers()` -> `obj.selectable_adviser_users`; `setSelectableAdviserUsers(value)` -> `obj.selectable_adviser_users = value`
+- `getItemAdviceStates()` -> `obj.item_advice_states`; `setItemAdviceStates(value)` -> `obj.item_advice_states = value`
+- `getItemAdviceEditStates()` -> `obj.item_advice_edit_states`; `setItemAdviceEditStates(value)` -> `obj.item_advice_edit_states = value`
+- `getItemAdviceViewStates()` -> `obj.item_advice_view_states`; `setItemAdviceViewStates(value)` -> `obj.item_advice_view_states = value`
+- `getKeepAccessToItemWhenAdvice()` -> `obj.keep_access_to_item_when_advice`; `setKeepAccessToItemWhenAdvice(value)` -> `obj.keep_access_to_item_when_advice = value`
+- `getEnableAdviceInvalidation()` -> `obj.enable_advice_invalidation`; `setEnableAdviceInvalidation(value)` -> `obj.enable_advice_invalidation = value`
+- `getItemAdviceInvalidateStates()` -> `obj.item_advice_invalidate_states`; `setItemAdviceInvalidateStates(value)` -> `obj.item_advice_invalidate_states = value`
+- `getAdviceStyle()` -> `obj.advice_style`; `setAdviceStyle(value)` -> `obj.advice_style = value`
+- `getEnableAdviceProposingGroupComment()` -> `obj.enable_advice_proposing_group_comment`; `setEnableAdviceProposingGroupComment(value)` -> `obj.enable_advice_proposing_group_comment = value`
+- `getEnforceAdviceMandatoriness()` -> `obj.enforce_advice_mandatoriness`; `setEnforceAdviceMandatoriness(value)` -> `obj.enforce_advice_mandatoriness = value`
+- `getDefaultAdviceHiddenDuringRedaction()` -> `obj.default_advice_hidden_during_redaction`; `setDefaultAdviceHiddenDuringRedaction(value)` -> `obj.default_advice_hidden_during_redaction = value`
+- `getTransitionsReinitializingDelays()` -> `obj.transitions_reinitializing_delays`; `setTransitionsReinitializingDelays(value)` -> `obj.transitions_reinitializing_delays = value`
+- `getHistorizeItemDataWhenAdviceIsGiven()` -> `obj.historize_item_data_when_advice_is_given`; `setHistorizeItemDataWhenAdviceIsGiven(value)` -> `obj.historize_item_data_when_advice_is_given = value`
+- `getHistorizeAdviceIfGivenAndItemModified()` -> `obj.historize_advice_if_given_and_item_modified`; `setHistorizeAdviceIfGivenAndItemModified(value)` -> `obj.historize_advice_if_given_and_item_modified = value`
+- `getItemWithGivenAdviceIsNotDeletable()` -> `obj.item_with_given_advice_is_not_deletable`; `setItemWithGivenAdviceIsNotDeletable(value)` -> `obj.item_with_given_advice_is_not_deletable = value`
+- `getInheritedAdviceRemoveableByAdviser()` -> `obj.inherited_advice_removeable_by_adviser`; `setInheritedAdviceRemoveableByAdviser(value)` -> `obj.inherited_advice_removeable_by_adviser = value`
+- `getEnableAddQuickAdvice()` -> `obj.enable_add_quick_advice`; `setEnableAddQuickAdvice(value)` -> `obj.enable_add_quick_advice = value`
+- `getCustomAdvisers()` -> `obj.custom_advisers`; `setCustomAdvisers(value)` -> `obj.custom_advisers = value`
+- `getPowerAdvisersGroups()` -> `obj.power_advisers_groups`; `setPowerAdvisersGroups(value)` -> `obj.power_advisers_groups = value`
+- `getPowerObservers()` -> `obj.power_observers`; `setPowerObservers(value)` -> `obj.power_observers = value`
+- `getItemBudgetInfosStates()` -> `obj.item_budget_infos_states`; `setItemBudgetInfosStates(value)` -> `obj.item_budget_infos_states = value`
+- `getItemGroupsInChargeStates()` -> `obj.item_groups_in_charge_states`; `setItemGroupsInChargeStates(value)` -> `obj.item_groups_in_charge_states = value`
+- `getItemObserversStates()` -> `obj.item_observers_states`; `setItemObserversStates(value)` -> `obj.item_observers_states = value`
+- `getSelectableCopyGroups()` -> `obj.selectable_copy_groups`; `setSelectableCopyGroups(value)` -> `obj.selectable_copy_groups = value`
+- `getItemCopyGroupsStates()` -> `obj.item_copy_groups_states`; `setItemCopyGroupsStates(value)` -> `obj.item_copy_groups_states = value`
+- `getSelectableRestrictedCopyGroups()` -> `obj.selectable_restricted_copy_groups`; `setSelectableRestrictedCopyGroups(value)` -> `obj.selectable_restricted_copy_groups = value`
+- `getItemRestrictedCopyGroupsStates()` -> `obj.item_restricted_copy_groups_states`; `setItemRestrictedCopyGroupsStates(value)` -> `obj.item_restricted_copy_groups_states = value`
+- `getHideHistoryTo()` -> `obj.hide_history_to`; `setHideHistoryTo(value)` -> `obj.hide_history_to = value`
+- `getHideItemHistoryCommentsToUsersOutsideProposingGroup()` -> `obj.hide_item_history_comments_to_users_outside_proposing_group`; `setHideItemHistoryCommentsToUsersOutsideProposingGroup(value)` -> `obj.hide_item_history_comments_to_users_outside_proposing_group = value`
+- `getHideNotViewableLinkedItemsTo()` -> `obj.hide_not_viewable_linked_items_to`; `setHideNotViewableLinkedItemsTo(value)` -> `obj.hide_not_viewable_linked_items_to = value`
+- `getRestrictAccessToSecretItems()` -> `obj.restrict_access_to_secret_items`; `setRestrictAccessToSecretItems(value)` -> `obj.restrict_access_to_secret_items = value`
+- `getRestrictAccessToSecretItemsTo()` -> `obj.restrict_access_to_secret_items_to`; `setRestrictAccessToSecretItemsTo(value)` -> `obj.restrict_access_to_secret_items_to = value`
+- `getAnnexRestrictShownAndEditableAttributes()` -> `obj.annex_restrict_shown_and_editable_attributes`; `setAnnexRestrictShownAndEditableAttributes(value)` -> `obj.annex_restrict_shown_and_editable_attributes = value`
+- `getOwnerMayDeleteAnnexDecision()` -> `obj.owner_may_delete_annex_decision`; `setOwnerMayDeleteAnnexDecision(value)` -> `obj.owner_may_delete_annex_decision = value`
+- `getAnnexEditorMayInsertBarcode()` -> `obj.annex_editor_may_insert_barcode`; `setAnnexEditorMayInsertBarcode(value)` -> `obj.annex_editor_may_insert_barcode = value`
+- `getItemAnnexConfidentialVisibleFor()` -> `obj.item_annex_confidential_visible_for`; `setItemAnnexConfidentialVisibleFor(value)` -> `obj.item_annex_confidential_visible_for = value`
+- `getAdviceAnnexConfidentialVisibleFor()` -> `obj.advice_annex_confidential_visible_for`; `setAdviceAnnexConfidentialVisibleFor(value)` -> `obj.advice_annex_confidential_visible_for = value`
+- `getMeetingAnnexConfidentialVisibleFor()` -> `obj.meeting_annex_confidential_visible_for`; `setMeetingAnnexConfidentialVisibleFor(value)` -> `obj.meeting_annex_confidential_visible_for = value`
+- `getEnableAdviceConfidentiality()` -> `obj.enable_advice_confidentiality`; `setEnableAdviceConfidentiality(value)` -> `obj.enable_advice_confidentiality = value`
+- `getAdviceConfidentialityDefault()` -> `obj.advice_confidentiality_default`; `setAdviceConfidentialityDefault(value)` -> `obj.advice_confidentiality_default = value`
+- `getAdviceConfidentialFor()` -> `obj.advice_confidential_for`; `setAdviceConfidentialFor(value)` -> `obj.advice_confidential_for = value`
+- `getLabelsConfig()` -> `obj.labels_config`; `setLabelsConfig(value)` -> `obj.labels_config = value`
+- `getItemInternalNotesEditableBy()` -> `obj.item_internal_notes_editable_by`; `setItemInternalNotesEditableBy(value)` -> `obj.item_internal_notes_editable_by = value`
+- `getItemFieldsConfig()` -> `obj.item_fields_config`; `setItemFieldsConfig(value)` -> `obj.item_fields_config = value`
+- `getUsingGroups()` -> `obj.using_groups`; `setUsingGroups(value)` -> `obj.using_groups = value`
+- `getOrderedCommitteeContacts()` -> `obj.ordered_committee_contacts`; `setOrderedCommitteeContacts(value)` -> `obj.ordered_committee_contacts = value`
+- `getItemCommitteesStates()` -> `obj.item_committees_states`; `setItemCommitteesStates(value)` -> `obj.item_committees_states = value`
+- `getItemCommitteesViewStates()` -> `obj.item_committees_view_states`; `setItemCommitteesViewStates(value)` -> `obj.item_committees_view_states = value`
+- `getCommittees()` -> `obj.committees`; `setCommittees(value)` -> `obj.committees = value`
+- `getUseVotes()` -> `obj.use_votes`; `setUseVotes(value)` -> `obj.use_votes = value`
+- `getVotesEncoder()` -> `obj.votes_encoder`; `setVotesEncoder(value)` -> `obj.votes_encoder = value`
+- `getUsedPollTypes()` -> `obj.used_poll_types`; `setUsedPollTypes(value)` -> `obj.used_poll_types = value`
+- `getDefaultPollType()` -> `obj.default_poll_type`; `setDefaultPollType(value)` -> `obj.default_poll_type = value`
+- `getUsedVoteValues()` -> `obj.used_vote_values`; `setUsedVoteValues(value)` -> `obj.used_vote_values = value`
+- `getFirstLinkedVoteUsedVoteValues()` -> `obj.first_linked_vote_used_vote_values`; `setFirstLinkedVoteUsedVoteValues(value)` -> `obj.first_linked_vote_used_vote_values = value`
+- `getNextLinkedVotesUsedVoteValues()` -> `obj.next_linked_votes_used_vote_values`; `setNextLinkedVotesUsedVoteValues(value)` -> `obj.next_linked_votes_used_vote_values = value`
+- `getVoteCondition()` -> `obj.vote_condition`; `setVoteCondition(value)` -> `obj.vote_condition = value`
+- `getVotesResultTALExpr()` -> `obj.votes_result_tal_expr`; `setVotesResultTALExpr(value)` -> `obj.votes_result_tal_expr = value`
+- `getDisplayVotingGroup()` -> `obj.display_voting_group`; `setDisplayVotingGroup(value)` -> `obj.display_voting_group = value`
+- `getMeetingItemTemplatesToStoreAsAnnex()` -> `obj.meeting_item_templates_to_store_as_annex`; `setMeetingItemTemplatesToStoreAsAnnex(value)` -> `obj.meeting_item_templates_to_store_as_annex = value`
+
+### Widgets Replaced With Defaults
+
+- `SelectionWidget` -> `SelectFieldWidget`: `itemIconColor`, `configGroup`, `annexToPrintMode`, `itemWorkflow`, `meetingWorkflow`, `maxShownListings`, `maxShownAvailableItems`, `maxShownMeetingItems`, `mailMode`, `defaultAdviceType`, `keepAccessToItemWhenAdvice`, `adviceStyle`, `defaultPollType`
+- `TextAreaWidget` -> `TextAreaFieldWidget`: `places`, `assembly`, `assemblyStaves`, `signatures`, `itemReferenceFormat`, `allItemTags`, `itemsNotViewableVisibleFieldsTALExpr`
+- ⚠️ `MultiSelectionWidget` -> `CheckBoxFieldWidget`: `yearlyInitMeetingNumbers`, `selectableRedefinedPositionTypes`, `usedItemAttributes`, `historizedItemAttributes`, `recordItemHistoryStates`, `usedMeetingAttributes`, `itemFieldsToKeepConfigSortingFor`, `xhtmlTransformFields`, `xhtmlTransformTypes`, `itemAutoSentToOtherMCStates`, `itemManualSentToOtherMCStates`, `contentsKeptOnSentToOtherMC`, `advicesKeptOnSentToOtherMC`, `enabledItemActions`, `workflowAdaptations`, `transitionsToConfirm`, `meetingPresentItemWhenNoCurrentMeetingStates`, `itemPreferredMeetingStates`, `itemColumns`, `availableItemsListVisibleColumns`, `itemsListVisibleColumns`, `itemActionsColumnConfig`, `meetingColumns`, `enabledAnnexesBatchActions`, `displayAvailableItemsTo`, `redirectToNextMeeting`, `dashboardItemsListingsFilters`, `dashboardMeetingAvailableItemsFilters`, `dashboardMeetingLinkedItemsFilters`, `dashboardMeetingsListingsFilters`, `groupsHiddenInDashboardFilter`, `usersHiddenInDashboardFilter`, `mailItemEvents`, `mailMeetingEvents`, `usedAdviceTypes`, `selectableAdvisers`, `selectableAdviserUsers`, `itemAdviceStates`, `itemAdviceEditStates`, `itemAdviceViewStates`, `itemAdviceInvalidateStates`, `defaultAdviceHiddenDuringRedaction`, `transitionsReinitializingDelays`, `powerAdvisersGroups`, `itemBudgetInfosStates`, `itemGroupsInChargeStates`, `itemObserversStates`, `selectableCopyGroups`, `itemCopyGroupsStates`, `selectableRestrictedCopyGroups`, `itemRestrictedCopyGroupsStates`, `hideHistoryTo`, `hideNotViewableLinkedItemsTo`, `restrictAccessToSecretItemsTo`, `annexRestrictShownAndEditableAttributes`, `itemAnnexConfidentialVisibleFor`, `adviceAnnexConfidentialVisibleFor`, `meetingAnnexConfidentialVisibleFor`, `adviceConfidentialFor`, `itemInternalNotesEditableBy`, `usingGroups`, `itemCommitteesStates`, `itemCommitteesViewStates`, `votesEncoder`, `meetingItemTemplatesToStoreAsAnnex`
+- ⚠️ `DataGridField._properties['widget']` -> `DataGridFieldFactory`: `certifiedSignatures`, `insertingMethodsOnAddItem`, `listTypes`, `meetingConfigsToCloneTo`, `cssTransforms`, `itemWFValidationLevels`, `onTransitionFieldTransforms`, `onMeetingTransitionItemActionToExecute`, `customAdvisers`, `powerObservers`, `labelsConfig`, `itemFieldsConfig`, `committees`
+- ⚠️ `InAndOutWidget` -> `OrderedSelectFieldWidget`: `orderedContacts`, `orderedItemInitiators`, `orderedAssociatedOrganizations`, `orderedGroupsInCharge`, `selectablePrivacies`, `itemsVisibleFields`, `itemsNotViewableVisibleFields`, `itemsListVisibleFields`, `toDoListSearches`, `orderedCommitteeContacts`, `usedPollTypes`, `usedVoteValues`, `firstLinkedVoteUsedVoteValues`, `nextLinkedVotesUsedVoteValues`
+
+### Vocabularies Added
+
+- ⚠️ `listNumbers` -> `Products.PloneMeeting.vocabularies.meeting_config_list_numbers` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableContacts` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_contacts` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listInsertingMethods` -> `Products.PloneMeeting.vocabularies.meeting_config_list_inserting_methods` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listBooleanVocabulary` -> `Products.PloneMeeting.vocabularies.meeting_config_list_boolean_vocabulary` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingConfigsToCloneTo` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_configs_to_clone_to` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listTransitionsUntilPresented` -> `Products.PloneMeeting.vocabularies.meeting_config_list_transitions_until_presented` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listPowerObserversTypes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_power_observers_types` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemTransitions` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_transitions` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemRichTextFields` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_rich_text_fields` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingTransitions` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_transitions` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listExecutableItemActions` -> `Products.PloneMeeting.vocabularies.meeting_config_list_executable_item_actions` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listActiveOrgsForCustomAdvisers` -> `Products.PloneMeeting.vocabularies.meeting_config_list_active_orgs_for_custom_advisers` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemStates` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_states` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingStates` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_states` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemAttributeVisibleForWithMeetingManagers` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_attribute_visible_for_with_meeting_managers` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableCommitteeAttendees` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_committee_attendees` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableProposingGroups` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_proposing_groups` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableCommitteeAutoFrom` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_committee_auto_from` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listNumbersFromZero` -> `Products.PloneMeeting.vocabularies.meeting_config_list_numbers_from_zero` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listCommitteesEnabled` -> `Products.PloneMeeting.vocabularies.meeting_config_list_committees_enabled` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemIconColors` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_icon_colors` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listConfigGroups` -> `Products.PloneMeeting.vocabularies.meeting_config_list_config_groups` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listUsedItemAttributes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_used_item_attributes` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemAttributes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_attributes` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listUsedMeetingAttributes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_used_meeting_attributes` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemFieldsToKeepConfigSortingFor` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_fields_to_keep_config_sorting_for` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAllRichTextFields` -> `Products.PloneMeeting.vocabularies.meeting_config_list_all_rich_text_fields` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listTransformTypes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_transform_types` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemAutoSentToOtherMCStates` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_auto_sent_to_other_mc_states` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listContentsKeptOnSentToOtherMCs` -> `Products.PloneMeeting.vocabularies.meeting_config_list_contents_kept_on_sent_to_other_mcs` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAnnexToPrintModes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_annex_to_print_modes` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAllTransitions` -> `Products.PloneMeeting.vocabularies.meeting_config_list_all_transitions` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemColumns` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_columns` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAvailableItemsListVisibleColumns` -> `Products.PloneMeeting.vocabularies.meeting_config_list_available_items_list_visible_columns` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemsListVisibleColumns` -> `Products.PloneMeeting.vocabularies.meeting_config_list_items_list_visible_columns` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemActionsColumnConfig` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_actions_column_config` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingColumns` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_columns` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAnnexesBatchActions` -> `Products.PloneMeeting.vocabularies.meeting_config_list_annexes_batch_actions` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listDisplayAvailableItemsTo` -> `Products.PloneMeeting.vocabularies.meeting_config_list_display_available_items_to` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listRedirectToNextMeeting` -> `Products.PloneMeeting.vocabularies.meeting_config_list_redirect_to_next_meeting` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemsVisibleFields` -> `Products.PloneMeeting.vocabularies.meeting_config_list_items_visible_fields` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemsNotViewableVisibleFields` -> `Products.PloneMeeting.vocabularies.meeting_config_list_items_not_viewable_visible_fields` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemsListVisibleFields` -> `Products.PloneMeeting.vocabularies.meeting_config_list_items_list_visible_fields` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listToDoListSearches` -> `Products.PloneMeeting.vocabularies.meeting_config_list_to_do_list_searches` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listDashboardItemsListingsFilters` -> `Products.PloneMeeting.vocabularies.meeting_config_list_dashboard_items_listings_filters` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listDashboardMeetingsListingsFilters` -> `Products.PloneMeeting.vocabularies.meeting_config_list_dashboard_meetings_listings_filters` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listResultsPerPage` -> `Products.PloneMeeting.vocabularies.meeting_config_list_results_per_page` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMailModes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_mail_modes` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemEvents` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_events` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingEvents` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_events` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableAdvisers` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_advisers` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAdviceStyles` -> `Products.PloneMeeting.vocabularies.meeting_config_list_advice_styles` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listActiveOrgsForPowerAdvisers` -> `Products.PloneMeeting.vocabularies.meeting_config_list_active_orgs_for_power_advisers` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listSelectableCopyGroups` -> `Products.PloneMeeting.vocabularies.meeting_config_list_selectable_copy_groups` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listItemAttributeVisibleFor` -> `Products.PloneMeeting.vocabularies.meeting_config_list_item_attribute_visible_for` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listAdviceAnnexConfidentialVisibleFor` -> `Products.PloneMeeting.vocabularies.meeting_config_list_advice_annex_confidential_visible_for` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listMeetingAnnexConfidentialVisibleFor` -> `Products.PloneMeeting.vocabularies.meeting_config_list_meeting_annex_confidential_visible_for` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listVotesEncoders` -> `Products.PloneMeeting.vocabularies.meeting_config_list_votes_encoders` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+- ⚠️ `listPollTypes` -> `Products.PloneMeeting.vocabularies.meeting_config_list_poll_types` (old MeetingConfig instance-method vocabulary; factory implementation/registration remains follow-up)
+
+### Schema Caveats
+
+- ⚠️ `OrderedBaseFolderSchema` inherited metadata fields are not translated here; later registration should decide which base DX behaviors replace `id`, `title`, and hidden metadata fields.
+- ⚠️ AT validators and `validate_*` methods were audited but not ported to DX constraints/invariants in this step.
+- ⚠️ `DataGridField` row values remain dict rows; migration code must copy the old DataGrid values field-by-field and preserve hidden row ids where present.
+- ⚠️ `TextField` + `RichWidget` (`budgetDefault`) was translated to `plone.app.textfield.RichText`; plain `TextField` fields remain `schema.Text` with text-area widgets.
+- ⚠️ The later migrator must convert existing `budgetDefault` values to `RichTextValue` while preserving MIME metadata.
+- ⚠️ `IntegerField` fields with AT vocabularies (`maxShownListings`, `maxShownAvailableItems`, `maxShownMeetingItems`) are represented as `schema.Choice` because z3c forms need a selectable vocabulary.
+- Defaults from `MeetingConfigDescriptor` are exposed through `defaultFactory` with `copy.deepcopy` to avoid shared mutable DX defaults.
+- ⚠️ AT field validators still need DX equivalents: `certifiedSignatures`.
+
+### Removed Code
+
+- None in step 1. The AT type, schema, validators, and registration remain in place.
+
+### Impacted Files
+
+- `src/Products/PloneMeeting/interfaces.py` - `DataGridField`, `computeItemReferenceForItemsOutOfMeeting`, `itemWorkflow`, `meetingWorkflow`, `usedItemAttributes`, `workflowAdaptations`
+- `src/Products/PloneMeeting/configure.zcml` - `DataGridField`, `committees`
+- `src/Products/PloneMeeting/MeetingGroup.py` - `DataGridField`, `MultiSelectionWidget`, `SelectionWidget`, `certifiedSignatures`, `getCertifiedSignatures`, `getItemAdviceEditStates`, `getItemAdviceStates`, `getItemAdviceViewStates`, ...
+- `src/Products/PloneMeeting/config.py` - `committees`, `itemBudgetInfosStates`, `itemIconColor`, `listTypes`, `meetingConfigsToCloneTo`, `orderedAssociatedOrganizations`, `orderedGroupsInCharge`, `selectablePrivacies`, ...
+- `src/Products/PloneMeeting/maintenance.py` - `customAdvisers`, `getCustomAdvisers`
+- `src/Products/PloneMeeting/events.py` - `assembly`, `customAdvisers`, `getAnnexToPrintMode`, `getCertifiedSignatures`, `getComputeItemReferenceForItemsOutOfMeeting`, `getCustomAdvisers`, `getItemAutoSentToOtherMCStates`, `getItemWorkflow`, ...
+- `src/Products/PloneMeeting/validators.py` - `adviceAnnexConfidentialVisibleFor`, `getSelectableAdviserUsers`, `getSelectableAdvisers`, `getSelectableCopyGroups`, `getUsingGroups`, `itemAnnexConfidentialVisibleFor`, `itemInternalNotesEditableBy`, `itemWFValidationLevels`, ...
+- `src/Products/PloneMeeting/ToolPloneMeeting.py` - `DataGridField`, `MultiSelectionWidget`, `SelectionWidget`, `TextAreaWidget`, `configGroup`, `customAdvisers`, `getAnnexToPrintMode`, `getConfigGroup`, ...
+- `src/Products/PloneMeeting/__init__.py` - `listTypes`
+- `src/Products/PloneMeeting/MeetingItem.py` - `DataGridField`, `MultiSelectionWidget`, `RichWidget`, `SelectionWidget`, `TextAreaWidget`, `assembly`, `committees`, `computeItemReferenceForItemsOutOfMeeting`, ...
+- `src/Products/PloneMeeting/setuphandlers.py` - `committees`
+- `src/Products/PloneMeeting/columns.py` - `committees`, `getAvailableItemsListVisibleColumns`, `getItemColumns`, `getItemsListVisibleColumns`, `getMeetingColumns`
+- `src/Products/PloneMeeting/indexes.py` - `committees`, `getCommittees`
+- `src/Products/PloneMeeting/MeetingUser.py` - `MultiSelectionWidget`, `SelectionWidget`, `adviceStyle`, `assembly`, `getAdviceStyle`, `getItemColumns`, `getItemsListVisibleColumns`, `getMailItemEvents`, ...
+- `src/Products/PloneMeeting/utils.py` - `DataGridField`, `RichWidget`, `assembly`, `configGroup`, `getConfigGroup`, `getDisplayVotingGroup`, `getHistorizedItemAttributes`, `getItemObserversStates`, ...
+- `src/Products/PloneMeeting/MeetingConfig.py` - `DataGridField`, `InAndOutWidget`, `MultiSelectionWidget`, `RichWidget`, `SelectionWidget`, `TextAreaWidget`, `adviceAnnexConfidentialVisibleFor`, `adviceConfidentialFor`, ...
+- `src/Products/PloneMeeting/MeetingCategory.py` - `MultiSelectionWidget`, `SelectionWidget`, `getMeetingConfigsToCloneTo`, `getUsingGroups`, `usingGroups`
+- `src/Products/PloneMeeting/Meeting.py` - `DataGridField`, `RichWidget`, `TextAreaWidget`, `assembly`, `assemblyStaves`, `getAssembly`, `getAssemblyStaves`, `getAvailableItemsListVisibleColumns`, ...
+- `src/Products/PloneMeeting/columns.zcml` - `committees`
+- `src/Products/PloneMeeting/vocabularies.zcml` - `assembly`, `committees`
+- `src/Products/PloneMeeting/vocabularies.py` - `DataGridField`, `assembly`, `committees`, `customAdvisers`, `firstLinkedVoteUsedVoteValues`, `getCommittees`, `getCustomAdvisers`, `getDisplayVotingGroup`, ...
+- `src/Products/PloneMeeting/adapters.py` - `MultiSelectionWidget`, `RichWidget`, `SelectionWidget`, `TextAreaWidget`, `committees`, `getAdviceAnnexConfidentialVisibleFor`, `getCustomAdvisers`, `getDashboardItemsListingsFilters`, ...
+- `src/Products/PloneMeeting/filters/css_transforms.py` - `getCssTransforms`
+- `src/Products/PloneMeeting/migrations/migrate_to_4209.py` - `getUsedItemAttributes`, `setUsedItemAttributes`, `usedItemAttributes`
+- `src/Products/PloneMeeting/migrations/migrate_to_4208.py` - `getUsedMeetingAttributes`, `setUsedMeetingAttributes`
+- `src/Products/PloneMeeting/migrations/migrate_to_4207.py` - `getUsingGroups`, `setUsingGroups`, `usingGroups`
+- `src/Products/PloneMeeting/migrations/migrate_to_4110.py` - `getUsingGroups`, `meetingItemTemplatesToStoreAsAnnex`
+- `src/Products/PloneMeeting/migrations/migrate_to_4104.py` - `getWorkflowAdaptations`, `setWorkflowAdaptations`, `workflowAdaptations`
+- `src/Products/PloneMeeting/migrations/migrate_to_4213.py` - `getCertifiedSignatures`
+- `src/Products/PloneMeeting/migrations/migrate_to_4202.py` - `getItemWorkflow`, `getWorkflowAdaptations`
+- `src/Products/PloneMeeting/migrations/__init__.py` - `availableItemsListVisibleColumns`, `customAdvisers`, `dashboardItemsListingsFilters`, `dashboardMeetingAvailableItemsFilters`, `dashboardMeetingLinkedItemsFilters`, `getEnableAdviceInvalidation`, `getMailMode`, `getUsedItemAttributes`, ...
+- `src/Products/PloneMeeting/migrations/migrate_to_4101.py` - `onMeetingTransitionItemActionToExecute`, `setOnMeetingTransitionItemActionToExecute`
+- `src/Products/PloneMeeting/migrations/migrate_to_4216.py` - `getItemWFValidationLevels`, `getLabelsConfig`, `getUsedItemAttributes`, `itemFieldsConfig`, `labelsConfig`, `setLabelsConfig`, `setUsedItemAttributes`, `usedItemAttributes`
+- `src/Products/PloneMeeting/migrations/migrate_to_4201.py` - `getItemWorkflow`
+- `src/Products/PloneMeeting/migrations/migrate_to_4211.py` - `enabledItemActions`, `getHideHistoryTo`, `getUsedItemAttributes`, `hideHistoryTo`, `setEnabledItemActions`, `setHideHistoryTo`
+- `src/Products/PloneMeeting/migrations/migrate_to_4205.py` - `committees`, `enableAdviceInvalidation`, `getCommittees`, `getItemWFValidationLevels`, `getUsedItemAttributes`, `historizeAdviceIfGivenAndItemModified`, `setCommittees`, `setUsedItemAttributes`, ...
+- `src/Products/PloneMeeting/migrations/migrate_to_4215.py` - `customAdvisers`, `getCustomAdvisers`, `getItemWorkflow`, `setCustomAdvisers`
+- `src/Products/PloneMeeting/migrations/migrate_to_4204.py` - `getUsedMeetingAttributes`, `setUsedMeetingAttributes`, `setYearlyInitMeetingNumbers`, `yearlyInitMeetingNumbers`
+- `src/Products/PloneMeeting/migrations/migrate_to_4214.py` - `getMailItemEvents`, `mailItemEvents`, `setMailItemEvents`
+- `src/Products/PloneMeeting/migrations/migrate_to_4200.py` - `adviceAnnexConfidentialVisibleFor`, `assembly`, `assemblyStaves`, `committees`, `dashboardItemsListingsFilters`, `dashboardMeetingAvailableItemsFilters`, `dashboardMeetingLinkedItemsFilters`, `defaultAdviceType`, ...
+- `src/Products/PloneMeeting/migrations/migrate_to_4217_1.py` - `cssTransforms`, `setCssTransforms`
+- `src/Products/PloneMeeting/migrations/migrate_to_4_1.py` - `adviceAnnexConfidentialVisibleFor`, `adviceConfidentialFor`, `advicesKeptOnSentToOtherMC`, `assembly`, `availableItemsListVisibleColumns`, `certifiedSignatures`, `contentsKeptOnSentToOtherMC`, `customAdvisers`, ...
+- `src/Products/PloneMeeting/skins/plonemeeting_templates/meetingitem_view.pt` - `assembly`, `committees`, `getCommittees`, `getUsedItemAttributes`, `getUsedMeetingAttributes`, `signatures`
+- `src/Products/PloneMeeting/skins/plonemeeting_templates/meetingconfig_view.pt` - `adviceAnnexConfidentialVisibleFor`, `adviceConfidentialFor`, `adviceConfidentialityDefault`, `adviceStyle`, `advicesKeptOnSentToOtherMC`, `allItemTags`, `annexEditorMayInsertBarcode`, `annexRestrictShownAndEditableAttributes`, ...
+- `src/Products/PloneMeeting/skins/plonemeeting_templates/toolplonemeeting_view.pt` - `configGroup`
+- `src/Products/PloneMeeting/skins/plonemeeting_templates/meetingitem_edit.pt` - `committees`, `getUsedItemAttributes`
+- `src/Products/PloneMeeting/skins/plonemeeting_styles/plonemeetingpopups.js` - `assembly`, `signatures`
+- `src/Products/PloneMeeting/skins/plonemeeting_styles/plonemeeting.js` - `InAndOutWidget`, `assembly`, `itemWFValidationLevels`, `signatures`
+- `src/Products/PloneMeeting/ftw_labels/overrides.py` - `getUsedItemAttributes`
+- `src/Products/PloneMeeting/ftw_labels/utils.py` - `getLabelsConfig`
+- `src/Products/PloneMeeting/ftw_labels/vocabularies.py` - `getUsedItemAttributes`, `labelsConfig`
+- `src/Products/PloneMeeting/ftw_labels/adapters.py` - `getLabelsConfig`
+- `src/Products/PloneMeeting/tests/testContacts.py` - `assembly`, `customAdvisers`, `getCustomAdvisers`, `getOrderedAssociatedOrganizations`, `getOrderedContacts`, `getOrderedGroupsInCharge`, `getOrderedItemInitiators`, `getPowerAdvisersGroups`, ...
+- `src/Products/PloneMeeting/tests/testAnnexes.py` - `adviceAnnexConfidentialVisibleFor`, `annexRestrictShownAndEditableAttributes`, `annexToPrintMode`, `getAnnexRestrictShownAndEditableAttributes`, `getOwnerMayDeleteAnnexDecision`, `getWorkflowAdaptations`, `itemAnnexConfidentialVisibleFor`, `meetingAnnexConfidentialVisibleFor`, ...
+- `src/Products/PloneMeeting/tests/testFaceted.py` - `customAdvisers`, `getCustomAdvisers`, `getGroupsHiddenInDashboardFilter`, `getRedirectToNextMeeting`, `getSelectableAdvisers`, `groupsHiddenInDashboardFilter`, `selectableAdvisers`, `setCustomAdvisers`, ...
+- `src/Products/PloneMeeting/tests/testViews.py` - `assembly`, `committees`, `configGroup`, `customAdvisers`, `getCommittees`, `getCustomAdvisers`, `getItemsListVisibleFields`, `getItemsNotViewableVisibleFields`, ...
+- `src/Products/PloneMeeting/tests/testSetup.py` - `getItemWorkflow`, `getMeetingWorkflow`, `shortName`
+- `src/Products/PloneMeeting/tests/testSearches.py` - `committees`, `getItemAdviceStates`, `getItemWFValidationLevels`, `getSelectableCopyGroups`, `getUsedAdviceTypes`, `getWorkflowAdaptations`, `itemWFValidationLevels`, `setCustomAdvisers`, ...
+- `src/Products/PloneMeeting/tests/testWFAdaptations.py` - `getItemAdviceStates`, `getItemWFValidationLevels`, `getItemWorkflow`, `getMeetingWorkflow`, `getOnMeetingTransitionItemActionToExecute`, `getWorkflowAdaptations`, `itemInternalNotesEditableBy`, `itemWFValidationLevels`, ...
+- `src/Products/PloneMeeting/tests/testUtils.py` - `assembly`, `mailMode`, `onMeetingTransitionItemActionToExecute`, `setConfigGroup`, `setItemAdviceEditStates`, `setItemAdviceStates`, `setItemAdviceViewStates`, `setMailItemEvents`, ...
+- `src/Products/PloneMeeting/tests/testMeetingCategory.py` - `setMeetingConfigsToCloneTo`
+- `src/Products/PloneMeeting/tests/testAdvices.py` - `customAdvisers`, `enforceAdviceMandatoriness`, `getAdviceAnnexConfidentialVisibleFor`, `getCustomAdvisers`, `getDefaultAdviceHiddenDuringRedaction`, `getHistorizeItemDataWhenAdviceIsGiven`, `getItemAdviceEditStates`, `getItemAdviceStates`, ...
+- `src/Products/PloneMeeting/tests/testVotes.py` - `assembly`, `getOrderedContacts`, `getUseVotes`, `getVotesResultTALExpr`, `setOrderedContacts`, `setUseVotes`, `setUsedVoteValues`, `setVotesResultTALExpr`, ...
+- `src/Products/PloneMeeting/tests/testValidators.py` - `getSelectableCopyGroups`, `itemAnnexConfidentialVisibleFor`, `itemWFValidationLevels`, `selectableCopyGroups`, `setItemAnnexConfidentialVisibleFor`, `setSelectableCopyGroups`, `setUsingGroups`, `signatures`, ...
+- `src/Products/PloneMeeting/tests/testMeeting.py` - `assembly`, `assemblyStaves`, `committees`, `getCommittees`, `getDisplayAvailableItemsTo`, `getFreezeDeadlineDefault`, `getInsertingMethodsOnAddItem`, `getLastMeetingNumber`, ...
+- `src/Products/PloneMeeting/tests/testToolPloneMeeting.py` - `configGroup`, `customAdvisers`, `getIsDefault`, `getKeepOriginalToPrintOfClonedItems`, `itemWorkflow`, `keepOriginalToPrintOfClonedItems`, `powerObservers`, `setConfigGroup`, ...
+- `src/Products/PloneMeeting/tests/testMeetingItem.py` - `assembly`, `committees`, `computeItemReferenceForItemsOutOfMeeting`, `customAdvisers`, `getCertifiedSignatures`, `getCommittees`, `getComputeItemReferenceForItemsOutOfMeeting`, `getCustomAdvisers`, ...
+- `src/Products/PloneMeeting/tests/PloneMeetingTestCase.py` - `assembly`, `defaultAdviceHiddenDuringRedaction`, `getDefaultAdviceHiddenDuringRedaction`, `getEnabledItemActions`, `getItemColumns`, `getMeetingColumns`, `getPowerObservers`, `getShortName`, ...
+- `src/Products/PloneMeeting/tests/testPerformances.py` - `assembly`, `customAdvisers`, `getWorkflowAdaptations`, `setCustomAdvisers`, `setInsertingMethodsOnAddItem`, `setItemAutoSentToOtherMCStates`, `setItemReferenceFormat`, `setMeetingConfigsToCloneTo`, ...
+- `src/Products/PloneMeeting/tests/testWorkflows.py` - `getItemWFValidationLevels`, `getWorkflowAdaptations`, `itemPreferredMeetingStates`, `onMeetingTransitionItemActionToExecute`, `setInsertingMethodsOnAddItem`, `setItemPreferredMeetingStates`, `setOnMeetingTransitionItemActionToExecute`, `setPowerObservers`, ...
+- `src/Products/PloneMeeting/tests/testMeetingConfig.py` - `DataGridField`, `assembly`, `committees`, `configGroup`, `customAdvisers`, `defaultPollType`, `firstLinkedVoteUsedVoteValues`, `getCommittees`, ...
+- `src/Products/PloneMeeting/tests/testPortlets.py` - `setToDoListSearches`, `toDoListSearches`
+- `src/Products/PloneMeeting/tests/helpers.py` - `assembly`, `committees`, `getCommittees`, `getItemWFValidationLevels`, `getLabelsConfig`, `itemWFValidationLevels`, `labelsConfig`, `orderedContacts`, ...
+- `src/Products/PloneMeeting/tests/testColumns.py` - `getItemWorkflow`, `setMeetingColumns`, `setRestrictAccessToSecretItems`
+- `src/Products/PloneMeeting/workflows/advice.py` - `historizeItemDataWhenAdviceIsGiven`
+- `src/Products/PloneMeeting/workflows/meeting.py` - `getLastMeetingNumber`, `getRemoveAnnexesPreviewsOnMeetingClosure`, `getWorkflowAdaptations`, `getYearlyInitMeetingNumbers`, `setLastMeetingNumber`
+- `src/Products/PloneMeeting/content/configure.zcml` - `places`
+- `src/Products/PloneMeeting/content/advice.py` - `getAdviceConfidentialFor`, `getDefaultAdviceHiddenDuringRedaction`, `getDefaultAdviceType`, `getPowerAdvisersGroups`, `places`, `usedAdviceTypes`
+- `src/Products/PloneMeeting/content/organization.py` - `DataGridField`, `certifiedSignatures`, `getCertifiedSignatures`, `getItemAdviceEditStates`, `getItemAdviceStates`, `getItemAdviceViewStates`, `getKeepAccessToItemWhenAdvice`, `getOrderedAssociatedOrganizations`, ...
+- `src/Products/PloneMeeting/content/meeting.py` - `DataGridField`, `assembly`, `committees`, `getAssembly`, `getAssemblyStaves`, `getAvailableItemsListVisibleColumns`, `getCommittees`, `getComputeItemReferenceForItemsOutOfMeeting`, ...
+- `src/Products/PloneMeeting/content/category.py` - `getMeetingConfigsToCloneTo`, `getUsedItemAttributes`, `getUsedMeetingAttributes`, `usedItemAttributes`, `usedMeetingAttributes`, `usingGroups`
+- `src/Products/PloneMeeting/faceted_conf/default_dashboard_items_widgets.xml` - `committees`
+- `src/Products/PloneMeeting/faceted_conf/upgrade_step_4200_add_item_widgets.xml` - `committees`
+- `src/Products/PloneMeeting/browser/advices.py` - `defaultAdviceHiddenDuringRedaction`, `getAdviceConfidentialFor`, `getAdviceStyle`, `getDefaultAdviceHiddenDuringRedaction`, `getEnableAdviceProposingGroupComment`, `getInheritedAdviceRemoveableByAdviser`, `getItemAdviceStates`, `itemAdviceEditStates`
+- `src/Products/PloneMeeting/browser/configure.zcml` - `assembly`, `committees`, `itemsNotViewableVisibleFields`, `places`, `signatures`
+- `src/Products/PloneMeeting/browser/annexes.py` - `getAnnexRestrictShownAndEditableAttributes`
+- `src/Products/PloneMeeting/browser/notify.py` - `places`
+- `src/Products/PloneMeeting/browser/overrides.py` - `getAdviceStyle`, `getHideHistoryTo`, `getItemActionsColumnConfig`, `getRedirectToNextMeeting`, `getTransitionsToConfirm`, `getUseAdvices`, `getWorkflowAdaptations`, `hideHistoryTo`, ...
+- `src/Products/PloneMeeting/browser/batchactions.py` - `committees`, `getEnabledAnnexesBatchActions`, `getIncludeGroupsInChargeDefinedOnCategory`, `getIncludeGroupsInChargeDefinedOnProposingGroup`, `getMeetingItemTemplatesToStoreAsAnnex`, `getUseAdvices`, `getUsedItemAttributes`, `getUsedMeetingAttributes`, ...
+- `src/Products/PloneMeeting/browser/portlet_todo.py` - `getToDoListSearches`
+- `src/Products/PloneMeeting/browser/advicechangedelay.py` - `customAdvisers`
+- `src/Products/PloneMeeting/browser/itemvotes.py` - `DataGridField`, `getUsedVoteValues`, `usedVoteValues`
+- `src/Products/PloneMeeting/browser/meeting.py` - `DataGridField`, `TextAreaWidget`, `assembly`, `committees`, `displayAvailableItemsTo`, `getDisplayAvailableItemsTo`, `getInsertingMethodsOnAddItem`, `getSignatures`, ...
+- `src/Products/PloneMeeting/browser/async.py` - `assembly`, `firstLinkedVoteUsedVoteValues`, `getUseVotes`, `getUsedItemAttributes`, `getUsedMeetingAttributes`, `getUsedVoteValues`, `signatures`
+- `src/Products/PloneMeeting/browser/itemtemplates.py` - `places`
+- `src/Products/PloneMeeting/browser/itemlisttype.py` - `listTypes`
+- `src/Products/PloneMeeting/browser/itemassembly.py` - `assembly`, `getUsedMeetingAttributes`, `usedMeetingAttributes`
+- `src/Products/PloneMeeting/browser/itemattendee.py` - `assembly`
+- `src/Products/PloneMeeting/browser/itemsignatures.py` - `assembly`, `signatures`
+- `src/Products/PloneMeeting/browser/views.py` - `assembly`, `customAdvisers`, `getCustomAdvisers`, `getItemsNotViewableVisibleFields`, `getItemsNotViewableVisibleFieldsTALExpr`, `getMailItemEvents`, `getMaxShownMeetingItems`, `getOrderedContacts`, ...
+- `src/Products/PloneMeeting/browser/templates/held_position_back_refs.pt` - `assembly`, `signatures`
+- `src/Products/PloneMeeting/browser/templates/meeting_inserting_methods_help_msg.pt` - `insertingMethodsOnAddItem`
+- `src/Products/PloneMeeting/browser/templates/term_searchmeetings.pt` - `getMaxShownMeetings`, `maxShownMeetings`
+- `src/Products/PloneMeeting/browser/templates/meetingadvice.pt` - `adviceStyle`, `getAdviceStyle`
+- `src/Products/PloneMeeting/browser/templates/macros.pt` - `RichWidget`, `adviceStyle`, `assembly`, `getAdviceStyle`, `getMeetingConfigsToCloneTo`, `getUsedItemAttributes`, `getUsedMeetingAttributes`, `itemsVisibleFields`, ...
+- `src/Products/PloneMeeting/browser/templates/display_excused_from_meeting.pt` - `assembly`
+- `src/Products/PloneMeeting/browser/templates/display_absents_from_meeting.pt` - `assembly`
+- `src/Products/PloneMeeting/browser/templates/display_assembly_from_meeting.pt` - `assembly`
+- `src/Products/PloneMeeting/browser/templates/display_signatures_from_meeting.pt` - `signatures`
+- `src/Products/PloneMeeting/browser/templates/meeting_attendees_edit.pt` - `getUseVotes`
+- `src/Products/PloneMeeting/browser/templates/meeting_view.pt` - `assembly`, `committees`, `signatures`
+- `src/Products/PloneMeeting/browser/templates/itemassemblyandsignatures.pt` - `assembly`, `signatures`
+- `src/Products/PloneMeeting/browser/templates/item_linked_items.pt` - `getUsedItemAttributes`
+- `src/Products/PloneMeeting/browser/templates/advices-icons-infos.pt` - `adviceStyle`, `getAdviceStyle`, `getEnableAdviceConfidentiality`, `places`
+- `src/Products/PloneMeeting/browser/templates/meetingassemblyandsignatures.pt` - `assembly`, `signatures`
+- `src/Products/PloneMeeting/browser/templates/advices-icons.pt` - `adviceStyle`, `getAdviceStyle`, `getEnableAddQuickAdvice`
+- `src/Products/PloneMeeting/model/adaptations.py` - `getItemWFValidationLevels`, `getItemWorkflow`, `getMeetingWorkflow`, `getTransitionsToConfirm`, `getWorkflowAdaptations`, `itemWFValidationLevels`, `itemWorkflow`, `meetingWorkflow`, ...
+- `src/Products/PloneMeeting/exportimport/content.py` - `TextAreaWidget`, `adviceAnnexConfidentialVisibleFor`, `customAdvisers`, `dashboardItemsListingsFilters`, `dashboardMeetingAvailableItemsFilters`, `dashboardMeetingLinkedItemsFilters`, `itemAnnexConfidentialVisibleFor`, `meetingAnnexConfidentialVisibleFor`, ...
+- `src/Products/PloneMeeting/profiles/__init__.py` - `adviceAnnexConfidentialVisibleFor`, `adviceConfidentialFor`, `adviceConfidentialityDefault`, `adviceStyle`, `advicesKeptOnSentToOtherMC`, `allItemTags`, `annexEditorMayInsertBarcode`, `annexRestrictShownAndEditableAttributes`, ...
+- `src/Products/PloneMeeting/profiles/default/metadata.xml` - `DataGridField`
+- `src/Products/PloneMeeting/profiles/testing/import_data.py` - `allItemTags`, `assembly`, `committees`, `insertingMethodsOnAddItem`, `isDefault`, `itemAdviceEditStates`, `itemAdviceStates`, `itemAdviceViewStates`, ...
+- `src/Products/PloneMeeting/profiles/testing/heldpositions.csv` - `assembly`
+- `src/Products/PloneMeeting/widgets/configure.zcml` - `DataGridField`
+- `src/Products/PloneMeeting/widgets/pm_textarea.py` - `TextAreaWidget`
