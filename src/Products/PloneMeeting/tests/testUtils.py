@@ -396,6 +396,7 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(meeting.first_item_number, 50)
         # make sure it is useable in TAL expressions
         self.changeUser('pmManager')
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression':
