@@ -3303,7 +3303,7 @@ class WorkflowAdaptationsVocabulary(object):
     def __call__(self, context, sorted=True):
         """Received "context" is a MeetingConfig."""
         terms = []
-        for adaptation in context.wfAdaptations:
+        for adaptation in context.wf_adaptations:
             # generate a WFA by MeetingConfig.powerObservers in addition to the base one
             if adaptation == 'hide_decisions_when_under_writing':
                 tool = api.portal.get_tool('portal_plonemeeting')
@@ -3497,6 +3497,8 @@ class BooleanVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listBooleanVocabulary'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listBooleanVocabulary())
 
 
@@ -3511,6 +3513,8 @@ class CommitteesEnabledVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listCommitteesEnabled'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listCommitteesEnabled())
 
 
@@ -3525,6 +3529,8 @@ class AnnexesBatchActionsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAnnexesBatchActions'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAnnexesBatchActions())
 
 
@@ -3539,6 +3545,8 @@ class AnnexToPrintModesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAnnexToPrintModes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAnnexToPrintModes())
 
 
@@ -3553,6 +3561,8 @@ class ContentsKeptOnSentToOtherMCVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listContentsKeptOnSentToOtherMCs'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listContentsKeptOnSentToOtherMCs())
 
 
@@ -3567,6 +3577,8 @@ class ItemIconColorsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemIconColors'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemIconColors())
 
 
@@ -3581,6 +3593,8 @@ class ItemFieldsToKeepConfigSortingForVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemFieldsToKeepConfigSortingFor'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemFieldsToKeepConfigSortingFor())
 
 
@@ -3595,6 +3609,8 @@ class ResultsPerPageVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listResultsPerPage'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listResultsPerPage())
 
 
@@ -3609,6 +3625,8 @@ class AdviceStylesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAdviceStyles'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAdviceStyles())
 
 
@@ -3623,6 +3641,8 @@ class VotesEncodersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listVotesEncoders'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listVotesEncoders())
 
 
@@ -3637,6 +3657,8 @@ class TransformTypesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listTransformTypes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listTransformTypes())
 
 
@@ -3651,6 +3673,8 @@ class MailModesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMailModes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMailModes())
 
 
@@ -3665,6 +3689,8 @@ class ItemActionsColumnConfigVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemActionsColumnConfig'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemActionsColumnConfig())
 
 
@@ -3679,6 +3705,8 @@ class DisplayAvailableItemsToVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listDisplayAvailableItemsTo'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listDisplayAvailableItemsTo())
 
 
@@ -3693,6 +3721,8 @@ class RedirectToNextMeetingVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listRedirectToNextMeeting'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listRedirectToNextMeeting())
 
 
@@ -3707,6 +3737,8 @@ class ConfigGroupsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listConfigGroups'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listConfigGroups())
 
 
@@ -3721,6 +3753,8 @@ class PowerObserversTypesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listPowerObserversTypes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listPowerObserversTypes())
 
 
@@ -3735,6 +3769,8 @@ class ItemAttributeVisibleForVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributeVisibleFor'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemAttributeVisibleFor())
 
 
@@ -3749,6 +3785,8 @@ class ItemAttributeVisibleForWithMeetingManagersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributeVisibleForWithMeetingManagers'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemAttributeVisibleForWithMeetingManagers())
 
 
@@ -3763,6 +3801,8 @@ class AdviceAnnexConfidentialVisibleForVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAdviceAnnexConfidentialVisibleFor'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAdviceAnnexConfidentialVisibleFor())
 
 
@@ -3777,6 +3817,8 @@ class MeetingAnnexConfidentialVisibleForVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingAnnexConfidentialVisibleFor'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingAnnexConfidentialVisibleFor())
 
 
@@ -3791,6 +3833,8 @@ class ActiveOrgsForPowerAdvisersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listActiveOrgsForPowerAdvisers'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listActiveOrgsForPowerAdvisers())
 
 
@@ -3805,6 +3849,8 @@ class ActiveOrgsForCustomAdvisersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listActiveOrgsForCustomAdvisers'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listActiveOrgsForCustomAdvisers())
 
 
@@ -3819,6 +3865,8 @@ class SelectableContactsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableContacts'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listSelectableContacts())
 
 
@@ -3833,6 +3881,8 @@ class SelectableCommitteeAutoFromVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableCommitteeAutoFrom'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listSelectableCommitteeAutoFrom())
 
 
@@ -3847,6 +3897,8 @@ class SelectableAdvisersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableAdvisers'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listSelectableAdvisers())
 
 
@@ -3861,6 +3913,8 @@ class SelectableProposingGroupsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableProposingGroups'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listSelectableProposingGroups())
 
 
@@ -3875,6 +3929,8 @@ class SelectableCopyGroupsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableCopyGroups'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listSelectableCopyGroups())
 
 
@@ -3889,6 +3945,8 @@ class ToDoListSearchesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listToDoListSearches'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listToDoListSearches())
 
 
@@ -3903,6 +3961,8 @@ class DashboardItemsListingsFiltersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listDashboardItemsListingsFilters'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listDashboardItemsListingsFilters())
 
 
@@ -3917,6 +3977,8 @@ class DashboardMeetingsListingsFiltersVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listDashboardMeetingsListingsFilters'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listDashboardMeetingsListingsFilters())
 
 
@@ -3931,6 +3993,8 @@ class MeetingConfigsToCloneToVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingConfigsToCloneTo'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingConfigsToCloneTo())
 
 
@@ -3945,6 +4009,8 @@ class TransitionsUntilPresentedVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listTransitionsUntilPresented'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listTransitionsUntilPresented())
 
 
@@ -3959,6 +4025,8 @@ class ExecutableItemActionsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listExecutableItemActions'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listExecutableItemActions())
 
 
@@ -3973,6 +4041,8 @@ class ItemTransitionsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemTransitions'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemTransitions())
 
 
@@ -3987,6 +4057,8 @@ class MeetingTransitionsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingTransitions'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingTransitions())
 
 
@@ -4001,6 +4073,8 @@ class ItemStatesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemStates'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemStates())
 
 
@@ -4015,6 +4089,8 @@ class ItemAutoSentToOtherMCStatesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAutoSentToOtherMCStates'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemAutoSentToOtherMCStates())
 
 
@@ -4029,6 +4105,8 @@ class MeetingStatesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingStates'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingStates())
 
 
@@ -4043,6 +4121,8 @@ class AllTransitionsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAllTransitions'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAllTransitions())
 
 
@@ -4057,6 +4137,8 @@ class ItemEventsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemEvents'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemEvents())
 
 
@@ -4071,6 +4153,8 @@ class MeetingEventsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingEvents'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingEvents())
 
 
@@ -4085,6 +4169,8 @@ class InsertingMethodsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listInsertingMethods'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listInsertingMethods())
 
 
@@ -4099,6 +4185,8 @@ class UsedItemAttributesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listUsedItemAttributes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listUsedItemAttributes())
 
 
@@ -4113,6 +4201,8 @@ class ItemAttributesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemAttributes())
 
 
@@ -4127,6 +4217,8 @@ class UsedMeetingAttributesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listUsedMeetingAttributes'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listUsedMeetingAttributes())
 
 
@@ -4141,6 +4233,8 @@ class ItemColumnsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemColumns'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemColumns())
 
 
@@ -4155,6 +4249,8 @@ class MeetingColumnsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingColumns'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listMeetingColumns())
 
 
@@ -4169,6 +4265,8 @@ class AvailableItemsListVisibleColumnsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAvailableItemsListVisibleColumns'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAvailableItemsListVisibleColumns())
 
 
@@ -4183,6 +4281,8 @@ class ItemsListVisibleColumnsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsListVisibleColumns'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemsListVisibleColumns())
 
 
@@ -4197,6 +4297,8 @@ class ItemsVisibleFieldsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsVisibleFields'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemsVisibleFields())
 
 
@@ -4211,6 +4313,8 @@ class ItemsNotViewableVisibleFieldsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsNotViewableVisibleFields'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemsNotViewableVisibleFields())
 
 
@@ -4225,6 +4329,8 @@ class ItemsListVisibleFieldsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsListVisibleFields'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemsListVisibleFields())
 
 
@@ -4239,6 +4345,8 @@ class AllRichTextFieldsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listAllRichTextFields'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listAllRichTextFields())
 
 
@@ -4253,6 +4361,8 @@ class ItemRichTextFieldsVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemRichTextFields'):
+            return SimpleVocabulary([])
         return _dl_to_vocabulary(context.listItemRichTextFields())
 
 
