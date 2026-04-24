@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.11 (unreleased)
+4.2.28.11 (2026-04-24)
 ----------------------
 
 - Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
