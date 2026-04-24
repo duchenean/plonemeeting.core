@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.12 (unreleased)
+4.2.28.12 (2026-04-24)
 ----------------------
 
 - Fixed version overview not in last version warning when current version
