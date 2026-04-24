@@ -5,8 +5,9 @@ Changelog
 4.2.28.12 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed version overview not in last version warning when current version
+  uses a `.` in the version.
+  [gbastien]
 
 4.2.28.11 (2026-04-24)
 ----------------------
