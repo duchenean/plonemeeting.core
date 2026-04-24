@@ -5,8 +5,8 @@ Changelog
 4.2.28.15 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem._bypass_write_perm_check_for`.
+  [gbastien]
 
 4.2.28.14 (2026-04-24)
 ----------------------

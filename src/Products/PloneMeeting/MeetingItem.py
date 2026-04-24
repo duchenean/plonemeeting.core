@@ -5005,7 +5005,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        return self.adapted().show_field(fieldName, mode='edit')
+        item = self.getSelf()
+        return item.adapted().show_field(fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
