@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.13 (unreleased)
+4.2.28.13 (2026-04-24)
 ----------------------
 
 - In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
