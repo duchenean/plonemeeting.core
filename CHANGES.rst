@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.14 (unreleased)
+4.2.28.14 (2026-04-24)
 ----------------------
 
 - Fixed `MeetingItem.show_field` to not evaluate if field not enabled and
