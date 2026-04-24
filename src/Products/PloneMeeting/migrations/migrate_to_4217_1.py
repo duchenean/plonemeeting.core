@@ -61,6 +61,10 @@ class Migrate_To_4217_1(Migrator):
         # changed from ModifyPortalContent to View
         load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
         self._updateGroupsInChargeNotes()
+        if not from_migration_to_4200:
+            # this will upgrade collective.dms.scanbehavior especially
+            self.upgradeAll(omit=['Products.PloneMeeting:default',
+                                  self.profile_name.replace('profile-', '')])
         logger.info('Migrating to PloneMeeting 4217.1... Done.')
 
 

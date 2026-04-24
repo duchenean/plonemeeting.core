@@ -5,8 +5,9 @@ Changelog
 4.2.28.13 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
+  `collective.dms.scanbehavior`.
+  [gbastien]
 
 4.2.28.12 (2026-04-24)
 ----------------------
