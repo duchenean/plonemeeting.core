@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.15 (unreleased)
+4.2.28.15 (2026-04-24)
 ----------------------
 
 - Fixed `MeetingItem._bypass_write_perm_check_for`.
