@@ -488,6 +488,10 @@ class testUtils(PloneMeetingTestCase):
         # org_uid can be a list of org_uids
         self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
         self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        # no org_uid
+        self.assertFalse(is_proposing_group_editor(None, cfg))
+        self.assertFalse(is_proposing_group_editor('', cfg))
+        self.assertFalse(is_proposing_group_editor([], cfg))
 
 
 def test_suite():

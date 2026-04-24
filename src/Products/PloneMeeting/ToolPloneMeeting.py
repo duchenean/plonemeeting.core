@@ -794,6 +794,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            p_org_id or p_org_uid can be a single value or a list of values.
            Other parameters from p_user_id=None to p_the_objects=True
            are default values passed to get_orgs_for_user."""
+        if not org_id and not org_uid:
+            return
         if not org_uid:
             # then we have an "org_id"
             if isinstance(org_id, str):

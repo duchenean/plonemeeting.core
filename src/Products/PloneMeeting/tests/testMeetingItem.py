@@ -9203,13 +9203,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(item.show_field('groupsInChargeNotes'))
         self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # with no group in charge
+        self.changeUser('pmCreator1')
+        item.setGroupsInCharge([])
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
         # make proposing group only able to edit
+        self.changeUser('pmObserver2')
         self._setupItemFieldsConfig(
             'groupsInChargeNotes',
             edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
         self.changeUser('pmCreator1')
         self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # wrong condition, will raise if used
+        self._setupItemFieldsConfig('groupsInChargeNotes', edit='python: wrong')
+        self.assertRaises(NameError, item.mayQuickEdit, 'groupsInChargeNotes')
+        # does not raise if not used
+        self._enableField(['groupsInChargeNotes'], enable=False)
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
 
 
 def test_suite():

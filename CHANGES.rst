@@ -5,8 +5,9 @@ Changelog
 4.2.28.14 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.show_field` to not evaluate if field not enabled and
+  to raise an error if TAL expression is wrong.
+  [gbastien]
 
 4.2.28.13 (2026-04-24)
 ----------------------

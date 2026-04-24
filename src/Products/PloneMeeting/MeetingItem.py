@@ -2663,14 +2663,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showField')
 
-    def show_field(self, field_name):
+    def show_field(self, field_name, mode='view'):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         if item.attribute_is_used(field_name):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            return cfg.eval_tal_expr_for_field(item, field_name)
+            return cfg.eval_tal_expr_for_field(item, field_name, mode=mode)
 
     security.declarePublic('showObservations')
 
@@ -5005,11 +5005,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in CONFIGURABLE_FIELD_NAMES:
-            item = self.getSelf()
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
-            return cfg.eval_tal_expr_for_field(item, fieldName, mode='edit')
+        return self.adapted().show_field(fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
