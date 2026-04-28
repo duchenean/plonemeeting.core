@@ -5,7 +5,15 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Disabled the CKEditor stack (`collective.ckeditor` + custom
+  `ckeditor/imagerotate` plugin + `PMRichTextWidget` AjaxSave hooks
+  + `PMCKFinder`/`PMAjaxSave` overrides + setuphandlers
+  configuration). The custom in-tree plugin directory was deleted
+  outright (no parity port); the rest is preserved as comments
+  tagged ``P6 migration:`` so the TinyMCE setup in Stage D can
+  cherry-pick the menu styles, AjaxSave logic, and quick-edit
+  bindings. Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
+  [duchenean]
 
 
 4.2.28.15 (2026-04-24)

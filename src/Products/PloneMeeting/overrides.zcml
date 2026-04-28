@@ -259,9 +259,11 @@
           zcml:condition="not-have plone-5" />
     </configure>
 
+    <!-- P6 migration: CKEditor dropped, reimplement under TinyMCE in Stage D.
     <adapter
         for="z3c.form.interfaces.IWidget"
         factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
+    -->
 
     <adapter
         for="Products.Five.BrowserView"

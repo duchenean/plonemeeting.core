@@ -293,8 +293,9 @@ SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig
 CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
 CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX = 'clone_to_other_mc_emergency_'
 
-# Value added in the CKeditor menuStyles to specify that it has been customized
-CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not remove this line! */'
+# P6 migration: CKEditor dropped, reimplement TinyMCE menu-style markers in Stage D.
+# # Value added in the CKeditor menuStyles to specify that it has been customized
+# CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not remove this line! */'
 
 # if a delay for giving an item is on saturday, we extends the delay to next avaialble day
 # so here, we define that weekday 5 (as weekday starts from 0) is unavailble

@@ -85,9 +85,11 @@
 
 <stylesheet id="++resource++collective.iconifiedcategory/iconifiedcategory.css" insert-after="collective-iconifiedcategory.css" />
 
+<!-- P6 migration: CKEditor dropped, register TinyMCE-related CSS in Stage D.
 <stylesheet id="imioapps_ckeditor_moonolisa.css" insert-after="++resource++collective.iconifiedcategory/iconifiedcategory.css" />
+-->
 
-<stylesheet id="++resource++collective.eeafaceted.batchactions/batch_actions.css" insert-after="imioapps_ckeditor_moonolisa.css" />
+<stylesheet id="++resource++collective.eeafaceted.batchactions/batch_actions.css" insert-after="++resource++collective.iconifiedcategory/iconifiedcategory.css" />
 
 <stylesheet id="++resource++select2/select2.css" insert-after="++resource++collective.eeafaceted.batchactions/batch_actions.css" />
 

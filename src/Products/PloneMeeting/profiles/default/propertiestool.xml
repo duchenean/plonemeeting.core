@@ -41,6 +41,7 @@
   </property>
  </object>
 
+ <!-- P6 migration: CKEditor dropped, configure TinyMCE properties in Stage D.
  <object name="ckeditor_properties" meta_type="Plone Property Sheet">
   <property name="plugins" type="lines" purge="False">
    <element value="tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js"/>
@@ -48,5 +49,6 @@
    <element value="imagerotate;/++resource++cke_imagerotate/plugin.js"/>
   </property>
  </object>
+ -->
 
 </object>

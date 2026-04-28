@@ -23,10 +23,11 @@ from imio.webspellchecker import config as wsc_config
 from plone import api
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
-from Products.CPUtils.Extensions.utils import configure_ckeditor
+# P6 migration: CKEditor dropped, reimplement TinyMCE configuration in Stage D.
+# from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
-from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+# from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_LDAP
 from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.config import HAS_ZAMQP
@@ -246,11 +247,12 @@ def postInstall(context):
         if hasattr(pt.aq_base, transform_id):
             pt.manage_delObjects([transform_id])
 
-    # configure CKEditor : adapt available buttons in toolbar and
-    # defines it as default Plone editor
-    _configureCKeditor(site)
-
-    _configureQuickupload(site)
+    # P6 migration: CKEditor dropped, reimplement TinyMCE configuration in Stage D.
+    # # configure CKEditor : adapt available buttons in toolbar and
+    # # defines it as default Plone editor
+    # _configureCKeditor(site)
+    #
+    # _configureQuickupload(site)
 
     _configureWebspellchecker(site)
 
@@ -430,105 +432,107 @@ def activate_solr_and_reindex_if_available(site):
         transaction.savepoint()
 
 
-def _configureCKeditor(site):
-    '''Make sure CKeditor is the new default editor used by everyone...
-       CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
-    logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
-    # this will install collective.ckeditor if it is not already the case...
-    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=0, removeWsc=1)
-    # remove every styles defined by default and add the custom styles if not already done...
-    cke_props = site.portal_properties.ckeditor_properties
-    if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
-        enc = site.portal_properties.site_properties.getProperty('default_charset')
-        msg_highlight_red = translate('ckeditor_style_highlight_in_red',
-                                      domain='PloneMeeting',
-                                      context=site.REQUEST).encode('utf-8')
-        msg_highlight_blue = translate('ckeditor_style_highlight_in_blue',
-                                       domain='PloneMeeting',
-                                       context=site.REQUEST).encode('utf-8')
-        msg_highlight_green = translate('ckeditor_style_highlight_in_green',
-                                        domain='PloneMeeting',
-                                        context=site.REQUEST).encode('utf-8')
-        msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
-                                         domain='PloneMeeting',
-                                         context=site.REQUEST).encode('utf-8')
-        msg_x_small = translate('ckeditor_style_x_small',
-                                domain='PloneMeeting',
-                                context=site.REQUEST).encode('utf-8')
-        msg_small = translate('ckeditor_style_small',
-                              domain='PloneMeeting',
-                              context=site.REQUEST).encode('utf-8')
-        msg_large = translate('ckeditor_style_large',
-                              domain='PloneMeeting',
-                              context=site.REQUEST).encode('utf-8')
-        msg_x_large = translate('ckeditor_style_x_large',
-                                domain='PloneMeeting',
-                                context=site.REQUEST).encode('utf-8')
-        msg_table_optimization = translate('ckeditor_style_table_optimization',
-                                           domain='PloneMeeting',
-                                           context=site.REQUEST).encode('utf-8')
-        msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
-                                              domain='PloneMeeting',
-                                              context=site.REQUEST).encode('utf-8')
-        msg_indent = translate('ckeditor_style_indent_first_line',
-                               domain='PloneMeeting',
-                               context=site.REQUEST).encode('utf-8')
-        msg_page_break = translate('ckeditor_style_page_break',
-                                   domain='PloneMeeting',
-                                   context=site.REQUEST).encode('utf-8')
+# P6 migration: CKEditor dropped, reimplement TinyMCE configuration in Stage D.
+# def _configureCKeditor(site):
+#     '''Make sure CKeditor is the new default editor used by everyone...
+#        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
+#     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
+#     # this will install collective.ckeditor if it is not already the case...
+#     configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=0, removeWsc=1)
+#     # remove every styles defined by default and add the custom styles if not already done...
+#     cke_props = site.portal_properties.ckeditor_properties
+#     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
+#         enc = site.portal_properties.site_properties.getProperty('default_charset')
+#         msg_highlight_red = translate('ckeditor_style_highlight_in_red',
+#                                       domain='PloneMeeting',
+#                                       context=site.REQUEST).encode('utf-8')
+#         msg_highlight_blue = translate('ckeditor_style_highlight_in_blue',
+#                                        domain='PloneMeeting',
+#                                        context=site.REQUEST).encode('utf-8')
+#         msg_highlight_green = translate('ckeditor_style_highlight_in_green',
+#                                         domain='PloneMeeting',
+#                                         context=site.REQUEST).encode('utf-8')
+#         msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
+#                                          domain='PloneMeeting',
+#                                          context=site.REQUEST).encode('utf-8')
+#         msg_x_small = translate('ckeditor_style_x_small',
+#                                 domain='PloneMeeting',
+#                                 context=site.REQUEST).encode('utf-8')
+#         msg_small = translate('ckeditor_style_small',
+#                               domain='PloneMeeting',
+#                               context=site.REQUEST).encode('utf-8')
+#         msg_large = translate('ckeditor_style_large',
+#                               domain='PloneMeeting',
+#                               context=site.REQUEST).encode('utf-8')
+#         msg_x_large = translate('ckeditor_style_x_large',
+#                                 domain='PloneMeeting',
+#                                 context=site.REQUEST).encode('utf-8')
+#         msg_table_optimization = translate('ckeditor_style_table_optimization',
+#                                            domain='PloneMeeting',
+#                                            context=site.REQUEST).encode('utf-8')
+#         msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
+#                                               domain='PloneMeeting',
+#                                               context=site.REQUEST).encode('utf-8')
+#         msg_indent = translate('ckeditor_style_indent_first_line',
+#                                domain='PloneMeeting',
+#                                context=site.REQUEST).encode('utf-8')
+#         msg_page_break = translate('ckeditor_style_page_break',
+#                                    domain='PloneMeeting',
+#                                    context=site.REQUEST).encode('utf-8')
+#
+#         menu_styles = unicode(
+#             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
+#             "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
+#             "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"
+#             "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
+#             "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
+#             "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
+#             "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
+#             "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
+#             "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'auto' }} }},\n"
+#             "{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
+#             "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
+#             "{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
+#             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
+#                    msg_highlight_red,
+#                    msg_highlight_blue,
+#                    msg_highlight_green,
+#                    msg_highlight_yellow,
+#                    msg_x_small,
+#                    msg_small,
+#                    msg_large,
+#                    msg_x_large,
+#                    msg_table_optimization,
+#                    msg_table_no_optimization,
+#                    msg_indent,
+#                    msg_page_break), enc)
+#         cke_props.menuStyles = menu_styles
+#     # make sure we use resolveuid for images so URL is always correct even if item id changed
+#     cke_props.allow_link_byuid = True
+#     # make sure force paste as plain text is disabled
+#     cke_props.forcePasteAsPlainText = False
+#     # disable folder creation thru CKeditor to avoid
+#     # having the add folder icon when adding an image
+#     cke_props.allow_folder_creation = False
+#     # set 500px for editor height everywhere
+#     cke_props.height = '500px'
+#     # do not use 'rows' of the field widget for editor height
+#     cke_props.properties_overloaded = (u'width', u'height')
+#     # use Moono-Lisa skin
+#     cke_props.skin = u'moono-lisa'
+#     logger.info('Done.')
 
-        menu_styles = unicode(
-            "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
-            "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"
-            "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
-            "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
-            "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
-            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
-            "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
-            "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'auto' }} }},\n"
-            "{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
-            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
-            "{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
-            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
-                   msg_highlight_red,
-                   msg_highlight_blue,
-                   msg_highlight_green,
-                   msg_highlight_yellow,
-                   msg_x_small,
-                   msg_small,
-                   msg_large,
-                   msg_x_large,
-                   msg_table_optimization,
-                   msg_table_no_optimization,
-                   msg_indent,
-                   msg_page_break), enc)
-        cke_props.menuStyles = menu_styles
-    # make sure we use resolveuid for images so URL is always correct even if item id changed
-    cke_props.allow_link_byuid = True
-    # make sure force paste as plain text is disabled
-    cke_props.forcePasteAsPlainText = False
-    # disable folder creation thru CKeditor to avoid
-    # having the add folder icon when adding an image
-    cke_props.allow_folder_creation = False
-    # set 500px for editor height everywhere
-    cke_props.height = '500px'
-    # do not use 'rows' of the field widget for editor height
-    cke_props.properties_overloaded = (u'width', u'height')
-    # use Moono-Lisa skin
-    cke_props.skin = u'moono-lisa'
-    logger.info('Done.')
 
-
-def _configureQuickupload(site):
-    '''Configure collective.quickupload.'''
-    logger.info('Defining collective.quickupload...')
-    qu_props = site.portal_properties.quickupload_properties
-    qu_props.fill_titles = True
-    qu_props.object_unique_id = True
-    qu_props.id_as_title = False
-    qu_props.sim_upload_limit = 1
-    logger.info('Done.')
+# P6 migration: CKEditor dropped, drop quickupload integration with it. Reimplement under TinyMCE in Stage D.
+# def _configureQuickupload(site):
+#     '''Configure collective.quickupload.'''
+#     logger.info('Defining collective.quickupload...')
+#     qu_props = site.portal_properties.quickupload_properties
+#     qu_props.fill_titles = True
+#     qu_props.object_unique_id = True
+#     qu_props.id_as_title = False
+#     qu_props.sim_upload_limit = 1
+#     logger.info('Done.')
 
 
 def installWebspellchecker(context):
@@ -541,32 +545,34 @@ def installWebspellchecker(context):
 
 
 def _installWebspellchecker(portal):
-    # remove Scayt in CKeditor
-    cke_props = portal.portal_properties.ckeditor_properties
-    cke_props.enableScaytOnStartup = False
-    toolbar_Custom = cke_props.toolbar_Custom
-    scayt_values = OrderedDict(
-        [
-            (",'-','Scayt']", "]"),
-            # space after ","
-            (", '-','Scayt']", "]"),
-            (",'-', 'Scayt']", "]"),
-            (", '-', 'Scayt']", "]"),
-            # space before "]"
-            (", '-','Scayt' ]", "]"),
-            (",'-', 'Scayt' ]", "]"),
-            (", '-', 'Scayt' ]", "]"),
-            # other possibilities, 'Scayt' in the middle
-            (",'Scayt',", ","),
-            (", 'Scayt',", ",")
-        ])
+    # P6 migration: CKEditor dropped, Scayt-removal step skipped — reimplement under TinyMCE in Stage D.
+    # # remove Scayt in CKeditor
+    # cke_props = portal.portal_properties.ckeditor_properties
+    # cke_props.enableScaytOnStartup = False
+    # toolbar_Custom = cke_props.toolbar_Custom
+    # scayt_values = OrderedDict(
+    #     [
+    #         (",'-','Scayt']", "]"),
+    #         # space after ","
+    #         (", '-','Scayt']", "]"),
+    #         (",'-', 'Scayt']", "]"),
+    #         (", '-', 'Scayt']", "]"),
+    #         # space before "]"
+    #         (", '-','Scayt' ]", "]"),
+    #         (",'-', 'Scayt' ]", "]"),
+    #         (", '-', 'Scayt' ]", "]"),
+    #         # other possibilities, 'Scayt' in the middle
+    #         (",'Scayt',", ","),
+    #         (", 'Scayt',", ",")
+    #     ])
+    # replaced = False
+    # for k, v in scayt_values.items():
+    #     if toolbar_Custom.find(k) != -1:
+    #         replaced = True
+    #         toolbar_Custom = toolbar_Custom.replace(k, v)
+    #         cke_props.toolbar_Custom = toolbar_Custom
+    #         break
     replaced = False
-    for k, v in scayt_values.items():
-        if toolbar_Custom.find(k) != -1:
-            replaced = True
-            toolbar_Custom = toolbar_Custom.replace(k, v)
-            cke_props.toolbar_Custom = toolbar_Custom
-            break
 
     # make sure imio.webspellchecker is correctly installed
     # by first uninstalling it because older versions (>1001)
