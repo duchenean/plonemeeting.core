@@ -5,7 +5,9 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Dropped `imio.pm.ws` (SOAP webservice). External consumers should
+  migrate to `plonemeeting.restapi`.
+  [duchenean]
 
 
 4.2.28.15 (2026-04-24)
