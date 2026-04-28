@@ -29,7 +29,8 @@ from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_LDAP
 from Products.PloneMeeting.config import HAS_SOLR
-from Products.PloneMeeting.config import HAS_ZAMQP
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
@@ -260,8 +261,9 @@ def postInstall(context):
     # adapt front-page
     _adaptFrontPage(site)
 
-    # configure imio.pm.zamqp if present
-    _configure_zamqp(site)
+    # P6 migration: AMQP integration to be reimplemented in Stage D.
+    # # configure imio.pm.zamqp if present
+    # _configure_zamqp(site)
 
     # configure collective.documentviewer
     from collective.documentviewer.settings import GlobalSettings
@@ -654,12 +656,13 @@ def _adaptFrontPage(site):
     logger.info('Done.')
 
 
-def _configure_zamqp(site):
-    """Apply imio.zamqp.pm profile if present."""
-    if HAS_ZAMQP:
-        site.portal_setup.runAllImportStepsFromProfile(
-            'imio.zamqp.pm:default',
-            dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# def _configure_zamqp(site):
+#     """Apply imio.zamqp.pm profile if present."""
+#     if HAS_ZAMQP:
+#         site.portal_setup.runAllImportStepsFromProfile(
+#             'imio.zamqp.pm:default',
+#             dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
 
 
 def _configurePortalRepository(removed_types=[u'ATDocument',

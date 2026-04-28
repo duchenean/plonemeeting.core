@@ -5,7 +5,11 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Disabled AMQP/scan_id integration (`imio.zamqp.pm`, `imio.zamqp.core`,
+  `collective.zamqp`, `imio.dataexchange.core`). Code preserved as
+  comments tagged ``P6 migration:`` and tracked in repo-root
+  ``MIGRATION_REIMPLEMENT.md`` for reactivation in the Plone 6 cutover.
+  [duchenean]
 
 
 4.2.28.15 (2026-04-24)

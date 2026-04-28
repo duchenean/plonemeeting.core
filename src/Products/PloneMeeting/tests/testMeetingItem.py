@@ -30,7 +30,9 @@ from imio.helpers.content import uuidToObject
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
-from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+DEFAULT_SCAN_ID = u'013999900000001'  # local stand-in matching imio.zamqp.pm tests
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
