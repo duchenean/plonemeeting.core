@@ -13,7 +13,8 @@
   <include package="imio.annex" />
   <include package="Products.PasswordStrength" />
   <include package="collective.behavior.internalnumber" />
-  <include package="collective.ckeditor" />
+  <!-- P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D. -->
+  <!-- <include package="collective.ckeditor" /> -->
   <include package="collective.contact.core" />
   <include package="collective.contact.plonegroup" />
   <include package="collective.dexteritytextindexer" />
@@ -47,7 +48,8 @@
   <include package="Products.DataGridField" />
   <include package=".behaviors" />
   <include package=".browser" />
-  <include package=".ckeditor" />
+  <!-- P6 migration: CKEditor dropped (custom plugins removed), configure stock TinyMCE in Stage D. -->
+  <!-- <include package=".ckeditor" /> -->
   <include package=".content" />
   <include package=".documentgenerator" />
   <include package=".external" />

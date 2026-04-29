@@ -5,6 +5,14 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
+- Disabled the CKEditor stack (`collective.ckeditor` + custom
+  `ckeditor/imagerotate` plugin + `PMRichTextWidget` AjaxSave hooks
+  + `PMCKFinder`/`PMAjaxSave` overrides + setuphandlers
+  configuration). The custom in-tree plugin directory was deleted
+  outright (no parity port); the rest is preserved as comments
+  tagged ``P6 migration:`` so the TinyMCE setup in Stage D can
+  cherry-pick the menu styles, AjaxSave logic, and quick-edit
+  bindings. Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
 - Disabled AMQP/scan_id integration (`imio.zamqp.pm`, `imio.zamqp.core`,
   `collective.zamqp`, `imio.dataexchange.core`). Code preserved as
   comments tagged ``P6 migration:`` and tracked in repo-root

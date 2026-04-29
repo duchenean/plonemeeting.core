@@ -54,7 +54,7 @@ setup(name='Products.PloneMeeting',
           'Plone',
           'Pillow',
           'collective.behavior.internalnumber',
-          'collective.ckeditor',
+          # 'collective.ckeditor',  # P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D
           'collective.contact.plonegroup',
           'collective.datagridcolumns',
           'collective.dexteritytextindexer',

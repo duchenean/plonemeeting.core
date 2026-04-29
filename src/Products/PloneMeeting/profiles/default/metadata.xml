@@ -5,7 +5,8 @@
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.dashboard:default</dependency>
     <dependency>profile-collective.behavior.internalnumber:default</dependency>
-    <dependency>profile-collective.ckeditor:default</dependency>
+    <!-- P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D. -->
+    <!-- <dependency>profile-collective.ckeditor:default</dependency> -->
     <dependency>profile-collective.contact.plonegroup:default</dependency>
     <dependency>profile-collective.datagridcolumns:default</dependency>
     <dependency>profile-collective.iconifieddocumentactions:default</dependency>
