@@ -156,7 +156,7 @@ def onItemTransition(item, event):
 
     # check if we need to send the item to another meetingConfig
     if item.query_state() in cfg.item_auto_sent_to_other_mc_states:
-        otherMCs = item.getOtherMeetingConfigsClonableTo()
+        otherMCs = item.other_meeting_configs_clonable_to
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
             # if the item is accepted, corrected then accepted again
@@ -878,7 +878,7 @@ def onItemModified(item, event):
         meeting = item.getMeeting()
         if meeting:
             # update item references if necessary
-            meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
+            meeting.update_item_references(start_number=item.item_number, check_needed=True)
             # invalidate Meeting.get_item_insert_order caching
             meeting._invalidate_insert_order_cache_for(item)
 
@@ -1402,7 +1402,7 @@ def onMeetingRemoved(meeting, event):
     items_to_reindex = []
     for brain in brains:
         item = brain._unrestrictedGetObject()
-        item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
+        item.preferred_meeting = ITEM_NO_PREFERRED_MEETING_VALUE
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(

@@ -17,6 +17,7 @@ from imio.history.utils import getLastWFAction
 from imio.pyutils.utils import safe_encode
 from OFS.interfaces import IItem
 from plone import api
+from plone.app.textfield.interfaces import ITransformer
 from plone.indexer import indexer
 from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
@@ -52,7 +53,7 @@ def getTakenOverBy(obj):
       Indexes the takenOverBy with a special value when empty,
       in faceted filters, query on empty value is ignored...
     """
-    takenOverBy = obj.getTakenOverBy()
+    takenOverBy = obj.taken_over_by
     if not takenOverBy:
         takenOverBy = EMPTY_STRING
     return takenOverBy
@@ -110,7 +111,7 @@ def pm_technical_index(obj):
     if base_getattr(obj, REINDEX_NEEDED_MARKER, False):
         res.append(REINDEX_NEEDED_MARKER)
     if obj.__class__.__name__ == "MeetingItem":
-        for hp_uid in obj.getItemInitiator():
+        for hp_uid in obj.item_initiator or ():
             res.append(ITEM_INITIATOR_INDEX_PATTERN.format(hp_uid))
     return res or _marker
 
@@ -119,9 +120,17 @@ def pm_technical_index(obj):
 def Description(obj):
     """
       Make sure to use 'text/plain' version of description field as it is normally
-      a TextField and that we store HTML data into it for MeetingItem
+      a RichText field and that we store HTML data into it for MeetingItem.
     """
-    return obj.Description(mimetype='text/plain')
+    value = obj.description
+    if not value:
+        return ''
+    try:
+        transformer = ITransformer(obj)
+        return transformer(value, 'text/plain') or ''
+    except Exception:
+        # value may be a plain string in legacy data
+        return getattr(value, 'raw', value) or ''
 
 
 @indexer(IMeetingItem)
@@ -218,8 +227,8 @@ def sentToInfos(obj):
       will receive the 'not_to_be_cloned_to' value so we can filter it out.
     """
     res = []
-    clonableTo = obj.getOtherMeetingConfigsClonableTo()
-    clonableToEmergency = obj.getOtherMeetingConfigsClonableToEmergency()
+    clonableTo = obj.other_meeting_configs_clonable_to or ()
+    clonableToEmergency = obj.other_meeting_configs_clonable_to_emergency or ()
     clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
     for cfgId in clonableTo:
         if cfgId not in clonedTo:
@@ -270,7 +279,7 @@ def send_to_authority(obj):
     """
       Index the MeetingItem.sendToAuthority to be searchable in a faceted navigation.
     """
-    if obj.getSendToAuthority():
+    if obj.send_to_authority:
         return '1'
     else:
         return '0'
@@ -281,7 +290,7 @@ def item_is_signed(obj):
     """
       Index the getItemIsSigned but in a faceted boolean compatible way.
     """
-    if obj.getItemIsSigned():
+    if obj.item_is_signed:
         return '1'
     return '0'
 
@@ -291,7 +300,7 @@ def to_discuss(obj):
     """
       Index the getToDiscuss but in a faceted boolean compatible way.
     """
-    if obj.getToDiscuss():
+    if obj.to_discuss:
         return '1'
     return '0'
 
@@ -355,7 +364,7 @@ def templateUsingGroups(obj):
       user is creator for.
     """
     if obj.meta_type == 'MeetingItem':
-        templateUsingGroups = obj.getTemplateUsingGroups()
+        templateUsingGroups = obj.template_using_groups
         return templateUsingGroups and templateUsingGroups or ('__nothing_selected__', )
     elif obj.portal_type == 'Folder':
         return ('__folder_in_itemtemplates__', )
@@ -516,7 +525,7 @@ def committees_index_item(obj):
     """
       Indexes the committees of an item into "committees_index" index.
     """
-    return obj.getCommittees() or EMPTY_STRING
+    return obj.committees or EMPTY_STRING
 
 
 @indexer(IMeeting)

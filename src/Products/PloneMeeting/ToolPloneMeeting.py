@@ -1223,6 +1223,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
+            # B.2.x TODO: AT schema/mutator/default introspection. Replace with
+            # plone.dexterity default-factory walking once MeetingItem FTI swap (B.2.8) lands.
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:
                     # Set the field to its default value
@@ -1240,13 +1242,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             # we found a mapping defined for the new category, apply it
                             # get the category so it fails if it does not exist (that should not be possible...)
                             newCat = getattr(destCfg.categories, destCat.split('.')[1])
-                            newItem.setCategory(newCat.getId())
+                            newItem.category = newCat.getId()
                             break
 
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
                 toDiscussDefault = destCfg.to_discuss_default
-                newItem.setToDiscuss(toDiscussDefault)
+                newItem.to_discuss = toDiscussDefault
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1325,6 +1327,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 person = get_person_from_userid(get_current_user_id())
                 primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
+                # B.2.x TODO: getField() pulls AT widget config — after MeetingItem
+                # FTI swap, look up vocabulary_factory from the DX schema.
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
@@ -1338,6 +1342,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
+                    # B.2.x TODO: getField() pulls AT widget config — after MeetingItem
+                    # FTI swap, look up vocabulary_factory from the DX schema.
                     field = newItem.getField('proposingGroup')
                     vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
                     if vocab._terms:

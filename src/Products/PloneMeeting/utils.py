@@ -341,6 +341,8 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
+    # B.2.x TODO: this still drives off the AT field/widget API. Once MeetingItem
+    # is fully on DX (FTI swap, B.2.8) refactor to schema/RichTextValue introspection.
     field = obj.getField(name)
     if useParamValue:
         value = value
@@ -867,6 +869,8 @@ def mark_empty_tags(obj, value):
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
+    # B.2.x TODO: AT field/accessor introspection. Switch to direct attr access
+    # once MeetingItem is on Dexterity (B.2.8).
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
     lastVersion = mark_empty_tags(obj, lastVersion)
@@ -902,6 +906,7 @@ def rememberPreviousData(obj, name=None):
     '''This method is called before updating p_obj and remembers, for every
        historized field (or only for p_name if explicitly given), the previous
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
+    # B.2.x TODO: AT field introspection. Switch to direct attr access on DX.
     res = {}
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
@@ -2149,6 +2154,8 @@ def validate_item_assembly_value(value):
 
 def main_item_data(item):
     """Build a dict with main infos data."""
+    # B.2.x TODO: walks the AT schema. After MeetingItem FTI swap (B.2.8),
+    # rewrite using DX schema introspection (see get_dx_data).
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(item)
     # compute data, save 'title' and every active RichText fields
@@ -2190,6 +2197,8 @@ def checkMayQuickEdit(obj,
 
 def may_view_field(obj, field_name):
     """Check if current user has permission and condition to see the given p_field_name."""
+    # B.2.x TODO: AT field/widget introspection. After MeetingItem FTI swap,
+    # use schema/permission tagged values via plone.autoform.
     field = obj.getField(field_name)
     return _checkPermission(field.read_permission, obj) and \
         _evaluateExpression(obj, field.widget.condition)

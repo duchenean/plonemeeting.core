@@ -262,7 +262,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # manage takenOverBy
         current_member_id = None
-        takenOverBy = self.context.getTakenOverBy()
+        takenOverBy = self.context.taken_over_by
         if takenOverBy:
             current_member_id = get_current_user_id(self.request)
 
@@ -277,7 +277,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         # indeed we need to know where to send/have been sent if selected/unselected, ...
         ann = IAnnotations(self.context)
         other_mc_to_clone_to = [
-            destMeetingConfigId for destMeetingConfigId in self.context.getOtherMeetingConfigsClonableTo()]
+            destMeetingConfigId for destMeetingConfigId in (self.context.other_meeting_configs_clonable_to or ())]
         destMeetingConfigIds = get_vocab_values(
             self.context, 'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
         other_mc_cloned_to_ann_keys = [
@@ -457,7 +457,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # the msgid and the mapping as a dict
             # if item sent to the other mc is inserted into a meeting,
             # we display the meeting date
-            emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            emergency = clonedToOtherMCId in (self.context.other_meeting_configs_clonable_to_emergency or ())
             clonedToOtherMC = self.tool.get(clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
             msg = translate(
@@ -488,7 +488,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # if not already cloned to another mc, maybe it will be?
         # we could have an item to clone to 2 other MCs, one already sent, not the other...
-        otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
+        otherMeetingConfigsClonableTo = self.context.other_meeting_configs_clonable_to or ()
         for otherMeetingConfigClonableToId in otherMeetingConfigsClonableTo:
             # already cloned?
             if otherMeetingConfigClonableToId in clonedToOtherMCIds:
@@ -497,7 +497,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
             otherMeetingConfigClonableTo = self.tool.get(otherMeetingConfigClonableToId)
-            emergency = otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            emergency = otherMeetingConfigClonableToId in (self.context.other_meeting_configs_clonable_to_emergency or ())
             msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
                 'will_be_sentto_othermeetingconfig'
             iconName = emergency and "will_be_cloned_to_other_mc_emergency" or "will_be_cloned_to_other_mc"
@@ -510,7 +510,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             suffix = ''
             if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
                'privacy' in otherMeetingConfigClonableTo.used_item_attributes:
-                if otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToPrivacy():
+                if otherMeetingConfigClonableToId in (self.context.other_meeting_configs_clonable_to_privacy or ()):
                     suffix = "_secret"
                 else:
                     suffix = "_public"
@@ -584,13 +584,13 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # In some cases, it does not matter if an item is inMeeting or not.
         if 'oralQuestion' in usedItemAttributes:
-            if self.context.getOralQuestion():
+            if self.context.oral_question:
                 res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
                                                           domain="PloneMeeting",
                                                           context=self.request)))
         if 'emergency' in usedItemAttributes:
             # display an icon if emergency asked/accepted/refused
-            itemEmergency = self.context.getEmergency()
+            itemEmergency = self.context.emergency
             if itemEmergency == 'emergency_asked':
                 res.append(('emergency_asked.png', translate('emergency_asked',
                                                              domain="PloneMeeting",
@@ -604,7 +604,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                                domain="PloneMeeting",
                                                                context=self.request)))
         if 'takenOverBy' in usedItemAttributes:
-            takenOverBy = self.context.getTakenOverBy()
+            takenOverBy = self.context.taken_over_by
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
                 user_id = get_current_user_id(self.request)
@@ -615,7 +615,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                 mapping={'fullname': get_user_fullname(takenOverBy)},
                                                 context=self.request)))
 
-        if self.context.getIsAcceptableOutOfMeeting():
+        if self.context.is_acceptable_out_of_meeting:
             res.append(('acceptable_out_of_meeting.png',
                         translate('icon_help_isAcceptableOutOfMeeting',
                                   domain="PloneMeeting",
@@ -772,6 +772,8 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
             new_event['changes'] = {}
             new_event['type'] = self.history_type
             for name, oldValue in full_datachanges_history[i]['changes'].iteritems():
+                # B.2.x TODO: AT widget introspection — switch to DX schema/widget lookup once
+                # MeetingItem and MeetingConfig are fully on Dexterity.
                 widgetName = self.context.getField(name).widget.getName()
                 if widgetName == 'RichWidget':
                     if xhtmlContentIsEmpty(oldValue):
