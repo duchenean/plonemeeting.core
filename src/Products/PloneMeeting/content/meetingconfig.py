@@ -3278,7 +3278,7 @@ class MeetingConfig(Container):
            - include config group label if p_include_config_group is True;
            - include config group full_label if p_include_config_group is "full_label".'''
         title = self.title
-        if include_config_group and self.getConfigGroup():
+        if include_config_group and self.config_group:
             if include_config_group is True:
                 # prepend configGroup label
                 title = u"{0} - {1}".format(
@@ -3830,7 +3830,7 @@ class MeetingConfig(Container):
             tool = api.portal.get_tool('portal_plonemeeting')
             configGroups = tool.getConfigGroups()
             res = [configGroup for configGroup in configGroups
-                   if configGroup['row_id'] == self.getConfigGroup()]
+                   if configGroup['row_id'] == self.config_group]
             res = res and res[0] or {}
         return res
 
@@ -5514,7 +5514,7 @@ class MeetingConfig(Container):
             # include configGroup if current cfg configGroup different than destConfig configGroup
             actionName = self._getCloneToOtherMCActionTitle(
                 destConfig.Title(
-                    include_config_group=self.getConfigGroup() != destConfig.getConfigGroup()))
+                    include_config_group=self.config_group != destConfig.config_group))
             item_portal_type.addAction(
                 id=actionId,
                 name=actionName,
