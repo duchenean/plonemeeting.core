@@ -536,7 +536,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         removed_configGroups = stored_configGroups.difference(configGroups_to_save)
         for configGroup in removed_configGroups:
             for cfg in self.objectValues('MeetingConfig'):
-                if cfg.getConfigGroup() == configGroup:
+                if cfg.config_group == configGroup:
                     config_group_title = [
                         v['label'] for v in self.getConfigGroups() if v['row_id'] == configGroup][0]
                     return translate(
@@ -1786,7 +1786,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 for cfg in self.objectValues('MeetingConfig'):
                     if check_access and not self.showPloneMeetingTab(cfg):
                         continue
-                    if cfg.getConfigGroup() == configGroup['row_id']:
+                    if cfg.config_group == configGroup['row_id']:
                         res.append({'id': cfg.getId(),
                                     'title': cfg.Title()})
                 data[(configGroup['row_id'], configGroup['label'], configGroup['full_label'])] = res

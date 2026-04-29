@@ -520,7 +520,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # in case we use configGroups and we have several MeetingConfig with
     # same title, this means we use configGroups to group same kind of
     # MeetingConfig, we prepend configGroup "full_label" to the "meetingConfigTitle"
-    if cfg.getConfigGroup() and several_mc_with_same_title():
+    if cfg.config_group and several_mc_with_same_title():
         cfg_title = safe_unicode(cfg.Title(include_config_group="full_label"))
     else:
         # common case
