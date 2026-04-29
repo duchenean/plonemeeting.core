@@ -159,6 +159,11 @@ monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
 
 adaptables = {
     'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
+    # MeetingItemTemplate and MeetingItemRecurring are DX subclasses of
+    # MeetingItem (the AT codebase used the same class for all three with a
+    # different portal_type). Reuse the MeetingItem adapter.
+    'MeetingItemTemplate': {'method': 'getItem', 'interface': IMeetingItemCustom},
+    'MeetingItemRecurring': {'method': 'getItem', 'interface': IMeetingItemCustom},
     'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.

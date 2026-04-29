@@ -82,6 +82,7 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
@@ -177,6 +178,8 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import implements
+from zope.interface import providedBy
+from zope.schema import getFieldsInOrder as zope_getFieldsInOrder
 from zope.schema.interfaces import IVocabularyFactory
 
 import html
@@ -968,6 +971,27 @@ class MeetingItem(Container):
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
+
+    def __init__(self, id=None, **kw):
+        super(MeetingItem, self).__init__(id, **kw)
+        # AT auto-initialised schema fields to their declared defaults at
+        # instance creation; pure DX does not. Walk IMeetingItem (and any
+        # behavior schemas) once and seed unset attributes so business
+        # methods can read self.<field> unconditionally — including fields
+        # whose schema default is None (those still need to exist as
+        # attributes, otherwise direct access raises AttributeError).
+        for iface in providedBy(self).flattened():
+            for name, field in zope_getFieldsInOrder(iface):
+                if base_hasattr(self, name):
+                    continue
+                default = getattr(field, 'default', None)
+                if default is None:
+                    default = getattr(field, 'missing_value', None)
+                # Mutable defaults must be deep-copied so instances do not
+                # share state.
+                if isinstance(default, (list, dict, set)):
+                    default = deepcopy(default)
+                setattr(self, name, default)
 
     security.declarePublic('title_or_id')
 
