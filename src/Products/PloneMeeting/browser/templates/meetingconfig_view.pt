@@ -191,7 +191,7 @@
     <tal:assembly_and_signatures condition="python: pageName == 'assembly_and_signatures'">
       <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class="pageNameDescr"></p><br />
 
-      <tal:defines define="usedMeetingAttributes context/getUsedMeetingAttributes">
+      <tal:defines define="usedMeetingAttributes context/used_meeting_attributes">
         <fieldset>
           <legend class="warningInMeetingConfig" i18n:translate="">This meeting configuration uses following fields to manage assemblies and signatures</legend>
           <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>

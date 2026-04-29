@@ -7,19 +7,28 @@
   <h4 class="inserting-methods-help-msg" i18n:translate="meeting_inserting_methods_help_msg_descr">Parameters of configuration influencing orders of insertion of item in the meeting</h4>
 
   <br />
-  <tal:field define="field python:cfg.getField('insertingMethodsOnAddItem')">
-    <tal:show tal:condition="field">
-      <span metal:use-macro="context/widgets/field/macros/view" />
-    </tal:show>
-  </tal:field>
+  <tal:comment replace="nothing">
+    TODO B.1.4: AT widget rendering (cfg.getField('xxx') + widgets/field/macros/view)
+    is not available on DX MeetingConfig. The original blocks below relied on the AT
+    widget machinery to render the 'insertingMethodsOnAddItem' field and the
+    fields returned by view/fieldsToDisplay. To restore parity, render via z3c.form
+    widgets (e.g. via a DefaultView-backed helper exposing rendered widget HTML)
+    or via custom display HTML per inserting method. See B.1.6 follow-up.
 
-  <tal:fields repeat="field_name view/fieldsToDisplay">
-    <tal:field define="field python:cfg.getField(field_name)">
+    <tal:field define="field python:cfg.getField('insertingMethodsOnAddItem')">
       <tal:show tal:condition="field">
-        <span metal:use-macro="cfg/widgets/field/macros/view" />
+        <span metal:use-macro="context/widgets/field/macros/view" />
       </tal:show>
     </tal:field>
-  </tal:fields>
+
+    <tal:fields repeat="field_name view/fieldsToDisplay">
+      <tal:field define="field python:cfg.getField(field_name)">
+        <tal:show tal:condition="field">
+          <span metal:use-macro="cfg/widgets/field/macros/view" />
+        </tal:show>
+      </tal:field>
+    </tal:fields>
+  </tal:comment>
 
   <tal:orgs tal:define="orgs view/orderedOrgs"
             tal:condition="orgs">
