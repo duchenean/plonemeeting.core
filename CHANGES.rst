@@ -9,6 +9,8 @@ Changelog
   `collective.zamqp`, `imio.dataexchange.core`). Code preserved as
   comments tagged ``P6 migration:`` and tracked in repo-root
   ``MIGRATION_REIMPLEMENT.md`` for reactivation in the Plone 6 cutover.
+- Dropped `imio.pm.ws` (SOAP webservice). External consumers should
+  migrate to `plonemeeting.restapi`.
   [duchenean]
 
 

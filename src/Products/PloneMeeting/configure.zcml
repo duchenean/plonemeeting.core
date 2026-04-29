@@ -30,7 +30,6 @@
   <include zcml:condition="installed collective.solr" package="collective.solr" />
   <include package="dexterity.localrolesfield" />
   <include package="ftw.labels" />
-  <include package="imio.pm.ws" />
   <include package="imio.dashboard" />
   <include package="imio.webspellchecker" />
   <!-- P6 migration: AMQP integration to be reimplemented in Stage D. -->
