@@ -14,6 +14,7 @@
          &lt;/schema&gt;
        &lt;/model&gt;
    </property>
+   <!-- P6 migration: AMQP integration to be reimplemented in Stage D.
    <action title="Insert barcode"
            action_id="insert_barcode"
            category="object_buttons"
@@ -25,4 +26,5 @@
            visible="True">
     <permission value="Modify portal content"/>
    </action>
+   -->
 </object>

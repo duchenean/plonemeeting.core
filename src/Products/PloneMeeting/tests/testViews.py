@@ -16,7 +16,9 @@ from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
-from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+DEFAULT_SCAN_ID = u'013999900000001'  # local stand-in matching imio.zamqp.pm tests
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -31,7 +33,8 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
-from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -3106,70 +3109,72 @@ class testViews(PloneMeetingTestCase):
         self.request.form['c1[]'] = adapter2.context.get('all_persons').UID()
         self.assertFalse(adapter2.get_generable_templates())
 
-    def test_pm_RichTextWidget(self):
-        """Test the PMRichTextWidget used on meeting for example."""
-        cfg = self.meetingConfig
-        self._enableField('observations', related_to='Meeting')
-        self.changeUser('pmManager')
-        self._removeConfigObjectsFor(cfg)
-        meeting = self.create('Meeting')
-        # editable by MeetingManager
-        # display mode
-        widget = get_dx_widget(meeting, field_name="observations")
-        self.assertEqual(widget.mode, DISPLAY_MODE)
-        editable_action = "@@richtext-edit?field_name=observations"
-        self.assertTrue(editable_action in widget.render())
-        # input mode
-        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
-        self.assertTrue('class="ckeditor_plone"' in widget.render())
+    # P6 migration: CKEditor dropped, reimplement under TinyMCE in Stage D.
+    # def test_pm_RichTextWidget(self):
+    #     """Test the PMRichTextWidget used on meeting for example."""
+    #     cfg = self.meetingConfig
+    #     self._enableField('observations', related_to='Meeting')
+    #     self.changeUser('pmManager')
+    #     self._removeConfigObjectsFor(cfg)
+    #     meeting = self.create('Meeting')
+    #     # editable by MeetingManager
+    #     # display mode
+    #     widget = get_dx_widget(meeting, field_name="observations")
+    #     self.assertEqual(widget.mode, DISPLAY_MODE)
+    #     editable_action = "@@richtext-edit?field_name=observations"
+    #     self.assertTrue(editable_action in widget.render())
+    #     # input mode
+    #     widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+    #     self.assertTrue('class="ckeditor_plone"' in widget.render())
+    #
+    #     # only viewable for others
+    #     self.changeUser('pmCreator1')
+    #     # display mode, not able to switch to input mode
+    #     widget = get_dx_widget(meeting, field_name="observations")
+    #     self.assertFalse(editable_action in widget.render())
+    #     self.assertFalse(widget.may_edit())
+    #     # input mode
+    #     widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+    #     self.assertTrue('class="ckeditor_plone"' in widget.render())
+    #
+    #     # not editable when content is locked
+    #     self.changeUser('siteadmin')
+    #     self.assertTrue(widget.may_edit())
+    #     lockable = ILockable(meeting)
+    #     lockable.lock()
+    #     self.assertTrue(widget.may_edit())
+    #     self.changeUser('pmManager')
+    #     # not editable as locked
+    #     self.assertFalse(widget.may_edit())
+    #     # unlock then editable
+    #     lockable.unlock()
+    #     self.assertTrue(widget.may_edit())
+    #     # ajaxsave is correctly setup
+    #     self.assertIn(
+    #         "ajaxsave_enabled",
+    #         widget.context.restrictedTraverse('@@richtext-edit')('observations'))
 
-        # only viewable for others
-        self.changeUser('pmCreator1')
-        # display mode, not able to switch to input mode
-        widget = get_dx_widget(meeting, field_name="observations")
-        self.assertFalse(editable_action in widget.render())
-        self.assertFalse(widget.may_edit())
-        # input mode
-        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
-        self.assertTrue('class="ckeditor_plone"' in widget.render())
-
-        # not editable when content is locked
-        self.changeUser('siteadmin')
-        self.assertTrue(widget.may_edit())
-        lockable = ILockable(meeting)
-        lockable.lock()
-        self.assertTrue(widget.may_edit())
-        self.changeUser('pmManager')
-        # not editable as locked
-        self.assertFalse(widget.may_edit())
-        # unlock then editable
-        lockable.unlock()
-        self.assertTrue(widget.may_edit())
-        # ajaxsave is correctly setup
-        self.assertIn(
-            "ajaxsave_enabled",
-            widget.context.restrictedTraverse('@@richtext-edit')('observations'))
-
-    def test_pm_Print_scan_id_barcode(self):
-        """Test the print_scan_id_barcode that takes care of raising
-           an Exception in case QR code for same context is generated several times."""
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        view = item.restrictedTraverse('document-generation')
-        helper = view.get_generation_context_helper()
-        # may only be called one time
-        self.assertEqual(helper.printed_scan_id_barcode, [])
-        # kwargs are passed from print_scan_id_barcode to sub methods
-        barcode = helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
-        data = barcode.read()
-        self.assertTrue(data.startswith("GIF"), data)
-        self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
-        with self.assertRaises(Exception) as cm:
-            helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
-        self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
-        # new helper instantiation has empty printed_scan_id_barcode
-        helper = view.get_generation_context_helper()
-        self.assertEqual(helper.printed_scan_id_barcode, [])
+    # P6 migration: AMQP integration to be reimplemented in Stage D.
+    # def test_pm_Print_scan_id_barcode(self):
+    #     """Test the print_scan_id_barcode that takes care of raising
+    #        an Exception in case QR code for same context is generated several times."""
+    #     self.changeUser('pmCreator1')
+    #     item = self.create('MeetingItem')
+    #     view = item.restrictedTraverse('document-generation')
+    #     helper = view.get_generation_context_helper()
+    #     # may only be called one time
+    #     self.assertEqual(helper.printed_scan_id_barcode, [])
+    #     # kwargs are passed from print_scan_id_barcode to sub methods
+    #     barcode = helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
+    #     data = barcode.read()
+    #     self.assertTrue(data.startswith("GIF"), data)
+    #     self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
+    #     with self.assertRaises(Exception) as cm:
+    #         helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
+    #     self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
+    #     # new helper instantiation has empty printed_scan_id_barcode
+    #     helper = view.get_generation_context_helper()
+    #     self.assertEqual(helper.printed_scan_id_barcode, [])
 
     def test_pm_DocumentGenerationContext(self):
         """We added some specific values to the generation

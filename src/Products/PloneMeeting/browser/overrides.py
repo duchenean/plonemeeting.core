@@ -5,8 +5,9 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from archetypes.referencebrowserwidget.utils import named_template_adapter
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.ckeditor.browser.ckeditorfinder import CKFinder
-from collective.ckeditor.browser.ckeditorview import AjaxSave
+# P6 migration: CKEditor dropped, reimplement under TinyMCE in Stage D.
+# from collective.ckeditor.browser.ckeditorfinder import CKFinder
+# from collective.ckeditor.browser.ckeditorview import AjaxSave
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -393,9 +394,6 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
             versions.insert(1, "%s %s (%s)" % (plugin_package_name.split('.')[1],
                                                plugin_version,
                                                plugin_ps_version))
-        # WS, imio.pm.ws
-        ws_soap_version = api.env.get_distribution('imio.pm.ws')._version
-        versions.insert(2, 'imio.pm.ws %s' % ws_soap_version)
         # plonemeeting.restapi could be not found on older versions
         if HAS_RESTAPI:
             ws_rest_version = api.env.get_distribution('plonemeeting.restapi')._version
@@ -1374,17 +1372,18 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
-class PMCKFinder(CKFinder):
-
-    def __init__(self, context, request):
-        super(PMCKFinder, self).__init__(context, request)
-        self.showbreadcrumbs = False
-        self.types = ['Image']
-        self.browse = False
-        self.allowimagesizeselection = False
-        self.allowaddfolder = False
-        self.showsearchbox = False
-        self.openuploadwidgetdefault = True
+# P6 migration: CKEditor dropped, file picker integration to be reimplemented under TinyMCE in Stage D.
+# class PMCKFinder(CKFinder):
+#
+#     def __init__(self, context, request):
+#         super(PMCKFinder, self).__init__(context, request)
+#         self.showbreadcrumbs = False
+#         self.types = ['Image']
+#         self.browse = False
+#         self.allowimagesizeselection = False
+#         self.allowaddfolder = False
+#         self.showsearchbox = False
+#         self.openuploadwidgetdefault = True
 
 
 pm_default_popup_template = named_template_adapter(
@@ -1676,28 +1675,29 @@ class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewCon
     """See PMBaseOverviewControlPanel docstring."""
 
 
-class PMAjaxSave(AjaxSave):
-    """Override collective.ckeditor ajaxsave to use utils.set_field_from_ajax."""
-
-    def AT_save(self, fieldname, text):
-        set_field_from_ajax(
-            self.context,
-            fieldname,
-            text,
-            remember=False,
-            tranform=True,
-            reindex=True,
-            unlock=False)
-
-    def dexterity_save(self, fieldname, text):
-        set_field_from_ajax(
-            self.context,
-            fieldname,
-            text,
-            remember=False,
-            tranform=True,
-            reindex=True,
-            unlock=False)
+# P6 migration: CKEditor dropped, AjaxSave hook to be reimplemented under TinyMCE in Stage D.
+# class PMAjaxSave(AjaxSave):
+#     """Override collective.ckeditor ajaxsave to use utils.set_field_from_ajax."""
+#
+#     def AT_save(self, fieldname, text):
+#         set_field_from_ajax(
+#             self.context,
+#             fieldname,
+#             text,
+#             remember=False,
+#             tranform=True,
+#             reindex=True,
+#             unlock=False)
+#
+#     def dexterity_save(self, fieldname, text):
+#         set_field_from_ajax(
+#             self.context,
+#             fieldname,
+#             text,
+#             remember=False,
+#             tranform=True,
+#             reindex=True,
+#             unlock=False)
 
 
 class PMCSSIconifiedCategory(IconifiedCategory):

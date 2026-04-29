@@ -81,7 +81,7 @@
             permission="zope2.View"/>
     </configure>
 
-    <!-- Override collective.ckeditor cke-save to handle more than just saving -->
+    <!-- P6 migration: CKEditor dropped, AjaxSave hook to be reimplemented under TinyMCE in Stage D.
     <configure package="collective.ckeditor">
         <browser:page
             name="cke-save"
@@ -96,6 +96,7 @@
             attribute="dexterity_save"
             permission="cmf.ModifyPortalContent"/>
     </configure>
+    -->
 
     <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
     <browser:page
@@ -1172,12 +1173,13 @@
         permission="zope2.View"
         name="document_generation_helper_view" />
 
-    <!-- ckeditor browser, override for Meeting, MeetingItem and meetingadvice -->
+    <!-- P6 migration: CKEditor dropped, file picker integration to be reimplemented under TinyMCE in Stage D.
     <browser:page
         name="plone_ckfinder"
         for="Products.PloneMeeting.interfaces.IMeetingContent"
         class=".overrides.PMCKFinder"
         permission="zope2.View" />
+    -->
 
     <!-- override the @@at_utils view to make it public so accessible
          when called from non accessible item, useful when using

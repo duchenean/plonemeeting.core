@@ -125,13 +125,15 @@
 
 <javascript id="++resource++quickupload_static/helpers.js" insert-after="++resource++quickupload_static/fileuploader.js" />
 
+<!-- P6 migration: CKEditor dropped, register TinyMCE bundles in Stage D.
 <javascript id="ckeditor_vars.js" insert-after="++resource++quickupload_static/helpers.js" />
 
 <javascript id="++resource++ckeditor/ckeditor.js" insert-after="ckeditor_vars.js" />
 
 <javascript id="++resource++ckeditor_for_plone/ckeditor_plone.js" insert-after="++resource++ckeditor/ckeditor.js" />
+-->
 
-<javascript id="++resource++collective.js.iframeresizer/iframeResizer.min.js" insert-after="++resource++ckeditor_for_plone/ckeditor_plone.js" />
+<javascript id="++resource++collective.js.iframeresizer/iframeResizer.min.js" insert-after="++resource++quickupload_static/helpers.js" />
 
 <javascript id="++resource++collective.js.iframeresizer/iframeResizer.contentWindow.min.js" insert-after="++resource++collective.js.iframeresizer/iframeResizer.min.js" />
 

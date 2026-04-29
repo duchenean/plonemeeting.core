@@ -5,7 +5,8 @@
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.dashboard:default</dependency>
     <dependency>profile-collective.behavior.internalnumber:default</dependency>
-    <dependency>profile-collective.ckeditor:default</dependency>
+    <!-- P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D. -->
+    <!-- <dependency>profile-collective.ckeditor:default</dependency> -->
     <dependency>profile-collective.contact.plonegroup:default</dependency>
     <dependency>profile-collective.datagridcolumns:default</dependency>
     <dependency>profile-collective.iconifieddocumentactions:default</dependency>
@@ -19,7 +20,6 @@
     <dependency>profile-ftw.labels:default</dependency>
     <dependency>profile-imio.annex:default</dependency>
     <dependency>profile-imio.helpers:default</dependency>
-    <dependency>profile-imio.pm.ws:default</dependency>
     <dependency>profile-imio.webspellchecker:default</dependency>
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
     <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>

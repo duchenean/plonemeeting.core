@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from collective.ckeditor.browser.ckeditorview import Z3CFormWidgetSettings
+# P6 migration: CKEditor dropped, reimplement quick-edit/AjaxSave hooks under TinyMCE in Stage D.
+# from collective.ckeditor.browser.ckeditorview import Z3CFormWidgetSettings
 from plone import api
 from plone.app.textfield.widget import IRichTextWidget
 from plone.app.textfield.widget import RichTextWidget
@@ -58,12 +59,14 @@ class PMRichTextWidget(RichTextWidget):
         return self.need_to_refresh_page() and 'javascript:refreshPageIfNeeded()' or ''
 
     def js_on_click(self):
-        return "if (reloadIfLocked()) {{tag=$('div#hook_{0}')[0];" \
-            "loadContent(tag, load_view='@@richtext-edit?field_name={1}', " \
-            "async=true, base_url='{2}', event_name='ckeditor_prepare_ajax_success');}}".format(
-                self.__name__.replace('.', '\\\.'),
-                self.__name__,
-                self.context.absolute_url())
+        # P6 migration: CKEditor-driven quick-edit removed, reimplement under TinyMCE in Stage D.
+        return ""
+        # return "if (reloadIfLocked()) {{tag=$('div#hook_{0}')[0];" \
+        #     "loadContent(tag, load_view='@@richtext-edit?field_name={1}', " \
+        #     "async=true, base_url='{2}', event_name='ckeditor_prepare_ajax_success');}}".format(
+        #         self.__name__.replace('.', '\\\\.'),
+        #         self.__name__,
+        #         self.context.absolute_url())
 
     def display_value(self, value):
         """ """
@@ -85,19 +88,22 @@ class RichTextEdit(BrowserView):
         self.context_url = context.absolute_url()
 
     def js_save(self):
-        """ """
-        return "saveCKeditor('{0}', base_url='{1}')".format(
-            self.field_name, self.context_url)
+        # P6 migration: CKEditor-driven save removed, reimplement under TinyMCE in Stage D.
+        return ""
+        # return "saveCKeditor('{0}', base_url='{1}')".format(
+        #     self.field_name, self.context_url)
 
     def js_save_and_exit(self):
-        """ """
-        return "saveAndExitCKeditor('{0}', base_url='{1}')".format(
-            self.field_name, self.context_url)
+        # P6 migration: CKEditor-driven save removed, reimplement under TinyMCE in Stage D.
+        return ""
+        # return "saveAndExitCKeditor('{0}', base_url='{1}')".format(
+        #     self.field_name, self.context_url)
 
     def js_cancel(self):
-        """ """
-        return "cancelCKeditor('{0}', base_url='{1}')".format(
-            self.field_name, self.context_url)
+        # P6 migration: CKEditor-driven cancel removed, reimplement under TinyMCE in Stage D.
+        return ""
+        # return "cancelCKeditor('{0}', base_url='{1}')".format(
+        #     self.field_name, self.context_url)
 
     def __call__(self, field_name):
         """ """
@@ -108,16 +114,17 @@ class RichTextEdit(BrowserView):
         return self.index()
 
 
-class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
-
-    def setupAjaxSave(self, widget_settings):
-        """Override to remove the restrictedTraverse to check if save_url available."""
-        portal = self.ckview.portal
-        # when used in a datagridfield, the target is sometimes a dict...
-        if not base_hasattr(self.ckview.context, "portal_type"):
-            return
-        target = self.getSaveTarget()
-        widget_settings['ajaxsave_enabled'] = 'true'
-        save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')
-        widget_settings['ajaxsave_url'] = save_url
-        widget_settings['ajaxsave_fieldname'] = self.getFieldName()
+# P6 migration: CKEditor dropped, reimplement Z3CFormWidgetSettings override under TinyMCE in Stage D.
+# class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
+#
+#     def setupAjaxSave(self, widget_settings):
+#         """Override to remove the restrictedTraverse to check if save_url available."""
+#         portal = self.ckview.portal
+#         # when used in a datagridfield, the target is sometimes a dict...
+#         if not base_hasattr(self.ckview.context, "portal_type"):
+#             return
+#         target = self.getSaveTarget()
+#         widget_settings['ajaxsave_enabled'] = 'true'
+#         save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')
+#         widget_settings['ajaxsave_url'] = save_url
+#         widget_settings['ajaxsave_fieldname'] = self.getFieldName()
