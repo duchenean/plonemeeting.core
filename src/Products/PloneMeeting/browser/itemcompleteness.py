@@ -25,7 +25,7 @@ class ItemCompletenessView(BrowserView):
         # we base our actions on avaialble terms in the MeetingItem.completeness field vocabulary
         completenesses = self.context.listCompleteness()
         completenessKeys = completenesses.keys()
-        currentCompleteness = self.context.getCompleteness()
+        currentCompleteness = self.context.completeness
         # now check if user can evaluate completeness
         if not self.context.adapted().mayEvaluateCompleteness():
             completenessKeys.remove('completeness_complete')
@@ -80,7 +80,7 @@ class ChangeItemCompletenessView(BrowserView):
         if not bypassSecurityCheck and new_completeness_value not in \
            self.context.unrestrictedTraverse('@@item-completeness').listSelectableCompleteness():
             raise Unauthorized
-        self.context.setCompleteness(new_completeness_value)
+        self.context.completeness = new_completeness_value
         # add a line to the item's completeness_changes_history
         add_event_to_history(
             self.context,

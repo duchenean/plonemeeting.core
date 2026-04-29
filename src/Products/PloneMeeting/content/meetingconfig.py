@@ -5028,7 +5028,7 @@ class MeetingConfig(Container):
             # pass 'template_row_marker'
             if value.get('orderindex_', None) == 'template_row_marker':
                 continue
-            res.append(value['insertingMethod'])
+            res.append(value['inserting_method'])
         # now that we have a list in res, we can check
         # first check presence of 'at_the_end'
         if 'at_the_end' in res and len(res) > 1:
@@ -5086,7 +5086,7 @@ class MeetingConfig(Container):
                                  context=self.REQUEST)
             # may not use 'reverse'
             privacy_reverse = [value['reverse'] for value in values
-                               if value['insertingMethod'] == 'on_privacy'][0]
+                               if value['inserting_method'] == 'on_privacy'][0]
             if privacy_reverse == '1':
                 return translate('inserting_methods_on_privacy_reverse_error',
                                  domain='PloneMeeting',

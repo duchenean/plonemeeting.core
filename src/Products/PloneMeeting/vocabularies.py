@@ -465,7 +465,7 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
 
     def _handle_include_stored(self, context, term_values, terms):
         """ """
-        current_value = context.getProposingGroupWithGroupInCharge()
+        current_value = context.proposing_group_with_group_in_charge
         if current_value and current_value not in term_values:
             current_proposingGroupUid, current_groupInChargeUid = \
                 current_value.split('__groupincharge__')
@@ -1624,8 +1624,8 @@ class PollTypesVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         usedPollTypes = list(cfg.used_poll_types)
         # if on an item, include values not unselected in config
-        if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
-            usedPollTypes.append(context.getPollType())
+        if context.meta_type == 'MeetingItem' and context.poll_type not in usedPollTypes:
+            usedPollTypes.append(context.poll_type)
 
         for usedPollType in usedPollTypes:
             res.append(SimpleTerm(usedPollType,

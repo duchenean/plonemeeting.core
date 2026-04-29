@@ -132,46 +132,46 @@ class PloneMeetingTestingHelpers(object):
         # id=item-1
         item1 = self.create('MeetingItem', title='Item 1')
         _set_proposing_group(item1, self.vendors)
-        item1.setAssociatedGroups((self.developers_uid,))
-        item1.setPrivacy('public')
-        item1.setPollType('secret_separated')
+        item1.associated_groups = (self.developers_uid,)
+        item1.privacy = 'public'
+        item1.poll_type = 'secret_separated'
         item1.setCategory('research')
         item1.setClassifier('classifier3')
         item1.reindexObject()
         # id=item-2
         item2 = self.create('MeetingItem', title='Item 2')
         _set_proposing_group(item2, self.developers)
-        item2.setPrivacy('public')
-        item2.setPollType('no_vote')
+        item2.privacy = 'public'
+        item2.poll_type = 'no_vote'
         item2.setCategory('development')
         item2.setClassifier('classifier2')
         item2.reindexObject()
         # id=item-3
         item3 = self.create('MeetingItem', title='Item 3')
         _set_proposing_group(item3, self.vendors)
-        item3.setPrivacy('secret')
-        item3.setPollType('freehand')
+        item3.privacy = 'secret'
+        item3.poll_type = 'freehand'
         item3.setCategory('development')
         item3.setClassifier('classifier2')
         item3.reindexObject()
         # id=item-4
         item4 = self.create('MeetingItem', title='Item 4')
         _set_proposing_group(item4, self.developers)
-        item4.setPrivacy('secret')
-        item4.setPollType('freehand')
+        item4.privacy = 'secret'
+        item4.poll_type = 'freehand'
         item4.setCategory('events')
         item4.setClassifier('classifier1')
         item4.reindexObject()
         # id=item-5
         item5 = self.create('MeetingItem', title='Item 5')
         _set_proposing_group(item5, self.vendors)
-        item5.setPrivacy('public')
-        item5.setPollType('secret')
+        item5.privacy = 'public'
+        item5.poll_type = 'secret'
         item5.setCategory('events')
         item5.setClassifier('classifier1')
         item5.reindexObject()
         for item in (item1, item2, item3, item4, item5):
-            item.setDecision('<p>A decision</p>')
+            item.decision = richtextval('<p>A decision</p>')
             self.presentItem(item)
         return meeting
 
@@ -467,7 +467,7 @@ class PloneMeetingTestingHelpers(object):
         """As group in charge is an adaptable method, it may be setup differently."""
         if not groups:
             groups = [self.vendors_uid]
-        item.setGroupsInCharge(groups)
+        item.groups_in_charge = list(groups)
         item.update_local_roles()
 
     def _setUpCommitteeEditor(self, cfg):
@@ -481,7 +481,7 @@ class PloneMeetingTestingHelpers(object):
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
-        item.setGroupsInCharge([])
+        item.groups_in_charge = []
 
     def _select_organization(self, org_uid, remove=False):
         """Select organization in ORGANIZATIONS_REGISTRY."""

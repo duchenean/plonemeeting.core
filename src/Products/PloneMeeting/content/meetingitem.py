@@ -31,6 +31,8 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
+from Acquisition import aq_inner
+from Acquisition import aq_parent
 from App.class_init import InitializeClass
 from appy.gen import No
 from collections import OrderedDict
@@ -185,6 +187,7 @@ from zope.schema.interfaces import IVocabularyFactory
 import html
 import itertools
 import logging
+import transaction
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -971,6 +974,7 @@ class MeetingItem(Container):
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
+    _at_rename_after_creation = True
 
     def __init__(self, id=None, **kw):
         super(MeetingItem, self).__init__(id, **kw)
@@ -992,6 +996,34 @@ class MeetingItem(Container):
                 if isinstance(default, (list, dict, set)):
                     default = deepcopy(default)
                 setattr(self, name, default)
+
+    def checkCreationFlag(self):
+        return getattr(aq_base(self), '_at_creation_flag', False)
+
+    def isTemporary(self):
+        parent = aq_parent(aq_inner(self))
+        return hasattr(aq_base(parent), 'meta_type') and \
+               parent.meta_type == 'TempFolder'
+
+    def generateNewId(self):
+        title = self.Title()
+        if not title:
+            return None
+        return normalize(title)
+
+    def _renameAfterCreation(self, check_auto_id=False):
+        new_id = self.generateNewId()
+        if new_id is None:
+            return False
+        parent = aq_parent(aq_inner(self))
+        if new_id in parent.objectIds():
+            idx = 1
+            while '{0}-{1}'.format(new_id, idx) in parent.objectIds():
+                idx += 1
+            new_id = '{0}-{1}'.format(new_id, idx)
+        transaction.savepoint(optimistic=True)
+        self.setId(new_id)
+        return new_id
 
     security.declarePublic('title_or_id')
 
@@ -1665,7 +1697,7 @@ class MeetingItem(Container):
         # Add a place to store takenOverBy by review_state user id
         # as we override mutator, this method is called before ObjectInitializedEvent
         # do not manage history while creating a new item
-        if not self._at_creation_flag:
+        if not self.checkCreationFlag():
             # save takenOverBy to takenOverByInfos for current review_state
             # or check for a wf_state in kwargs
             if 'wf_state' in kwargs:
@@ -1778,7 +1810,7 @@ class MeetingItem(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         # user must be an item completeness editor (one of corresponding role)
-        if item.getCompleteness() == 'completeness_incomplete' and \
+        if item.completeness == 'completeness_incomplete' and \
            _checkPermission(ModifyPortalContent, item) and \
            (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(cfg)):
             res = True
@@ -1787,7 +1819,7 @@ class MeetingItem(Container):
     def _is_complete(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-        return item.getCompleteness() in ('completeness_complete',
+        return item.completeness in ('completeness_complete',
                                           'completeness_evaluation_not_required')
 
     security.declarePublic('mayEditAdviceConfidentiality')
@@ -1911,7 +1943,7 @@ class MeetingItem(Container):
            actually editable.'''
         # if we are not in the creation process (setting the default value)
         # and if the user can not sign the item, we raise an Unauthorized
-        if not self._at_creation_flag and not self.adapted().maySignItem():
+        if not self.checkCreationFlag() and not self.adapted().maySignItem():
             raise Unauthorized
         self.item_is_signed = value
     security.declareProtected(ModifyPortalContent, 'setItemNumber')
@@ -2553,7 +2585,7 @@ class MeetingItem(Container):
         """Return manually selected copyGroups and automatically added ones.
            If p_auto_real_plone_group_ids is True, the real Plone group id is returned for
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
-        allGroups = self.copy_groups
+        allGroups = tuple(self.copy_groups or ())
         if auto_real_plone_group_ids:
             allGroups += tuple([self._realCopyGroupId(plone_group_id)
                                 for plone_group_id in self.autoCopyGroups])
@@ -2567,7 +2599,7 @@ class MeetingItem(Container):
         """Return manually selected restrictedCopyGroups and automatically added ones.
            If p_auto_real_plone_group_ids is True, the real Plone group id is returned for
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
-        allGroups = self.restricted_copy_groups
+        allGroups = tuple(self.restricted_copy_groups or ())
         autoRestrictedCopyGroups = getattr(self, 'autoRestrictedCopyGroups', [])
         if auto_real_plone_group_ids:
             allGroups += tuple([self._realCopyGroupId(plone_group_id)
@@ -3084,7 +3116,7 @@ class MeetingItem(Container):
         gic_from_pg = cfg.include_groups_in_charge_defined_on_proposing_group
         if (gic_from_cat or gic_from_pg) and \
            (force or
-            not self.groupsInCharge or
+            not self.groups_in_charge or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_category') and
              gic_from_cat) or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_classifier') and
@@ -3843,7 +3875,7 @@ class MeetingItem(Container):
 
         insertMethods = cfg.inserting_methods_on_add_item
         for insertMethod in insertMethods:
-            order = item._findOrderFor(insertMethod['insertingMethod'])
+            order = item._findOrderFor(insertMethod['inserting_method'])
             if insertMethod['reverse'] == '1':
                 order = - order
             res.append(order)
@@ -6295,6 +6327,23 @@ class MeetingItem(Container):
     # creation. On DX the equivalent work (item_added_or_initialized) runs
     # via the IObjectAddedEvent subscriber wired in events.zcml.
 
+    def _at_post_create(self, **kwargs):
+        '''Post-creation lifecycle formerly run by AT at_post_create_script.'''
+        userId = get_current_user_id(self.REQUEST)
+        self.manage_delLocalRoles([userId])
+        self.manage_addLocalRoles(userId, ('Owner',))
+        self.update_groups_in_charge(force=True)
+        indexes = self.update_local_roles(
+            isCreated=True,
+            inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
+        cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
+        transformAllRichTextFields(self)
+        forceHTMLContentTypeForEmptyRichFields(self)
+        indexes += self.update_committees(force=True)
+        self.reindexObject(idxs=indexes)
+        self.update_item_reference()
+        self.adapted().onEdit(isCreated=True)
+
     security.declareProtected(ModifyPortalContent, 'processForm')
 
     def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
@@ -6305,6 +6354,7 @@ class MeetingItem(Container):
         responsible for post-save reactions. The bookkeeping below remains
         callable from tests / programmatic flows that mirror the AT API.
         '''
+        is_creation = self.checkCreationFlag()
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
             self._v_previousData = rememberPreviousData(self)
@@ -6314,6 +6364,9 @@ class MeetingItem(Container):
                 self._historizeAdvicesOnItemEdit()
         # unmark deferred SearchableText reindexing
         setattr(self, REINDEX_NEEDED_MARKER, False)
+        self._at_creation_flag = False
+        if is_creation:
+            self._at_post_create()
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -6510,15 +6563,15 @@ class MeetingItem(Container):
         if 'otherMeetingConfigsClonableTo' in copyFields:
             clonableTo = set([mc['meeting_config'] for mc in dest_cfg.meeting_configs_to_clone_to])
             # make sure we only have selectable otherMeetingConfigsClonableTo
-            newItem.setOtherMeetingConfigsClonableTo(
-                tuple(set(self.other_meeting_configs_clonable_to).intersection(clonableTo)))
+            newItem.other_meeting_configs_clonable_to = \
+                tuple(set(self.other_meeting_configs_clonable_to).intersection(clonableTo))
         if 'copyGroups' in copyFields:
             copyGroups = list(self.copy_groups)
             selectableCopyGroups = 'copyGroups' in dest_cfg.used_item_attributes and \
                 dest_cfg.selectable_copy_groups or []
             # make sure we only have selectable copyGroups
-            newItem.setCopyGroups(
-                tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
+            newItem.copy_groups = \
+                tuple(set(copyGroups).intersection(set(selectableCopyGroups)))
         if 'optionalAdvisers' in copyFields:
             optionalAdvisers = list(newItem.getOptionalAdvisers())
             advisers_vocab = get_vocab(
@@ -6686,11 +6739,11 @@ class MeetingItem(Container):
         # as it requires the preferredMeeting to be the frozen meeting
         meeting = self._otherMCMeetingToBePresentedIn(destCfg)
         if meeting:
-            newItem.setPreferredMeeting(meeting.UID())
+            newItem.preferred_meeting = meeting.UID()
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
         if destMeetingConfigId in self.other_meeting_configs_clonable_to_privacy and \
            'privacy' in destUsedItemAttributes:
-            newItem.setPrivacy('secret')
+            newItem.privacy = 'secret'
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
         for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
@@ -6906,7 +6959,7 @@ class MeetingItem(Container):
                           context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
-        if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item._at_creation_flag:
+        if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item.checkCreationFlag():
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
             predecessor = self.get_predecessor()

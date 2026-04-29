@@ -843,6 +843,9 @@ def item_added_or_initialized(item):
     item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
+    item.autoCopyGroups = PersistentList()
+    item.itemHistory = PersistentList()
+    item._at_creation_flag = True
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
@@ -1187,7 +1190,7 @@ def onItemEditCancelled(item, event):
     '''When cancelling an edit, if item is not in portal_factory but have
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
-    if item._at_creation_flag and not item.isTemporary():
+    if item.checkCreationFlag() and not item.isTemporary():
         # decrement internal_number if it was the last added item
         decrement_if_last_nb(item.portal_type)
         parent = item.getParentNode()

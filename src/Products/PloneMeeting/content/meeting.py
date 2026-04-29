@@ -1823,21 +1823,21 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         is_late = not force_normal and item.wfConditions().isLateFor(self)
         if is_late:
-            item.setListType(item.adapted().getListTypeLateValue(self))
+            item.list_type = item.adapted().getListTypeLateValue(self)
             to_discuss_value = cfg.to_discuss_late_default
         else:
-            item.setListType(item.adapted().getListTypeNormalValue(self))
+            item.list_type = item.adapted().getListTypeNormalValue(self)
             to_discuss_value = cfg.to_discuss_default
         items = self.get_items(ordered=True, unrestricted=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.to_discuss_set_on_item_insert:
-            item.setToDiscuss(to_discuss_value)
+            item.to_discuss = to_discuss_value
         # At what place must we insert the item in the list ?
         insert_methods = cfg.inserting_methods_on_add_item
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insert_at_the_end = False
-        if insert_methods[0]['insertingMethod'] != 'at_the_end':
+        if insert_methods[0]['inserting_method'] != 'at_the_end':
             # We must insert it according to category or proposing group order
             # (at the end of the items belonging to the same category or
             # proposing group). We will insert the p_item just before the first
@@ -1875,7 +1875,7 @@ class Meeting(Container):
             else:
                 insert_at_the_end = True
 
-        if insert_methods[0]['insertingMethod'] == 'at_the_end' or insert_at_the_end:
+        if insert_methods[0]['inserting_method'] == 'at_the_end' or insert_at_the_end:
             # insert it as next integer number
             if items:
                 item.setItemNumber(_to_integer(items[-1].getItemNumber()) + 100)
@@ -1900,7 +1900,7 @@ class Meeting(Container):
         # and reindex linkedMeeting indexes that is used by update_item_references using getItems
         lowest_item_number = 0
         for item in items_to_update:
-            item_number = item.getRawItemNumber()
+            item_number = item.item_number
             if not lowest_item_number or item_number < lowest_item_number:
                 lowest_item_number = item_number
             item.reindexObject(idxs=['getItemNumber',
@@ -1927,8 +1927,8 @@ class Meeting(Container):
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it
-            if item.getListType() == 'late':
-                item.setListType('normal')
+            if item.list_type == 'late':
+                item.list_type = 'normal'
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list

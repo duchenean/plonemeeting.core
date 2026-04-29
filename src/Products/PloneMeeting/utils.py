@@ -346,20 +346,28 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
-    # B.2.x TODO: this still drives off the AT field/widget API. Once MeetingItem
-    # is fully on DX (FTI swap, B.2.8) refactor to schema/RichTextValue introspection.
-    field = obj.getField(name)
-    if useParamValue:
-        value = value
-    else:
-        value = field.get(obj)
-    widgetName = field.widget.getName()
-    if widgetName == 'RichWidget':
-        return xhtmlContentIsEmpty(value)
-    elif widgetName == 'BooleanWidget':
-        return value is None
-    else:
+    field = getattr(obj, 'getField', lambda n: None)(name)
+    if field is not None:
+        if not useParamValue:
+            value = field.get(obj)
+        widgetName = field.widget.getName()
+        if widgetName == 'RichWidget':
+            return xhtmlContentIsEmpty(value)
+        elif widgetName == 'BooleanWidget':
+            return value is None
         return not value
+    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+    dx_name = _at_to_dx(name)
+    if not useParamValue:
+        value = getattr(obj, dx_name, None)
+    if isinstance(value, RichTextValue):
+        raw = value.output if value else u''
+        if isinstance(raw, unicode):
+            raw = raw.encode('utf-8')
+        return xhtmlContentIsEmpty(raw)
+    elif isinstance(value, bool) or value is None:
+        return value is None
+    return not value
 
 
 def get_datagridfield_column_value(value, column):
@@ -871,12 +879,23 @@ def mark_empty_tags(obj, value):
     return value
 
 
+def _get_field_value(obj, name):
+    """Get a field value from an AT or DX object by field name (camelCase or snake_case)."""
+    field = getattr(obj, 'getField', lambda n: None)(name)
+    if field is not None:
+        return field.get(obj)
+    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+    dx_name = _at_to_dx(name)
+    value = getattr(obj, dx_name, None)
+    if isinstance(value, RichTextValue):
+        return value.output if value else u''
+    return value
+
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
-    # B.2.x TODO: AT field/accessor introspection. Switch to direct attr access
-    # once MeetingItem is on Dexterity (B.2.8).
-    lastVersion = obj.getField(name).getAccessor(obj)()
+    lastVersion = _get_field_value(obj, name)
     # highlight blank lines at the end of the text if current user may edit the obj
     lastVersion = mark_empty_tags(obj, lastVersion)
     if not changes:
@@ -911,7 +930,6 @@ def rememberPreviousData(obj, name=None):
     '''This method is called before updating p_obj and remembers, for every
        historized field (or only for p_name if explicitly given), the previous
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
-    # B.2.x TODO: AT field introspection. Switch to direct attr access on DX.
     res = {}
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
@@ -924,10 +942,10 @@ def rememberPreviousData(obj, name=None):
     historized = cfg.historized_item_attributes
     if name:
         if name in historized:
-            res[name] = obj.getField(name).get(obj)
+            res[name] = _get_field_value(obj, name)
     else:
         for name in historized:
-            res[name] = obj.getField(name).get(obj)
+            res[name] = _get_field_value(obj, name)
     return res
 
 
@@ -941,11 +959,10 @@ def addDataChange(obj, previousData=None):
         return
     # Remove from p_previousData values that were not changed or that were empty
     for name in previousData.keys():
-        field = obj.getField(name)
         oldValue = previousData[name]
         if isinstance(oldValue, basestring):
             oldValue = oldValue.strip()
-        newValue = field.get(obj)
+        newValue = _get_field_value(obj, name)
         if isinstance(newValue, basestring):
             newValue = newValue.strip()
         if oldValue == newValue:

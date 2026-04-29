@@ -255,7 +255,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # insert a late item
         lateItem = self.create('MeetingItem')
-        lateItem.setPreferredMeeting(meeting.UID())
+        lateItem.preferred_meeting = meeting.UID()
         self.freezeMeeting(meeting)
         self.presentItem(lateItem)
         # inserted at the end
@@ -267,7 +267,7 @@ class testMeetingType(PloneMeetingTestCase):
                                                 'label': 'Addendum',
                                                 'used_in_inserting_method': '1'}, ])
         lateItem2 = self.create('MeetingItem')
-        lateItem2.setPreferredMeeting(meeting.UID())
+        lateItem2.preferred_meeting = meeting.UID()
         self.presentItem(lateItem2)
         orderedItems = meeting.get_items(ordered=True)
         self.assertEqual(orderedItems[3], lateItem2)
@@ -315,16 +315,16 @@ class testMeetingType(PloneMeetingTestCase):
         # ok, now insert some late items using different proposingGroups
         lateItem1 = self.create('MeetingItem')
         lateItem1.setProposingGroup(self.vendors_uid)
-        lateItem1.setPreferredMeeting(meeting.UID())
+        lateItem1.preferred_meeting = meeting.UID()
         lateItem2 = self.create('MeetingItem')
         lateItem2.setProposingGroup(self.developers_uid)
-        lateItem2.setPreferredMeeting(meeting.UID())
+        lateItem2.preferred_meeting = meeting.UID()
         lateItem3 = self.create('MeetingItem')
         lateItem3.setProposingGroup(self.vendors_uid)
-        lateItem3.setPreferredMeeting(meeting.UID())
+        lateItem3.preferred_meeting = meeting.UID()
         lateItem4 = self.create('MeetingItem')
         lateItem4.setProposingGroup(self.developers_uid)
-        lateItem4.setPreferredMeeting(meeting.UID())
+        lateItem4.preferred_meeting = meeting.UID()
         self.freezeMeeting(meeting)
         self.presentItem(lateItem1)
         self.presentItem(lateItem2)
@@ -1503,9 +1503,9 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         meetingUID = meeting.UID()
         item1 = self.create('MeetingItem')
-        item1.setPreferredMeeting(meetingUID)
+        item1.preferred_meeting = meetingUID
         item2 = self.create('MeetingItem')
-        item2.setPreferredMeeting(meetingUID)
+        item2.preferred_meeting = meetingUID
 
         # freeze the meeting and use functionnality
         self.freezeMeeting(meeting)
@@ -1782,7 +1782,7 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         normalItem = self.create('MeetingItem')
         lateItem = self.create('MeetingItem')
-        lateItem.setPreferredMeeting(meeting.UID())
+        lateItem.preferred_meeting = meeting.UID()
 
         # presenting an item in a not late meeting will insert it as normal
         self.assertFalse(meeting.is_late())
@@ -1953,7 +1953,7 @@ class testMeetingType(PloneMeetingTestCase):
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
-        item.setPreferredMeeting(meeting.UID())
+        item.preferred_meeting = meeting.UID()
         self.presentItem(item)
         # now 8 items
         self.assertEqual(meeting.number_of_items(as_str=True), '8')
@@ -2012,11 +2012,11 @@ class testMeetingType(PloneMeetingTestCase):
         i1.setTitle('i1')
         i1.decision = richtextval('<p>Decision item 1</p>')
         i2 = self.create('MeetingItem')
-        i2.setPreferredMeeting(m2.UID())
+        i2.preferred_meeting = m2.UID()
         i2.setTitle('i2')
         i2.decision = richtextval('<p>Decision item 2</p>')
         i3 = self.create('MeetingItem')
-        i3.setPreferredMeeting(m3.UID())
+        i3.preferred_meeting = m3.UID()
         i3.setTitle('i3')
         i3.decision = richtextval('<p>Decision item 3</p>')
         # set a category if the meetingConfig use it
@@ -2072,7 +2072,7 @@ class testMeetingType(PloneMeetingTestCase):
         i2Wf = self.wfTool.getWorkflowsFor(i2)[0]
         if proposedState in i2Wf.states.keys():
             self.backToState(i2, proposedState)
-            i2.setPreferredMeeting(m1.UID())
+            i2.preferred_meeting = m1.UID()
             i2.reindexObject()
             self.validateItem(i2)
             # i1 is a late item
@@ -2094,10 +2094,10 @@ class testMeetingType(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         # meeting as preferredMeeting
-        item1.setPreferredMeeting(meeting.UID())
+        item1.preferred_meeting = meeting.UID()
         item1._update_after_edit()
         # after_meeting as preferredMeeting
-        item2.setPreferredMeeting(after_meeting.UID())
+        item2.preferred_meeting = after_meeting.UID()
         item2._update_after_edit()
         self.freezeMeeting(meeting)
         self.validateItem(item1)
@@ -2184,7 +2184,7 @@ class testMeetingType(PloneMeetingTestCase):
         # then continue with cfg1
         self.setMeetingConfig(cfgId)
         item1 = self.create('MeetingItem')
-        item1.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        item1.other_meeting_configs_clonable_to = (cfg2Id, )
         self.validateItem(item1)
         item2 = self.create('MeetingItem')
         self.validateItem(item2)
@@ -2279,7 +2279,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.assertTrue(item.wfConditions().mayPresent())
         # present the item as late item
-        item.setPreferredMeeting(meeting.UID())
+        item.preferred_meeting = meeting.UID()
         item._update_after_edit()
         self.assertTrue(item.wfConditions().mayPresent())
         self.presentItem(item)
@@ -2360,7 +2360,7 @@ class testMeetingType(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         meeting2 = self.create('Meeting')
         item2.REQUEST['PUBLISHED'] = item2
-        item2.setPreferredMeeting(meeting2.UID())
+        item2.preferred_meeting = meeting2.UID()
         self.validateItem(item2)
 
         # freeze the meeting2, it will not be in the available meetings so item2 will take meeting to present
@@ -2453,7 +2453,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse(meeting1.wfConditions().may_accept_items())
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         # even if meeting1 is set as preferred meeting
-        item.setPreferredMeeting(meeting1.UID())
+        item.preferred_meeting = meeting1.UID()
         item.notifyModified()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
 
@@ -2642,7 +2642,7 @@ class testMeetingType(PloneMeetingTestCase):
         # it also take late items into account
         self.freezeMeeting(meeting)
         lateItem = self.create('MeetingItem')
-        lateItem.setPreferredMeeting(meeting.UID())
+        lateItem.preferred_meeting = meeting.UID()
         self.presentItem(lateItem)
         # if we ask 8th item, so the late item, it works
         self.assertTrue(lateItem.isLate())
@@ -2665,7 +2665,7 @@ class testMeetingType(PloneMeetingTestCase):
         # as removing a meeting will update items preferredMeeting
         # make sure it works here too...
         anItem = meeting.get_items()[0]
-        anItem.setPreferredMeeting(meeting.UID())
+        anItem.preferred_meeting = meeting.UID()
         # add an annex as removing an item/annex calls onAnnexRemoved
         self.addAnnex(anItem)
         # add an advice as removing item/advice calls onAdviceRemoved
@@ -2699,7 +2699,7 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
-        item.setPreferredMeeting(meeting.UID())
+        item.preferred_meeting = meeting.UID()
         text = '<p>Text with image <img src="%s"/>.</p>' % self.external_image4
         item.decision = richtextval(text)
         item._update_after_edit()
@@ -2722,7 +2722,7 @@ class testMeetingType(PloneMeetingTestCase):
         # create item as 'pmCreator2' so it is not viewable by 'pmManager'
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        item.setPreferredMeeting(meeting_uid)
+        item.preferred_meeting = meeting_uid
         item._update_after_edit()
         items = self.catalog(preferred_meeting_uid=meeting_uid)
         self.assertEqual(len(items), 1)
@@ -2954,7 +2954,7 @@ class testMeetingType(PloneMeetingTestCase):
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
-        item.setPreferredMeeting(meeting_uid)
+        item.preferred_meeting = meeting_uid
         item._update_after_edit()
         self.presentItem(item)
         itemBrain = uuidToCatalogBrain(item_uid)

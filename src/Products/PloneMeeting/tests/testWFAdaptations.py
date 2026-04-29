@@ -763,8 +763,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                 item.emergency = 'emergency_accepted'
                 item.is_acceptable_out_of_meeting = True
             elif wfa_name.startswith('transfered'):
-                item.setOtherMeetingConfigsClonableTo((
-                    self.meetingConfig2.getId(), ))
+                item.other_meeting_configs_clonable_to = (
+                    self.meetingConfig2.getId(), )
             else:
                 # accepted_out_of_meeting/accepted_out_of_meeting_and_duplicated
                 item.is_acceptable_out_of_meeting = True
@@ -3520,7 +3520,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.validateItem(item)
         # not available until MeetingItem.otherMeetingConfigsClonableTo is empty
         self.assertFalse('transfer' in self.transitions(item))
-        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        item.other_meeting_configs_clonable_to = (self.meetingConfig2.getId(), )
         self.assertTrue('transfer' in self.transitions(item))
         # in case 'reviewers_take_back_validated_item' is available
         self.changeUser('pmReviewer1')

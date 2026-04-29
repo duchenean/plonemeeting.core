@@ -38,7 +38,7 @@ class ItemPollTypeView(BrowserView):
         '''Returns a list of pollTypes the current user can set the item to.'''
         if not self.context.adapted().mayChangePollType():
             return []
-        pollType = self.context.getPollType()
+        pollType = self.context.poll_type
         return [term for term in self.vocab if term.value != pollType]
 
 
@@ -90,19 +90,19 @@ class ChangeItemPollTypeView(BrowserView):
            - new_value is among selectable pollType values;
            - user actually mayChangePollType;
            - adapt Meeting.item_votes values.'''
-        old_pollType = self.context.getPollType()
+        old_pollType = self.context.poll_type
         if self.validate_new_poll_type(old_pollType, new_value):
             return
 
         # save old_pollType so we can pass it the the ItemPollTypeChangedEvent
         # set the new pollType and notify events
-        self.context.setPollType(new_value)
+        self.context.poll_type = new_value
         self.context._update_after_edit(idxs=['pollType'])
         try:
             notify(ItemPollTypeChangedEvent(self.context, old_pollType))
         except PloneMeetingError, msg:
             # back to original state
-            self.context.setPollType(old_pollType)
+            self.context.poll_type = old_pollType
             self.context._update_after_edit(idxs=['pollType'])
             api.portal.show_message(msg, type='warning')
 
@@ -134,7 +134,7 @@ class ItemVotePollTypeView(ItemPollTypeView):
         if not self.context._mayChangeAttendees():
             return []
         pollType = self.context.get_item_votes(self.vote_number).get(
-            'poll_type', self.context.getPollType())
+            'poll_type', self.context.poll_type)
         return [term for term in self.vocab
                 if term.value not in [pollType, 'no_vote']]
 
@@ -173,7 +173,7 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
     def _changePollType(self, new_value):
         ''' '''
         old_pollType = self.context.get_item_votes(self.vote_number).get(
-            'poll_type', self.context.getPollType())
+            'poll_type', self.context.poll_type)
         if self.validate_new_poll_type(old_pollType, new_value):
             return
         # set new vote pollType

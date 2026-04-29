@@ -284,7 +284,7 @@ class ItemToDiscussView(BrowserView):
     def __call__parent_cachekey(method, self):
         '''cachekey method for self.__call__.'''
         # check also on portal_url as path to image is cached
-        return self.portal_url, self.context.getToDiscuss(), \
+        return self.portal_url, self.context.to_discuss, \
             self.mayEdit(), self.reviewerMayAskDiscussion()
 
     @ram.cache(__call__parent_cachekey)
@@ -313,7 +313,7 @@ class ItemToDiscussView(BrowserView):
 
     def reviewerMayAskDiscussion(self):
         """Do we use the "reviewer may ask item discussion" ?"""
-        return not self.context.getToDiscuss() and \
+        return not self.context.to_discuss and \
             "askDiscussItem" in self.cfg.mail_item_events and \
             self.context.hasMeeting() and \
             not self.context.is_decided(self.cfg) and \

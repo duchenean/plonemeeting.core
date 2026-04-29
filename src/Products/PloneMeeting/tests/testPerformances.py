@@ -234,7 +234,7 @@ class testPerformances(PloneMeetingTestCase):
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True, as_uids=False)
         # make 25 items sendable to another MC
         for item in items[0:25]:
-            item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+            item.other_meeting_configs_clonable_to = (self.meetingConfig2.getId(), )
             item.reindexObject(idxs=['sentToInfos', ])
 
         # create meeting in cfg2 in which items will be presented

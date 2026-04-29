@@ -34,7 +34,7 @@ class ItemEmergencyView(BrowserView):
         # we base our actions on avaialble terms in the MeetingItem.emergency field vocabulary
         emergencies = self.context.listEmergencies()
         emergencyKeys = emergencies.keys()
-        currentEmergency = self.context.getEmergency()
+        currentEmergency = self.context.emergency
         # now check if user can ask emergency if it is not already the case
         if not self.context.adapted().mayAskEmergency():
             emergencyKeys.remove('emergency_asked')
@@ -140,7 +140,7 @@ class ItemEmergencyChangeForm(form.Form):
         itemEmergencyView = self.context.unrestrictedTraverse('@@item-emergency')
         if new_emergency_value not in itemEmergencyView.listSelectableEmergencies():
             raise Unauthorized
-        self.context.setEmergency(new_emergency_value)
+        self.context.emergency = new_emergency_value
         # add a line to the item's emergency_change_history
         add_event_to_history(
             self.context,

@@ -752,6 +752,43 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
     history_type = 'data_changes'
     highlight_last_comment = False
 
+    _DX_WIDGET_MAP = None
+
+    def _get_dx_widget_map(self):
+        if PMDataChangesHistoryAdapter._DX_WIDGET_MAP is None:
+            from plone.app.textfield import RichText as RichTextField
+            from zope import schema as zschema
+            PMDataChangesHistoryAdapter._DX_WIDGET_MAP = {
+                RichTextField: 'RichWidget',
+                zschema.Bool: 'BooleanWidget',
+                zschema.Text: 'TextAreaWidget',
+                zschema.Choice: 'SelectionWidget',
+                zschema.List: 'MultiSelectionWidget',
+                zschema.Tuple: 'MultiSelectionWidget',
+            }
+        return PMDataChangesHistoryAdapter._DX_WIDGET_MAP
+
+    def _get_widget_name(self, name):
+        at_field = getattr(self.context, 'getField', lambda n: None)(name)
+        if at_field is not None:
+            return at_field.widget.getName()
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        from plone.dexterity.utils import iterSchemata
+        dx_name = _at_to_dx(name)
+        for iface in iterSchemata(self.context):
+            if dx_name in iface:
+                for field_type, widget_name in self._get_dx_widget_map().items():
+                    if isinstance(iface[dx_name], field_type):
+                        return widget_name
+                return 'StringWidget'
+        return 'StringWidget'
+
+    def _get_vocabulary_values(self, name):
+        at_field = getattr(self.context, 'getField', lambda n: None)(name)
+        if at_field is not None:
+            return at_field.Vocabulary(self.context)
+        return None
+
     def get_history_data(self):
         """WF history is mixed with data_changes history."""
         history = super(PMDataChangesHistoryAdapter, self).get_history_data()
@@ -772,15 +809,12 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
             new_event['changes'] = {}
             new_event['type'] = self.history_type
             for name, oldValue in full_datachanges_history[i]['changes'].iteritems():
-                # B.2.x TODO: AT widget introspection — switch to DX schema/widget lookup once
-                # MeetingItem and MeetingConfig are fully on Dexterity.
-                widgetName = self.context.getField(name).widget.getName()
+                widgetName = self._get_widget_name(name)
                 if widgetName == 'RichWidget':
                     if xhtmlContentIsEmpty(oldValue):
                         val = '-'
                     else:
                         newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
-                        # Compute the diff between oldValue and newValue
                         iMsg, dMsg = getHistoryTexts(self.context, new_event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
                         val = comparator.get()
@@ -792,14 +826,15 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     val = oldValue.replace('\r', '').replace('\n', '<br/>')
                     new_event['changes'][name] = val
                 elif widgetName == 'SelectionWidget':
-                    allValues = self.context.getField(name).Vocabulary(self.context)
-                    val = allValues.getValue(oldValue or '')
+                    allValues = self._get_vocabulary_values(name)
+                    val = allValues.getValue(oldValue or '') if hasattr(allValues, 'getValue') else '-'
                     new_event['changes'][name] = val or '-'
                 elif widgetName == 'MultiSelectionWidget':
-                    allValues = self.context.getField(name).Vocabulary(self.context)
-                    val = [allValues.getValue(v) for v in oldValue]
-                    # remove None in val in case we have old values that
-                    # does not exist anymore in allValues
+                    allValues = self._get_vocabulary_values(name)
+                    if hasattr(allValues, 'getValue'):
+                        val = [allValues.getValue(v) for v in oldValue]
+                    else:
+                        val = list(oldValue)
                     val = [v for v in val if v is not None]
                     if not val:
                         val = '-'

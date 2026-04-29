@@ -308,9 +308,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setProposingGroupWithGroupInCharge(
-            item.Vocabulary('proposingGroupWithGroupInCharge')[0][0])
-        self.assertEqual(item.getProposingGroupWithGroupInCharge(),
+        from zope.component import queryUtility
+        from zope.schema.interfaces import IVocabularyFactory
+        vocab = queryUtility(
+            IVocabularyFactory,
+            'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary')
+        item.proposing_group_with_group_in_charge = list(vocab(item))[0].value
+        self.assertEqual(item.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getGroupsInCharge(), [self.vendors_uid])
@@ -320,19 +324,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failIf(self.developers_creators in self.member.getGroups())
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
-                         item.getProposingGroupWithGroupInCharge())
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
+                         item.proposing_group_with_group_in_charge)
         self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.vendors_uid])
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
-        self.assertNotEqual(clonedItem.getProposingGroupWithGroupInCharge(),
-                            item.getProposingGroupWithGroupInCharge())
+        self.assertNotEqual(clonedItem.proposing_group_with_group_in_charge,
+                            item.proposing_group_with_group_in_charge)
         self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
 
     def test_pm_PasteItem(self):
@@ -696,7 +700,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
@@ -725,7 +729,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
@@ -754,7 +758,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')

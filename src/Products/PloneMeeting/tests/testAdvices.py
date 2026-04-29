@@ -3651,7 +3651,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.contents_kept_on_sent_to_other_mc = ('advices',)
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
-        item1.setOtherMeetingConfigsClonableTo((cfg2_id, ))
+        item1.other_meeting_configs_clonable_to = (cfg2_id, )
         # give advice
         createContentInContainer(item1,
                                  'meetingadvice',
@@ -3954,7 +3954,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2_id = cfg2.getId()
         cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'))
-        item1.setOtherMeetingConfigsClonableTo((cfg2_id, ))
+        item1.other_meeting_configs_clonable_to = (cfg2_id, )
         item3 = item1.cloneToOtherMeetingConfig(cfg2_id)
         self.assertNotEqual(item1.portal_type, item3.portal_type)
         # advices are kept

@@ -51,8 +51,8 @@ class Discuss(BrowserView):
         if not _checkPermission(ModifyPortalContent, self.context):
             raise Unauthorized
 
-        toDiscuss = not self.context.getToDiscuss()
-        self.context.setToDiscuss(toDiscuss)
+        toDiscuss = not self.context.to_discuss
+        self.context.to_discuss = toDiscuss
         self.context.adapted().onDiscussChanged(toDiscuss)
 
         if toDiscuss:
@@ -97,8 +97,8 @@ class Discuss(BrowserView):
                 item.translate(msgId, domain='PloneMeeting'))
         elif discussAction == 'toggle':
             # I must toggle the "toDiscuss" switch on the item
-            toDiscuss = not item.getToDiscuss()
-            item.setToDiscuss(toDiscuss)
+            toDiscuss = not item.to_discuss
+            item.to_discuss = toDiscuss
             item.adapted().onDiscussChanged(toDiscuss)
         self.context._update_after_edit(idxs=['to_discuss'])
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
@@ -121,7 +121,7 @@ class TakenOverBy(BrowserView):
 
         memberId = get_current_user_id()
 
-        currentlyTakenOverBy = self.context.getTakenOverBy()
+        currentlyTakenOverBy = self.context.taken_over_by
         if currentlyTakenOverBy and \
            not currentlyTakenOverBy == takenOverByFrom and \
            not currentlyTakenOverBy == memberId:
@@ -238,9 +238,9 @@ class BudgetRelated(BrowserView):
         if not _checkPermission(WriteBudgetInfos, self.context):
             raise Unauthorized
 
-        beforeToggleBudgetRelated = self.context.getBudgetRelated()
+        beforeToggleBudgetRelated = self.context.budget_related
         # toggle value
-        self.context.setBudgetRelated(not beforeToggleBudgetRelated)
+        self.context.budget_related = not beforeToggleBudgetRelated
 
         if beforeToggleBudgetRelated:
             filename = 'budgetRelatedNo.png'
@@ -446,7 +446,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
-            elif vote_infos.get('poll_type') == self.context.getPollType():
+            elif vote_infos.get('poll_type') == self.context.poll_type:
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
                 if self.get_cached_vote_is_secret(vote_number):
                     vote_values = [vote_value for vote_value, vote_count
@@ -485,7 +485,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         if context_uid not in str(redefined_item_attendees):
             redefined_item_attendees = []
         may_change_attendees = self.context._mayChangeAttendees()
-        poll_type = self.context.getPollType()
+        poll_type = self.context.poll_type
         cache_date = self.request.get('cache_date', None)
         # when using a cache_date, make sure cache is invalidated
         if cache_date:

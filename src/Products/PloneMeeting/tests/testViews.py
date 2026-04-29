@@ -1428,7 +1428,7 @@ class testViews(PloneMeetingTestCase):
             ['-', 'xxx']
         )
 
-        item.setPreferredMeeting(meeting.UID())
+        item.preferred_meeting = meeting.UID()
         self.assertListEqual(  # standard case, a preferred meeting date is expected
             [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
             ['1 january 2019', meeting.date]
