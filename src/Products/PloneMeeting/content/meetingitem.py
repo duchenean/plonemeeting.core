@@ -790,14 +790,37 @@ class MeetingItemSchemaPolicy(DexteritySchemaPolicy):
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
 
-    B.2.0 ships only the schema and a placeholder class; the FTI swap and
-    AT compatibility shims (``getField``, ``processForm``, ``validate``,
-    ``Title`` override, business methods) land in B.2.1+. Until then,
-    the active runtime class is still ``Products.PloneMeeting.MeetingItem``
-    (Archetypes).
+    No AT compatibility shims (``getField``, ``processForm``, ``validate``,
+    ``__init__`` kwargs translator) — every caller is being refactored to
+    direct DX-style attribute access in B.2.2-B.2.7.
+
+    Business methods are ported in subsequent sub-phases. Until B.2.8,
+    the AT module ``Products/PloneMeeting/MeetingItem.py`` still exists
+    in the source tree but is no longer instantiated at runtime.
     """
 
     implements(IMeetingItem)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
+
+
+class MeetingItemTemplate(MeetingItem):
+    """Item template subtype — same schema, different portal_type.
+
+    Distinguished from regular ``MeetingItem`` by its containment (lives
+    under ``MeetingConfig/itemtemplates``) and by helpers that key off
+    ``portal_type``. Inheriting the schema avoids duplication.
+    """
+
+    meta_type = 'MeetingItemTemplate'
+
+
+class MeetingItemRecurring(MeetingItem):
+    """Recurring item subtype — same schema, different portal_type.
+
+    Auto-inserted into meetings on workflow transitions; lives under
+    ``MeetingConfig/recurringitems``.
+    """
+
+    meta_type = 'MeetingItemRecurring'
