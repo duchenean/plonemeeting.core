@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.28.16 (unreleased)
-----------------------
+6.0.0 (unreleased)
+------------------
 
 - Removed dead/dev-only `install_requires` entries: `archetypes.schematuning`
   (AT-only perf overlay, irrelevant once `MeetingItem`/`MeetingConfig`
