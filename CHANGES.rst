@@ -13,6 +13,16 @@ Changelog
   Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
   [duchenean]
 
+- Disabled the cron4plone integration (`@@pm-night-tasks` registration
+  in `setuphandlers`, ZCML include, profile dependency). Scheduled
+  tasks are no longer triggered automatically; reimplement with an
+  external scheduler in Stage D. Also switched annex preview
+  generation in `ToolPloneMeeting.convertAnnexes` and
+  `events._annexToPrintChanged` from `collective.documentviewer.async.queueJob`
+  to direct synchronous `Converter(annex)()` calls so `zc.async` /
+  `plone.app.async` can be dropped. All disabled code preserved as
+  comments tagged ``P6 migration:`` and tracked in repo-root
+  ``MIGRATION_REIMPLEMENT.md``.
 - Disabled the CKEditor stack (`collective.ckeditor` + custom
   `ckeditor/imagerotate` plugin + `PMRichTextWidget` AjaxSave hooks
   + `PMCKFinder`/`PMAjaxSave` overrides + setuphandlers
@@ -21,6 +31,12 @@ Changelog
   tagged ``P6 migration:`` so the TinyMCE setup in Stage D can
   cherry-pick the menu styles, AjaxSave logic, and quick-edit
   bindings. Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
+- Disabled AMQP/scan_id integration (`imio.zamqp.pm`, `imio.zamqp.core`,
+  `collective.zamqp`, `imio.dataexchange.core`). Code preserved as
+  comments tagged ``P6 migration:`` and tracked in repo-root
+  ``MIGRATION_REIMPLEMENT.md`` for reactivation in the Plone 6 cutover.
+- Dropped `imio.pm.ws` (SOAP webservice). External consumers should
+  migrate to `plonemeeting.restapi`.
   [duchenean]
 
 

@@ -32,10 +32,10 @@
   <include zcml:condition="installed collective.solr" package="collective.solr" />
   <include package="dexterity.localrolesfield" />
   <include package="ftw.labels" />
-  <include package="imio.pm.ws" />
   <include package="imio.dashboard" />
   <include package="imio.webspellchecker" />
-  <include package="imio.zamqp.pm" />
+  <!-- P6 migration: AMQP integration to be reimplemented in Stage D. -->
+  <!-- <include package="imio.zamqp.pm" /> -->
   <include package="plone.app.caching" />
   <include package="plone.app.contenttypes" />
   <include package="plone.app.dexterity" />
@@ -45,7 +45,8 @@
   <include package="plonemeeting.restapi" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.CPUtils"/>
-  <include package="Products.cron4plone" />
+  <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
+  <!-- <include package="Products.cron4plone" /> -->
   <include package="Products.DataGridField" />
   <include package=".behaviors" />
   <include package=".browser" />

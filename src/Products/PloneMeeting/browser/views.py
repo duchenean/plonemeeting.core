@@ -19,7 +19,8 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_ordinal_clusters
-from imio.zamqp.core.utils import scan_id_barcode
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
@@ -838,44 +839,56 @@ class BaseDGHV(object):
         return res.encode('utf-8')
 
     def get_scan_id(self):
-        """We get scan_id to use on the template.
-           - either we have a stored annex having a used_pod_template_id that corresponds
-           to self.pod_template.id;
-           - or we get the next_scan_id."""
+        """Return the stored annex scan_id when available, else None.
+           P6 migration: AMQP-driven `next_scan_id` fallback removed —
+           reimplement in Stage D. Original logic preserved below."""
         for annex in get_annexes(self.context):
             if getattr(annex, 'used_pod_template_id', None) == self.pod_template.getId():
-                # annex must have a scan_id in this case or something went wrong
-                if not annex.scan_id:
-                    raise Exception(
-                        "Found annex at {0} with correct 'used_pod_template_id' "
-                        "but without a 'scan_id'!".format(
-                            '/'.join(annex.getPhysicalPath())))
-                # make the 'item_scan_id' value available in the REQUEST
-                self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
-                return annex.scan_id
-        # no annex found we get the next_scan_id
-        # we import here because imio.zamqp.core could not be there
-        # as amqp is activated when necessary
-        from imio.zamqp.core.utils import next_scan_id
-        scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
-        # append a special value to scan_id stored in REQUEST if it is not a stored value
-        if self.request.get('store_as_annex', '0') != '1':
-            temp_qr_code_msg = translate(
-                "Temporary QR code!", domain='PloneMeeting', context=self.request)
-            scan_id = u'{0}\n[{1}]'.format(scan_id, temp_qr_code_msg)
-        # make the 'item_scan_id' value available in the REQUEST
-        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
-        return scan_id
+                if annex.scan_id:
+                    self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
+                    return annex.scan_id
+        return None
+
+        # P6 migration: AMQP integration to be reimplemented in Stage D.
+        # for annex in get_annexes(self.context):
+        #     if getattr(annex, 'used_pod_template_id', None) == self.pod_template.getId():
+        #         # annex must have a scan_id in this case or something went wrong
+        #         if not annex.scan_id:
+        #             raise Exception(
+        #                 "Found annex at {0} with correct 'used_pod_template_id' "
+        #                 "but without a 'scan_id'!".format(
+        #                     '/'.join(annex.getPhysicalPath())))
+        #         # make the 'item_scan_id' value available in the REQUEST
+        #         self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
+        #         return annex.scan_id
+        # # no annex found we get the next_scan_id
+        # # we import here because imio.zamqp.core could not be there
+        # # as amqp is activated when necessary
+        # from imio.zamqp.core.utils import next_scan_id
+        # scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        # # append a special value to scan_id stored in REQUEST if it is not a stored value
+        # if self.request.get('store_as_annex', '0') != '1':
+        #     temp_qr_code_msg = translate(
+        #         "Temporary QR code!", domain='PloneMeeting', context=self.request)
+        #     scan_id = u'{0}\n[{1}]'.format(scan_id, temp_qr_code_msg)
+        # # make the 'item_scan_id' value available in the REQUEST
+        # self.request.set(ITEM_SCAN_ID_NAME, scan_id)
+        # return scan_id
 
     def print_scan_id_barcode(self, **kwargs):
-        """Helper that will call scan_id_barcode from imio.zamqp.core
-           and that will make sure that it is not called several times."""
-        context_uid = self.context.UID()
-        if context_uid in self.printed_scan_id_barcode:
-            raise Exception(SEVERAL_SAME_BARCODE_ERROR)
-        self.printed_scan_id_barcode.append(context_uid)
-        barcode = scan_id_barcode(self.context, **kwargs)
-        return barcode
+        """Stub: P6 migration — AMQP-driven barcode generation removed.
+           Reimplement in Stage D. Original logic preserved below."""
+        return None
+
+        # P6 migration: AMQP integration to be reimplemented in Stage D.
+        # """Helper that will call scan_id_barcode from imio.zamqp.core
+        #    and that will make sure that it is not called several times."""
+        # context_uid = self.context.UID()
+        # if context_uid in self.printed_scan_id_barcode:
+        #     raise Exception(SEVERAL_SAME_BARCODE_ERROR)
+        # self.printed_scan_id_barcode.append(context_uid)
+        # barcode = scan_id_barcode(self.context, **kwargs)
+        # return barcode
 
     def print_fullname(self, user_id):
         """ """

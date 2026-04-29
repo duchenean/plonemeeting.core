@@ -66,6 +66,7 @@
     url_expr="string:${object/absolute_url}/@@download" visible="True">
   <permission value="View"/>
  </action>
+ <!-- P6 migration: AMQP integration to be reimplemented in Stage D.
  <action title="Insert barcode"
          action_id="insert_barcode"
          category="object_buttons"
@@ -77,4 +78,5 @@
          visible="True">
   <permission value="View"/>
  </action>
+ -->
 </object>
