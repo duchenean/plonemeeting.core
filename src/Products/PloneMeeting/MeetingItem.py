@@ -2936,7 +2936,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(self)
-                wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), self.query_state())
+                wf_state = "%s__wfstate__%s" % (cfg.item_workflow, self.query_state())
             if value:
                 self.takenOverByInfos[wf_state] = value
             elif not value and wf_state in self.takenOverByInfos:
