@@ -5,6 +5,14 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
+- Disabled the `communesplone.layout` integration (dead theme overlay
+  with no Py3 release). No direct Python references existed; the
+  ZCML include, profile dependency, and ``install_requires`` entry
+  are commented for reactivation in Stage D if any of its features
+  (viewlets, CSS, profile actions) turn out to be still needed.
+  Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
+  [duchenean]
+
 - Disabled the cron4plone integration (`@@pm-night-tasks` registration
   in `setuphandlers`, ZCML include, profile dependency). Scheduled
   tasks are no longer triggered automatically; reimplement with an

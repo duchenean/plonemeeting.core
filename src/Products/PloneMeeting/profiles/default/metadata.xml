@@ -15,7 +15,8 @@
     <dependency>profile-collective.js.iframeresizer:default</dependency>
     <dependency>profile-collective.js.tablednd:default</dependency>
     <dependency>profile-collective.messagesviewlet:messages</dependency>
-    <dependency>profile-communesplone.layout:default</dependency>
+    <!-- P6 migration: communesplone.layout dropped; reimplement in Stage D if any feature is still needed. -->
+    <!-- <dependency>profile-communesplone.layout:default</dependency> -->
     <dependency>profile-dexterity.localrolesfield:default</dependency>
     <dependency>profile-ftw.labels:default</dependency>
     <dependency>profile-imio.annex:default</dependency>
