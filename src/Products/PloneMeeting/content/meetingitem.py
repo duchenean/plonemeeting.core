@@ -157,20 +157,20 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: python: here.attribute_is_used('category')
-    # AT vocabulary: 'listCategories' (instance method) — wrap in IVocabularyFactory in B.2.x.
+    # Reuses the existing ItemCategoriesVocabulary registered in B.1.
     category = schema.Choice(
         title=_(u'PloneMeeting_label_category', default=u'Category'),
         description=_(u'item_category_descr', default=u'Category'),
-        vocabulary=u'Products.PloneMeeting.vocabularies.item_categories_vocabulary',
+        vocabulary=u'Products.PloneMeeting.vocabularies.categoriesvocabulary',
         required=False,
     )
 
     # AT condition: python: here.attribute_is_used('classifier')
-    # AT vocabulary: 'listClassifiers' — wrap in IVocabularyFactory in B.2.x.
+    # Reuses the existing ItemClassifiersVocabulary registered in B.1.
     classifier = schema.Choice(
         title=_(u'PloneMeeting_label_classifier', default=u'Classifier'),
         description=_(u'item_classifier_descr', default=u'Classifier'),
-        vocabulary=u'Products.PloneMeeting.vocabularies.item_classifiers_vocabulary',
+        vocabulary=u'Products.PloneMeeting.vocabularies.classifiersvocabulary',
         required=False,
     )
 
@@ -192,7 +192,7 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: python: here.showEmergency()
-    # AT vocabulary: 'listEmergencies' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listEmergencies' — wrapped as IVocabularyFactory in B.2.1.
     emergency = schema.Choice(
         title=_(u'PloneMeeting_label_emergency', default=u'Emergency'),
         description=_(u'item_emergency_descr', default=u'Emergency'),
@@ -202,7 +202,7 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: not here.isDefinedInTool()
-    # AT vocabulary: 'listMeetingsAcceptingItems' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listMeetingsAcceptingItems' — wrapped as IVocabularyFactory in B.2.1.
     preferred_meeting = schema.Choice(
         title=_(u'PloneMeeting_label_preferredMeeting', default=u'Preferredmeeting'),
         description=_(u'preferred_meeting_descr', default=u'Preferredmeeting'),
@@ -219,7 +219,7 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: python: here.attribute_is_used('itemTags')
-    # AT vocabulary: 'listItemTags' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listItemTags' — wrapped as IVocabularyFactory in B.2.1.
     item_tags = schema.List(
         title=_(u'PloneMeeting_label_itemTags', default=u'Itemtags'),
         value_type=schema.Choice(
@@ -328,7 +328,7 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: python: here.attribute_is_used('itemInitiator')
-    # AT vocabulary: 'listItemInitiators' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listItemInitiators' — wrapped as IVocabularyFactory in B.2.1.
     item_initiator = schema.List(
         title=_(u'PloneMeeting_label_itemInitiator', default=u'Iteminitiator'),
         description=_(u'item_initiator_descr', default=u'Iteminitiator'),
@@ -476,7 +476,7 @@ class IMeetingItem(IMeetingItemMarker):
     )
 
     # AT condition: here.isDefinedInTool(item_type='recurring')
-    # AT vocabulary: 'listMeetingTransitions' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listMeetingTransitions' — wrapped as IVocabularyFactory in B.2.1.
     meeting_transition_inserting_me = schema.Choice(
         title=_(u'PloneMeeting_label_meetingTransitionInsertingMe',
                 default=u'Meetingtransitioninsertingme'),
@@ -739,7 +739,7 @@ class IMeetingItem(IMeetingItemMarker):
 
     # AT condition: here.attribute_is_used('completeness') and
     #   (here.adapted().mayEvaluateCompleteness() or here.adapted().mayAskCompletenessEvalAgain())
-    # AT vocabulary: 'listCompleteness' — wrap in IVocabularyFactory in B.2.x.
+    # AT vocabulary: 'listCompleteness' — wrapped as IVocabularyFactory in B.2.1.
     completeness = schema.Choice(
         title=_(u'PloneMeeting_label_completeness', default=u'Completeness'),
         description=_(u'item_completeness_descr', default=u'Completeness'),

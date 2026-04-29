@@ -4416,3 +4416,232 @@ class PollTypesVocabularyAlias(PollTypesVocabulary):
 
 
 PollTypesVocabularyAliasFactory = PollTypesVocabularyAlias()
+
+
+# ---------------------------------------------------------------------------
+# Vocabularies for the DX MeetingItem schema (B.2.1)
+# ---------------------------------------------------------------------------
+#
+# These factories wrap the AT instance methods that lived on
+# ``Products.PloneMeeting.MeetingItem`` so the DX schema can refer to
+# them by name. ``listCategories`` / ``listClassifiers`` reuse the
+# existing ``ItemCategoriesVocabulary`` / ``ItemClassifiersVocabulary``
+# (registered earlier under the legacy ``categoriesvocabulary`` /
+# ``classifiersvocabulary`` names) — no extra factory is needed.
+
+class ItemEmergenciesVocabulary(object):
+    """Vocabulary for ``MeetingItem.emergency``.
+
+    Replaces AT method ``MeetingItem.listEmergencies``.
+    """
+    implements(IVocabularyFactory)
+
+    _terms = (
+        'no_emergency',
+        'emergency_asked',
+        'emergency_accepted',
+        'emergency_refused',
+    )
+
+    def __call__(self, context):
+        request = getattr(context, 'REQUEST', None)
+        return SimpleVocabulary([
+            SimpleTerm(value=t,
+                       token=t,
+                       title=translate(t, domain='PloneMeeting', context=request))
+            for t in self._terms
+        ])
+
+
+ItemEmergenciesVocabularyFactory = ItemEmergenciesVocabulary()
+
+
+class ItemCompletenessVocabulary(object):
+    """Vocabulary for ``MeetingItem.completeness``.
+
+    Replaces AT method ``MeetingItem.listCompleteness``.
+    """
+    implements(IVocabularyFactory)
+
+    _terms = (
+        'completeness_not_yet_evaluated',
+        'completeness_complete',
+        'completeness_incomplete',
+        'completeness_evaluation_asked_again',
+        'completeness_evaluation_not_required',
+    )
+
+    def __call__(self, context):
+        request = getattr(context, 'REQUEST', None)
+        return SimpleVocabulary([
+            SimpleTerm(value=t,
+                       token=t,
+                       title=translate(t, domain='PloneMeeting', context=request))
+            for t in self._terms
+        ])
+
+
+ItemCompletenessVocabularyFactory = ItemCompletenessVocabulary()
+
+
+class ItemTagsVocabulary(object):
+    """Vocabulary for ``MeetingItem.item_tags``.
+
+    Replaces AT method ``MeetingItem.listItemTags``. Tags live in
+    ``MeetingConfig.all_item_tags`` (newline-separated text).
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return SimpleVocabulary([])
+        terms = []
+        for tag in (cfg.all_item_tags or u'').split('\n'):
+            tag = tag.strip()
+            if not tag:
+                continue
+            token = tag.encode('utf-8') if isinstance(tag, unicode) else tag
+            terms.append(SimpleTerm(value=tag, token=token, title=tag))
+        return SimpleVocabulary(terms)
+
+
+ItemTagsVocabularyFactory = ItemTagsVocabulary()
+
+
+class ItemMeetingsAcceptingItemsVocabulary(object):
+    """Vocabulary for ``MeetingItem.preferred_meeting``.
+
+    Replaces AT method ``MeetingItem.listMeetingsAcceptingItems``. Lists
+    the meetings of the same MeetingConfig that are still accepting
+    items, plus a leading ``ITEM_NO_PREFERRED_MEETING_VALUE`` entry.
+    Falls back to the currently stored preferred meeting if it is no
+    longer in the active set, so editing an old item does not lose the
+    information.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return SimpleVocabulary([])
+
+        terms = []
+        seen = set()
+        # while passing empty review_states, the AT helper computes
+        # them based on current user permissions.
+        for brain in cfg.getMeetingsAcceptingItems(review_states=[]):
+            label = u"{0} ({1})".format(
+                tool.format_date(brain.meeting_date, with_hour=True),
+                translate(brain.review_state, domain='plone',
+                          context=getattr(context, 'REQUEST', None)),
+            )
+            terms.append(SimpleTerm(value=brain.UID, token=brain.UID, title=label))
+            seen.add(brain.UID)
+
+        # Preserve the stored preferred meeting if it isn't in the active
+        # set anymore. ``preferred_meeting`` is the DX attribute (post-swap);
+        # AT items still expose it via getPreferredMeeting().
+        preferred = getattr(context, 'preferred_meeting', None)
+        if preferred is None and hasattr(context, 'getPreferredMeeting'):
+            preferred = context.getPreferredMeeting()
+        if preferred and preferred != ITEM_NO_PREFERRED_MEETING_VALUE \
+                and preferred not in seen:
+            from imio.helpers.content import uuidToCatalogBrain
+            brain = uuidToCatalogBrain(preferred, unrestricted=True)
+            if brain:
+                label = u"{0} ({1})".format(
+                    tool.format_date(brain.meeting_date, with_hour=True),
+                    translate(brain.review_state, domain='plone',
+                              context=getattr(context, 'REQUEST', None)),
+                )
+                terms.append(SimpleTerm(value=brain.UID, token=brain.UID,
+                                        title=label))
+
+        terms.reverse()
+        terms.insert(0, SimpleTerm(
+            value=ITEM_NO_PREFERRED_MEETING_VALUE,
+            token=ITEM_NO_PREFERRED_MEETING_VALUE,
+            title=u'Any meeting',
+        ))
+        return SimpleVocabulary(terms)
+
+
+ItemMeetingsAcceptingItemsVocabularyFactory = ItemMeetingsAcceptingItemsVocabulary()
+
+
+class ItemMeetingTransitionsVocabulary(object):
+    """Vocabulary for ``MeetingItem.meeting_transition_inserting_me``.
+
+    Replaces AT method ``MeetingItem.listMeetingTransitions``. Used by
+    recurring items to declare which meeting WF transition causes them
+    to be inserted into the meeting. Distinct from
+    ``MeetingTransitionsVocabulary`` (which wraps the cfg-side method);
+    this one prepends a special ``_init_`` value meaning "right after
+    the meeting is created".
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return SimpleVocabulary([])
+        terms = [SimpleTerm(
+            value='_init_',
+            token='_init_',
+            title=translate('_init_', domain='plone',
+                            context=getattr(context, 'REQUEST', None)),
+        )]
+        cfg_dl = cfg.listMeetingTransitions()
+        for value in cfg_dl:
+            label = cfg_dl.getValue(value)
+            token = value.encode('utf-8') if isinstance(value, unicode) else value
+            terms.append(SimpleTerm(value=value, token=token, title=label))
+        return SimpleVocabulary(terms)
+
+
+ItemMeetingTransitionsVocabularyFactory = ItemMeetingTransitionsVocabulary()
+
+
+class ItemInitiatorsVocabulary(object):
+    """Vocabulary for ``MeetingItem.item_initiator``.
+
+    Replaces AT method ``MeetingItem.listItemInitiators``. An initiator
+    is either an organization or a held_position; both are picked from
+    ``MeetingConfig.getOrderedItemInitiators(theObjects=True)``, with
+    a fallback that re-injects any currently-stored UID that has been
+    de-selected from the cfg.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return SimpleVocabulary([])
+
+        ordered = cfg.getOrderedItemInitiators()
+        stored = getattr(context, 'item_initiator', None)
+        if stored is None and hasattr(context, 'getItemInitiator'):
+            stored = context.getItemInitiator()
+        stored = list(stored or [])
+        missing_uids = [uid for uid in stored if uid not in ordered]
+
+        objs = list(cfg.getOrderedItemInitiators(theObjects=True))
+        if missing_uids:
+            objs.extend(uuidsToObjects(missing_uids, unrestricted=True))
+
+        terms = []
+        for obj in objs:
+            uid = obj.UID()
+            title = obj.Title() if obj.portal_type == 'organization' \
+                else obj.get_short_title()
+            terms.append(SimpleTerm(value=uid, token=uid, title=title))
+        return SimpleVocabulary(terms)
+
+
+ItemInitiatorsVocabularyFactory = ItemInitiatorsVocabulary()

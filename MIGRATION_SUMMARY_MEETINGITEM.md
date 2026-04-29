@@ -10,14 +10,14 @@ already-landed `MeetingConfig` migration is `MIGRATION_SUMMARY_MEETINGCONFIG.md`
 | Phase | Scope | State |
 |---|---|---|
 | B.2.0 | DX schema declaration (`content/meetingitem.py`), schema policy, ZCML utility wiring | **landed** |
-| B.2.1 | FTI swap, AT compatibility shims, dual-class registration so test layer can stand both up | pending |
-| B.2.2 | Caller sweep across core modules (`events.py`, `utils.py`, `adapters.py`, `vocabularies.py`, `indexes.py`, `MeetingConfig.py`, `Meeting.py`, `ToolPloneMeeting.py`) | pending |
+| B.2.1 | Infrastructure prep: 6 new vocabulary factories, DX `IObjectAddedEvent` subscriber. **No AT compat shims** — explicit project preference; refactor callers instead. **No FTI swap** — held to end of B.2 so CI stays green. | **landed** |
+| B.2.2 | Caller sweep across core modules (`events.py`, `utils.py`, `adapters.py`, `indexes.py`, `Meeting.py`, `ToolPloneMeeting.py`) | pending |
 | B.2.3 | Caller sweep across browser layer (`browser/views.py`, `browser/overrides.py`, etc.) | pending |
 | B.2.4 | Test suite (`tests/testMeetingItem.py`, `testWFAdaptations.py`, `testViews.py`) | pending |
 | B.2.5 | Templates (`browser/templates/*.pt`, `skins/plonemeeting_templates/*.pt` — `meetingitem_view.pt`, `meetingitem_edit.pt`) | pending |
 | B.2.6 | Replace `Products.DataGridField` with `collective.z3cform.datagridfield` for grid-style fields | pending |
 | B.2.7 | Subtypes (`MeetingItemTemplate`, `MeetingItemRecurring`) re-derive cleanly | pending |
-| B.2.8 | Final cleanup, scrub redundant `MeetingItem.py` self-references, document `getCustomFields(2)` decision | pending |
+| B.2.8 | FTI swap to Dexterity (last sub-phase). Final cleanup, scrub redundant `MeetingItem.py` self-references, document `getCustomFields(2)` decision. | pending |
 
 ## Field renames (camelCase → snake_case)
 
@@ -142,25 +142,20 @@ constant) — no semantic regression while AT remains the active class.
 ## Vocabularies
 
 Most AT fields already use `vocabulary_factory='Products.PloneMeeting.vocabularies.<name>'`,
-which the DX schema can reuse verbatim. A handful still use
-AT-style `vocabulary='listFoo'` (instance method on the AT class) and
-need to be wrapped in an `IVocabularyFactory`:
+which the DX schema can reuse verbatim. The fields that originally
+used `vocabulary='listFoo'` (AT instance method) are now wired to
+`IVocabularyFactory` factories — added in **B.2.1**:
 
-| AT method | DX vocabulary name (planned) |
-|---|---|
-| `listCategories` | `Products.PloneMeeting.vocabularies.item_categories_vocabulary` |
-| `listClassifiers` | `Products.PloneMeeting.vocabularies.item_classifiers_vocabulary` |
-| `listEmergencies` | `Products.PloneMeeting.vocabularies.item_emergencies_vocabulary` |
-| `listMeetingsAcceptingItems` | `Products.PloneMeeting.vocabularies.item_meetings_accepting_items_vocabulary` |
-| `listItemTags` | `Products.PloneMeeting.vocabularies.item_tags_vocabulary` |
-| `listItemInitiators` | `Products.PloneMeeting.vocabularies.item_initiators_vocabulary` |
-| `listMeetingTransitions` | `Products.PloneMeeting.vocabularies.item_meeting_transitions_vocabulary` |
-| `listCompleteness` | `Products.PloneMeeting.vocabularies.item_completeness_vocabulary` |
-
-The schema in B.2.0 references these names. The factories will be added
-to `vocabularies.py` (and registered in `vocabularies.zcml`) in B.2.1
-together with the FTI swap, since they'll only be exercised once a DX
-instance of `MeetingItem` exists.
+| AT method | DX vocabulary name | Source (B.2.1) |
+|---|---|---|
+| `listCategories` | `Products.PloneMeeting.vocabularies.categoriesvocabulary` | reuse pre-existing `ItemCategoriesVocabulary` |
+| `listClassifiers` | `Products.PloneMeeting.vocabularies.classifiersvocabulary` | reuse pre-existing `ItemClassifiersVocabulary` |
+| `listEmergencies` | `Products.PloneMeeting.vocabularies.item_emergencies_vocabulary` | new `ItemEmergenciesVocabulary` |
+| `listMeetingsAcceptingItems` | `Products.PloneMeeting.vocabularies.item_meetings_accepting_items_vocabulary` | new `ItemMeetingsAcceptingItemsVocabulary` |
+| `listItemTags` | `Products.PloneMeeting.vocabularies.item_tags_vocabulary` | new `ItemTagsVocabulary` |
+| `listItemInitiators` | `Products.PloneMeeting.vocabularies.item_initiators_vocabulary` | new `ItemInitiatorsVocabulary` |
+| `listMeetingTransitions` (item-side) | `Products.PloneMeeting.vocabularies.item_meeting_transitions_vocabulary` | new `ItemMeetingTransitionsVocabulary` (distinct from cfg-side `MeetingTransitionsVocabulary`) |
+| `listCompleteness` | `Products.PloneMeeting.vocabularies.item_completeness_vocabulary` | new `ItemCompletenessVocabulary` |
 
 ## Permissions
 
@@ -277,18 +272,20 @@ for the old camelCase names.
 `Products.MeetingCommunes` and friends, `imio.zamqp.pm`,
 `imio.dms.mail`) may also have accessor calls — audit those separately.
 
-## Event wiring (planned)
+## Event wiring
 
 | Event | Phase | DX subscriber |
 |---|---|---|
-| Object added | B.2.1 | `.content.meetingitem.IMeetingItem` ↔ `zope.lifecycleevent.IObjectAddedEvent` |
-| Object modified | B.2.1 | `.content.meetingitem.IMeetingItem` ↔ `zope.lifecycleevent.IObjectModifiedEvent` |
-| Object will be removed | B.2.1 | `.interfaces.IMeetingItem` (kept — schema iface extends marker, parent subscribers still apply) |
+| Object added | **landed B.2.1** | `.content.meetingitem.IMeetingItem` ↔ `zope.lifecycleevent.IObjectAddedEvent` → `events.onItemInitialized` |
+| Object modified | n/a | `.interfaces.IMeetingItem` ↔ `IObjectModifiedEvent` → `events.onItemModified` (already exists, fires for DX too via marker iface inheritance) |
+| Object will be removed | n/a | `.interfaces.IMeetingItem` (already exists, schema iface extends marker, parent subscribers still apply) |
 
 The DX schema interface `content.meetingitem.IMeetingItem` extends the
-existing marker `interfaces.IMeetingItem`, so existing subscribers wired
-to the marker automatically apply to DX instances once the FTI swap
-lands.
+existing marker `interfaces.IMeetingItem`, so all existing subscribers
+wired to the marker automatically apply to DX instances. The B.2.1
+addition specifically targets ``IObjectAddedEvent`` because the AT
+``IObjectInitializedEvent`` has no DX counterpart — without the new
+subscriber, ``onItemInitialized`` would not run on DX item creation.
 
 ## View migration (planned, B.2.5)
 
