@@ -26,7 +26,8 @@
     <dependency>profile-Products.CPUtils:default</dependency>
     <dependency>profile-Products.DataGridField:default</dependency>
     <dependency>profile-Products.PasswordStrength:default</dependency>
-    <dependency>profile-Products.cron4plone:default</dependency>
+    <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
+    <!-- <dependency>profile-Products.cron4plone:default</dependency> -->
     <dependency>profile-plone.app.caching:default</dependency>
     <dependency>profile-plonemeeting.restapi:default</dependency>
   </dependencies>
