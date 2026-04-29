@@ -65,7 +65,7 @@ setup(name='Products.PloneMeeting',
           'collective.messagesviewlet',
           'collective.upgrade',
           'collective.usernamelogger',
-          'communesplone.layout',
+          # 'communesplone.layout',  # P6 migration: dead theme overlay, no Py3 release; reimplement in Stage D if any feature is still needed
           'dexterity.localrolesfield',
           'ftw.labels',
           'imio.annex',
