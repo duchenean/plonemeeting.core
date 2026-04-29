@@ -489,13 +489,13 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the indexAdvisers index and check that it is always consistent.
            Ask a delay and a non delay-aware advice.'''
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         # an advice can be given or edited when an item is 'proposed'
         cfg.item_advice_states = (self._stateMappingFor('proposed', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
@@ -1029,11 +1029,11 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.vendors_uid in item.adviceIndex)
         # now make 'vendors' advice automatically asked
         # it will be asked if item.budgetRelated is True
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'item/getBudgetRelated',
-              'for_item_created_from': '2012/01/01', }, ])
+              'for_item_created_from': '2012/01/01', }, ]
+        notify(ObjectModifiedEvent(cfg))
         # if the item is not budgetRelated, nothing happens
         item._update_after_edit()
         self.assertFalse(self.vendors_uid in item.adviceIndex)
@@ -1049,14 +1049,15 @@ class testAdvices(PloneMeetingTestCase):
         # the advice is only asked once and considered as automatic, aka not optional
         # but before, 'developers' advice is still considered as optional
         self.assertTrue(self.developers_uid in item.getOptionalAdvisers())
-        cfg.setCustomAdvisers([{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
                                 'org': self.vendors_uid,
                                 'gives_auto_advice_on': 'item/getBudgetRelated',
                                 'for_item_created_from': '2012/01/01', },
                                {'row_id': 'unique_id_456',
                                 'org': self.developers_uid,
                                 'gives_auto_advice_on': 'item/getBudgetRelated',
-                                'for_item_created_from': '2012/01/01', }, ])
+                                'for_item_created_from': '2012/01/01', }, ]
+        notify(ObjectModifiedEvent(cfg))
         item._update_after_edit()
         self.assertFalse(item.adviceIndex[self.vendors_uid]['optional'])
         # 'developers' asked advice is no more considered as optional even if in optionalAdvisers
@@ -1089,26 +1090,28 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.developers.groups_in_charge = [self.vendors_uid]
         # when using org_uid
-        cfg.setCustomAdvisers([
+        cfg.custom_advisers = [
             {'row_id': 'unique_id_123',
              'org': self.vendors_uid,
              'gives_auto_advice_on':
                 'python: item.getGroupsInCharge(theObjects=False, fromOrgIfEmpty=True, first=True) == org_uid',
              'for_item_created_from': '2012/01/01',
-             'delay': '10'}, ])
+             'delay': '10'}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # advice was asked
         self.assertTrue(self.vendors_uid in item.adviceIndex)
 
         # when using org
-        cfg.setCustomAdvisers([
+        cfg.custom_advisers = [
             {'row_id': 'unique_id_123',
              'org': self.vendors_uid,
              'gives_auto_advice_on':
                 'python: item.getGroupsInCharge(theObjects=True, fromOrgIfEmpty=True, first=True) == org',
              'for_item_created_from': '2012/01/01',
-             'delay': '10'}, ])
+             'delay': '10'}, ]
+        notify(ObjectModifiedEvent(cfg))
         item2 = self.create('MeetingItem')
         # advice was asked
         self.assertTrue(self.vendors_uid in item2.adviceIndex)
@@ -1118,11 +1121,12 @@ class testAdvices(PloneMeetingTestCase):
            on the item is True, the automatic advice is given then the condition
            on the item changes, the advice is kept.'''
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
                                 'org': self.vendors_uid,
                                 'gives_auto_advice_on': 'item/getBudgetRelated',
                                 'for_item_created_from': '2012/01/01',
-                                'delay': '10'}, ])
+                                'delay': '10'}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setBudgetRelated(True)
@@ -1151,13 +1155,14 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         # if nothing defined, getAutomaticAdvisersData returns nothing...
         self.failIf(item.getAutomaticAdvisersData())
         # define some customAdvisers
-        cfg.setCustomAdvisers([])
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'item/wrongMethod',
               'for_item_created_from': '2012/01/01',
@@ -1175,7 +1180,8 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'delay': '10',
-              'delay_label': ''}])
+              'delay_label': ''}]
+        notify(ObjectModifiedEvent(cfg))
         # one wrong condition (raising an error when evaluated) and one returning False
         self.failIf(item.getAutomaticAdvisersData())
         # now make the second row expression return True, set item.budgetRelated
@@ -1195,22 +1201,21 @@ class testAdvices(PloneMeetingTestCase):
         )
         # define one condition for which the date is > than current item CreationDate
         future_date = DateTime() + 1
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': future_date.strftime('%Y/%m/%d'),
               'delay': '',
               'delay_left_alert': '',
               'delay_label': '',
-              'userids': []}, ])
+              'userids': []}, ]
+        notify(ObjectModifiedEvent(cfg))
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(future_date > item.created())
         self.failIf(item.getAutomaticAdvisersData())
         # define an old 'for_item_created_from' and a 'for_item_created_until' in the future
         # the advice should be considered as automatic advice to ask
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
@@ -1218,7 +1223,8 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '',
               'delay_left_alert': '',
               'delay_label': '',
-              'userids': []}, ])
+              'userids': []}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(item.getAutomaticAdvisersData(),
                          [{'delay': '',
                            'delay_left_alert': '',
@@ -1231,8 +1237,7 @@ class testAdvices(PloneMeetingTestCase):
                            'userids': []}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
@@ -1240,7 +1245,8 @@ class testAdvices(PloneMeetingTestCase):
               'is_delay_calendar_days': '0',
               'delay': '',
               'delay_left_alert': '',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.failIf(item.getAutomaticAdvisersData())
 
     def test_pm_RowIdSetOnAdvices(self):
@@ -1248,7 +1254,8 @@ class testAdvices(PloneMeetingTestCase):
            the 'advice_row_id' field is correctly initialized on the meetingadvice object.'''
         # for now, make sure no custom adviser is defined
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
@@ -1267,12 +1274,12 @@ class testAdvices(PloneMeetingTestCase):
 
         # now remove it and make it a 'delay-aware' advice
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
-              'delay': '10'}, ])
+              'delay': '10'}, ]
+        notify(ObjectModifiedEvent(cfg))
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         item._update_after_edit()
         advice = createContentInContainer(item,
@@ -1284,13 +1291,13 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[advice.advice_group]['row_id'], 'unique_id_123')
 
         # same behaviour for an automatic advice
-        cfg.setCustomAdvisers(
-            list(cfg.custom_advisers) +
+        cfg.custom_advisers = (list(cfg.custom_advisers) +
             [{'row_id': 'unique_id_456',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
               'delay': ''}, ])
+        notify(ObjectModifiedEvent(cfg))
         item._update_after_edit()
         # the automatic advice was asked, now add it
         advice = createContentInContainer(item,
@@ -1329,14 +1336,14 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # configure one automatic adviser with delay
         # and ask one non-delay-aware optional adviser
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         data = {
             'title': 'Item to advice',
             'category': 'development'
@@ -1412,14 +1419,14 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_MayNotAddAdviceEditIfDelayExceeded(self):
         '''Test that if the delay to give an advice is exceeded, the advice is no more giveable.'''
         # configure one delay-aware optional adviser
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        self.meetingConfig.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(self.meetingConfig))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
@@ -1636,14 +1643,14 @@ class testAdvices(PloneMeetingTestCase):
         # configure one delay-aware optional adviser
         # we use 7 days of delay so we are sure that we when setting
         # manually 'delay_started_on' to last monday, delay is still ok
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        self.meetingConfig.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '7',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(self.meetingConfig))
         # no holidays for now...
         self.tool.setHolidays([])
         # no unavailable ending days for now...
@@ -1738,14 +1745,14 @@ class testAdvices(PloneMeetingTestCase):
           Test that computing of delays works also as 'calendar days'.
           To do this, we simply define 7 days of the week as working days and no holidays.
         '''
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        self.meetingConfig.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '10',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(self.meetingConfig))
         # no holidays...
         self.tool.setHolidays([])
         # every days are working days
@@ -1767,8 +1774,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
@@ -1783,7 +1789,8 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_until': '',
               'delay': '10',
               'delay_label': '',
-              'is_delay_calendar_days': '1'}])
+              'is_delay_calendar_days': '1'}]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create(
             'MeetingItem',
@@ -1825,7 +1832,8 @@ class testAdvices(PloneMeetingTestCase):
                             'is_delay_calendar_days': '0',
                             'available_on': '',
                             'is_linked_to_previous_row': '0'}, ]
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # select delay of 5 days
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
@@ -1855,7 +1863,8 @@ class testAdvices(PloneMeetingTestCase):
                              'is_delay_calendar_days': '1',
                              'available_on': '',
                              'is_linked_to_previous_row': '1'}, ]
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # we need to cleanRamCacheFor _findLinkedRowsFor used by listSelectableDelays
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         # the delay may still be edited when the user can edit the item
@@ -1883,7 +1892,8 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item._update_after_edit()
         custom_advisers[0]['gives_auto_advice_on'] = 'python:True'
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # MeetingConfig._findLinkedRowsFor is ram cached
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         item.setOptionalAdvisers(())
@@ -1916,7 +1926,8 @@ class testAdvices(PloneMeetingTestCase):
         # now define a 'available_on' for third row
         # first step, something that is False
         custom_advisers[2]['available_on'] = 'python:False'
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])
@@ -1924,7 +1935,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(available_delays_view._mayAccessDelayChangesHistory())
         # a wrong TAL expression for 'available_on' does not break anything
         custom_advisers[2]['available_on'] = 'python:here.someUnexistingMethod()'
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])
@@ -1932,7 +1944,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(available_delays_view._mayAccessDelayChangesHistory())
         # second step, something that is True
         custom_advisers[2]['available_on'] = 'python:True'
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
@@ -1942,7 +1955,8 @@ class testAdvices(PloneMeetingTestCase):
         # useable when changing delays but not in other cases
         custom_advisers[2]['available_on'] = "python:item.REQUEST.get('managing_available_delays', False)"
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
@@ -1952,14 +1966,16 @@ class testAdvices(PloneMeetingTestCase):
         # user may edit item, False otherwise
         custom_advisers[2]['available_on'] = "mayEdit"
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(available_delays_view._mayAccessDelayChangesHistory())
         custom_advisers[2]['available_on'] = "not:mayEdit"
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
@@ -2013,7 +2029,8 @@ class testAdvices(PloneMeetingTestCase):
                             'delay_label': 'h\xc3\xa9h\xc3\xa9',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'}, ]
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # select delay of 5 days
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
@@ -2046,7 +2063,8 @@ class testAdvices(PloneMeetingTestCase):
         # it works also for automatic advices but only MeetingManagers may change it
         # makes it an automatic advice
         custom_advisers[0]['gives_auto_advice_on'] = 'python:True'
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         cfg.processForm({'dummy': ''})
         item.setOptionalAdvisers(())
@@ -2192,7 +2210,8 @@ class testAdvices(PloneMeetingTestCase):
                             'delay_label': '',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'}, ]
-        cfg.setCustomAdvisers(custom_advisers)
+        cfg.custom_advisers = custom_advisers
+        notify(ObjectModifiedEvent(cfg))
         # select delay of 5 days
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
@@ -3095,7 +3114,8 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AdviceAddImagePermission(self):
         """A user able to edit the advice is able to add images."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
@@ -3136,7 +3156,8 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AdviceExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
@@ -3169,7 +3190,8 @@ class testAdvices(PloneMeetingTestCase):
         """Test the MeetingItem.getAdviceObj that return the real advice
            object if available, otherwise it returns None."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
@@ -3193,8 +3215,7 @@ class testAdvices(PloneMeetingTestCase):
     def _setupInheritedAdvice(self, addEndUsersAdvice=False, addAnnexesToVendorsAdvice=False):
         """ """
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
@@ -3209,7 +3230,8 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': '',
               'available_on': '',
-              'is_linked_to_previous_row': '1'}, ])
+              'is_linked_to_previous_row': '1'}, ]
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
@@ -3518,13 +3540,13 @@ class testAdvices(PloneMeetingTestCase):
            advice when inherit from.  Advice inheritance may be multiple as long as
            original advice exist, so we may have several chained predecessors.'''
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/10',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
@@ -3640,13 +3662,13 @@ class testAdvices(PloneMeetingTestCase):
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
         cfg2 = self.meetingConfig2
         cfg2_id = cfg2.getId()
-        cfg2.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg2.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'python:True',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg2))
 
         cfg.contents_kept_on_sent_to_other_mc = ('advices',)
         self.changeUser('pmManager')
@@ -4018,8 +4040,7 @@ class testAdvices(PloneMeetingTestCase):
         """When a WF transition from MeetingConfig.transitionsReinitializingDelays
            occurs, advice delay is only reinitialized if advice was not given."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2021/04/01',
@@ -4030,7 +4051,8 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2021/04/01',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         # ask both advice but give only one
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -4074,8 +4096,7 @@ class testAdvices(PloneMeetingTestCase):
            get the automatic advice, it does not break.'''
         cfg = self.meetingConfig
         proposed_state_id = self._stateMappingFor('proposed')
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on':
                 'python: item.query_state() == "{0}"'.format(proposed_state_id),
@@ -4087,7 +4108,8 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': 'python: True',
               'for_item_created_from': '2016/07/12',
               'delay': '',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # developers advice was asked
@@ -4105,7 +4127,8 @@ class testAdvices(PloneMeetingTestCase):
            to manage annexes and advices "Add" permissions, now we use role
            "MeetingAdviser" to manage add advice permission."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
@@ -4198,13 +4221,13 @@ class testAdvices(PloneMeetingTestCase):
            itemTemplate for which proposingGroup may be empty and adviceIndex
            is partially computed."""
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('templatemanager1')
         item_template = cfg.getItemTemplates(as_brains=False)[0]
         self.assertEqual(item_template.getProposingGroup(), '')
@@ -4359,7 +4382,8 @@ class testAdvices(PloneMeetingTestCase):
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 0)
         cfg.mail_item_events = ('advice_edited__reviewers',)
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)

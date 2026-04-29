@@ -26,6 +26,7 @@ from Products.PloneMeeting.utils import getAdvicePortalTypes
 from zope.component import getAdapter
 from zope.component import getAdapters
 from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 class testSearches(PloneMeetingTestCase):
@@ -82,10 +83,10 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         cfg.used_advice_types = list(cfg.used_advice_types) + ['asked_again']
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
-              'delay': '5', }, ])
+              'delay': '5', }, ]
+        notify(ObjectModifiedEvent(cfg))
         itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
@@ -220,7 +221,8 @@ class testSearches(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label', }
-        cfg.setCustomAdvisers([originalCustomAdvisers])
+        cfg.custom_advisers = [originalCustomAdvisers]
+        notify(ObjectModifiedEvent(cfg))
         cfg.selectable_adviser_users = (self.vendors_uid, )
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
@@ -460,7 +462,8 @@ class testSearches(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label', }
-        cfg.setCustomAdvisers([originalCustomAdvisers, ])
+        cfg.custom_advisers = [originalCustomAdvisers, ]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
@@ -485,7 +488,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), 'validated', )
 
         itemTypeName = cfg.getItemTypeName()
 
@@ -531,7 +534,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), 'validated', )
         # configure an auto copyGroup, vendors_reviewers will be set
         # as auto copyGroup for every items
         self.vendors.as_copy_group_on = u"python: ['reviewers']"
@@ -570,7 +573,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), 'validated', )
 
         itemTypeName = cfg.getItemTypeName()
 
@@ -677,7 +680,7 @@ class testSearches(PloneMeetingTestCase):
         review_states = reviewers[reviewers.keys()[0]]
         if 'prereviewers' in reviewers:
             review_states += ('prevalidated',)
-        cfg.setItemCopyGroupsStates(review_states)
+        cfg.item_copy_groups_states = review_states
         item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
         self.changeUser('pmReviewer2')
@@ -901,7 +904,8 @@ class testSearches(PloneMeetingTestCase):
         wfAdaptations = list(cfg.wf_adaptations)
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
-        cfg.setWorkflowAdaptations(wfAdaptations)
+        cfg.wf_adaptations = wfAdaptations
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to correct items
@@ -973,7 +977,8 @@ class testSearches(PloneMeetingTestCase):
         # desactivate simple return to proposing group wf
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
-        cfg.setWorkflowAdaptations(wfAdaptations)
+        cfg.wf_adaptations = wfAdaptations
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
 
         # first test the generated query
@@ -1131,7 +1136,8 @@ class testSearches(PloneMeetingTestCase):
         # deactivate simple return to proposing group wf
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
-        cfg.setWorkflowAdaptations(wfAdaptations)
+        cfg.wf_adaptations = wfAdaptations
+        notify(ObjectModifiedEvent(cfg))
         self._enablePrevalidation(cfg)
         notify(ObjectEditedEvent(cfg))
 
@@ -1173,7 +1179,7 @@ class testSearches(PloneMeetingTestCase):
         self._test_reviewer_groups(developers_item, vendors_item, collection)
 
     def _get_query_review_process(self, cfg):
-        return [state['state'] for state in cfg.getItemWFValidationLevels()
+        return [state['state'] for state in cfg.item_wf_validation_levels
                 if state['enabled'] == '1' and state['state']]
 
     def test_pm_SearchAllItemsToValidateOfEveryReviewerGroups(self):
@@ -1242,10 +1248,10 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-with-negative-previous-index' adapter.
            Here we will try to get items that do not have a certain advice asked.'''
         cfg = self.meetingConfig
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
-              'delay': '10', }, ])
+              'delay': '10', }, ]
+        notify(ObjectModifiedEvent(cfg))
         # this will return items for which developers 10 days delay advice was not asked
         # or vendors advice was not asked
         collection = cfg.searches.searches_items.searchallitems

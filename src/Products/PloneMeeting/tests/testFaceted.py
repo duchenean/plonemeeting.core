@@ -617,7 +617,8 @@ class testFaceted(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',
                            'delay_label': ''}]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         pmFolder = self.getMeetingFolder()
         vocab = get_vocab(pmFolder,
                           "Products.PloneMeeting.vocabularies.askedadvicesvocabulary",
@@ -662,7 +663,8 @@ class testFaceted(PloneMeetingTestCase):
                                'for_item_created_from': '2012/01/01',
                                'delay': '11',
                                'delay_label': 'New delay'})
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
         self.assertTrue('delay_row_id__unique_id_999' in vocab(pmFolder).by_token)
@@ -670,28 +672,32 @@ class testFaceted(PloneMeetingTestCase):
         self.assertTrue('11 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # edit a customAdviser
         customAdvisers[-1]['delay'] = '12'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # remove a customAdviser
         customAdvisers = customAdvisers[:-1]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 6)
         # power advisers are taken into account by the vocabulary
-        cfg.setPowerAdvisersGroups([self.endUsers_uid])
+        cfg.power_advisers_groups = [self.endUsers_uid]
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
         # inactive term, displayed in term title
         # make a not really expired term, a 'for_item_created_until' in the future
         self.assertEqual(customAdvisers[-1]['row_id'], 'unique_id_789')
         customAdvisers[-1]['for_item_created_until'] = '2099/01/01'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
                          u'Vendors - 20 day(s)')
         customAdvisers[-1]['for_item_created_until'] = '2009/01/01'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
                          u'Vendors - 20 day(s) (Inactive)')
@@ -750,14 +756,16 @@ class testFaceted(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',
                            'delay_label': ''}]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         customAdvisers = [{'row_id': 'unique_id_999',
                            'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',
                            'delay_label': ''}]
-        cfg2.setCustomAdvisers(customAdvisers)
+        cfg2.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg2))
         pmFolder = self.getMeetingFolder()
         vocab = get_vocab(pmFolder,
                           "Products.PloneMeeting.vocabularies.askedadvicesvocabulary",

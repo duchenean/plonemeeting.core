@@ -62,6 +62,7 @@ from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import magic
 import transaction
@@ -193,7 +194,7 @@ class testViews(PloneMeetingTestCase):
         # test when 'proposingGroupWithGroupInCharge' is used
         usedItemAttrs = cfg.used_item_attributes
         if 'proposingGroupWithGroupInCharge' not in usedItemAttrs:
-            cfg.setUsedItemAttributes(usedItemAttrs + ('proposingGroupWithGroupInCharge', ))
+            cfg.used_item_attributes = usedItemAttrs + ('proposingGroupWithGroupInCharge', )
         for brain in itemTemplates:
             itemTemplate = brain.getObject()
             itemTemplate()
@@ -275,7 +276,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         self._enableField('privacy')
-        cfg.setRestrictAccessToSecretItems(True)
+        cfg.restrict_access_to_secret_items = True
         itemTemplates = cfg.getItemTemplates(filtered=True)
         itemTemplate = itemTemplates[0].getObject()
         itemTemplate.setPrivacy('secret')
@@ -500,8 +501,7 @@ class testViews(PloneMeetingTestCase):
         # item2 : one optional advice, one automatic advice, none delay-aware
         # item3 : one delay-aware advice
         self.changeUser('admin')
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        self.meetingConfig.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
@@ -514,7 +514,8 @@ class testViews(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(self.meetingConfig))
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         query['meta_type'] = 'MeetingItem'
 
@@ -610,8 +611,7 @@ class testViews(PloneMeetingTestCase):
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         self.assertEqual(query, {'indexAdvisers': ['dummy']})
         # define customAdvisers in cfg1, only one delay aware for vendors
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
@@ -624,15 +624,15 @@ class testViews(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         self.assertEqual(
             query,
             {'indexAdvisers': ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
                                for advice_state in ('advice_not_given', ) + advice_alive_states]})
         # define customAdvisers in cfg2, also for vendors
-        cfg2.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg2.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'python:True',
               'for_item_created_from': '2012/01/01',
@@ -645,7 +645,8 @@ class testViews(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '10',
-              'delay_label': '10 days'}, ])
+              'delay_label': '10 days'}, ]
+        notify(ObjectModifiedEvent(cfg2))
         # the query is the same when vendors defined in cfg alone or cfg and cfg2
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         self.assertEqual(
@@ -654,8 +655,7 @@ class testViews(PloneMeetingTestCase):
                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
                     for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # now define customAdvisers for developers
-        cfg2.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg2.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'python:True',
               'for_item_created_from': '2012/01/01',
@@ -668,7 +668,8 @@ class testViews(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '10',
-              'delay_label': '10 days'}, ])
+              'delay_label': '10 days'}, ]
+        notify(ObjectModifiedEvent(cfg2))
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         # check len because sorted removes duplicates
         self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
@@ -680,8 +681,7 @@ class testViews(PloneMeetingTestCase):
                     ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
                      for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # if org delay aware in several MeetingConfigs, line is only shown one time
-        cfg2.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg2.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'python:True',
               'for_item_created_from': '2012/01/01',
@@ -694,7 +694,8 @@ class testViews(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '10',
-              'delay_label': '10 days'}, ])
+              'delay_label': '10 days'}, ]
+        notify(ObjectModifiedEvent(cfg2))
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
         self.assertEqual(
@@ -709,7 +710,7 @@ class testViews(PloneMeetingTestCase):
         """Test the _updateAllAdvices method that update every advices.
            It is used to update every delay aware advices every night."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         # create items and ask advice
         self.changeUser('pmCreator1')
@@ -724,7 +725,7 @@ class testViews(PloneMeetingTestCase):
 
         # change configuration, _updateAllAdvices then check again
         self.changeUser('siteadmin')
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'),))
+        cfg.item_advice_states = (self._stateMappingFor('proposed'),)
         cfg.item_advice_edit_states = (self._stateMappingFor('proposed'),)
         # check that item modified is not changed when advice updated
         item1_original_modified = item1.modified()
@@ -1010,9 +1011,9 @@ class testViews(PloneMeetingTestCase):
            for which order of fields may be defined and displayed data may not
            respect MeetingItem schema order.'''
         cfg = self.meetingConfig
-        cfg.setItemsListVisibleFields(('MeetingItem.description',
+        cfg.items_list_visible_fields = ('MeetingItem.description',
                                        'MeetingItem.decision',
-                                       'MeetingItem.motivation'))
+                                       'MeetingItem.motivation')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@item-more-infos')
@@ -1025,14 +1026,14 @@ class testViews(PloneMeetingTestCase):
            instead MeetingConfig.itemsListVisibleFields.'''
         cfg = self.meetingConfig
         # not used
-        cfg.setItemsListVisibleFields(('MeetingItem.description',
-                                       'MeetingItem.decision'))
-        cfg.setItemsVisibleFields(('MeetingItem.annexes',
+        cfg.items_list_visible_fields = ('MeetingItem.description',
+                                       'MeetingItem.decision')
+        cfg.items_visible_fields = ('MeetingItem.annexes',
                                    'MeetingItem.advices',
                                    'MeetingItem.description',
                                    'MeetingItem.motivation',
                                    'MeetingItem.decision',
-                                   'MeetingItem.privacy'))
+                                   'MeetingItem.privacy')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@item-more-infos')
@@ -1303,7 +1304,7 @@ class testViews(PloneMeetingTestCase):
         """Test the print_advices_infos method."""
         cfg = self.meetingConfig
         cfg.selectable_advisers = (self.developers_uid, self.vendors_uid)
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'),)
         notify(ObjectEditedEvent(cfg))
@@ -1355,7 +1356,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_print_meeting_date(self):
         # Setup
         cfg = self.meetingConfig
-        cfg.setPowerObservers([
+        cfg.power_observers = [
             {'item_access_on': '',
              'item_states': ['validated',
                              'presented',
@@ -1369,7 +1370,8 @@ class testViews(PloneMeetingTestCase):
              'label': 'testSuperObservers',
              'meeting_access_on': '',
              'meeting_states': [],
-             'row_id': 'powerobservers'}])
+             'row_id': 'powerobservers'}]
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1399,7 +1401,7 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_Print_preferred_meeting_date(self):
         cfg = self.meetingConfig
-        cfg.setPowerObservers([
+        cfg.power_observers = [
             {'item_access_on': '',
              'item_states': ['validated',
                              'presented',
@@ -1413,7 +1415,8 @@ class testViews(PloneMeetingTestCase):
              'label': 'testSuperObservers',
              'meeting_access_on': '',
              'meeting_states': [],
-             'row_id': 'powerobservers'}])
+             'row_id': 'powerobservers'}]
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1502,8 +1505,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
-        cfg.setItemReferenceFormat(
-            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+        cfg.item_reference_format = ("python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()
@@ -1525,14 +1527,13 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self._removeConfigObjectsFor(cfg)
         self._enableField('category')
-        cfg.setInsertingMethodsOnAddItem((
+        cfg.inserting_methods_on_add_item = (
             {'insertingMethod': 'on_list_type',
              'reverse': '0'},
             {'insertingMethod': 'on_categories',
              'reverse': '0'},
             {'insertingMethod': 'on_proposing_groups',
              'reverse': '0'},)
-        )
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2019, 1, 18))
         item1 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
@@ -1652,7 +1653,7 @@ class testViews(PloneMeetingTestCase):
         """It is possible to get every Plone groups."""
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))
         view = item.restrictedTraverse('@@display-group-users')
@@ -1815,7 +1816,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._setupLabelsEditableWhenItemEditable(cfg)
         self._enableField(('copyGroups', ))
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
 
         # create some items
         self.changeUser('pmCreator1')
@@ -2099,7 +2100,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_UpdateCopyGroupsBatchActionForm(self):
         """This will update copyGroups for selected items."""
         cfg = self.meetingConfig
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         # not available when not using copyGroups
         self.changeUser('pmCreator1')
         searches_items = self.getMeetingFolder().searches_items
@@ -2153,7 +2154,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg_id = cfg.getId()
         self._enableField("committees", related_to="Meeting")
-        cfg_committees = cfg.getCommittees()
+        cfg_committees = cfg.committees
         com1_id = cfg_committees[0]['row_id']
         com2_id = cfg_committees[1]['row_id']
         com3_id = cfg_committees[2]['row_id']
@@ -2633,16 +2634,16 @@ class testViews(PloneMeetingTestCase):
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
 
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
-        cfg.setPowerAdvisersGroups((self.vendors_uid,))
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
+        cfg.power_advisers_groups = (self.vendors_uid,)
         self._setPowerObserverStates(states=('itemcreated',))
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'),)
         notify(ObjectEditedEvent(cfg))
@@ -2695,11 +2696,11 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        cfg.setRestrictAccessToSecretItems(True)
+        cfg.restrict_access_to_secret_items = True
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('presented',))
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                           'reverse': '0'},))
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'},)
         # create 2 'public' items and 1 'secret' item
         self.changeUser('pmManager')
         publicItem1 = self.create('MeetingItem')
@@ -2763,8 +2764,8 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.max_shown_meeting_items = 2
         self._removeConfigObjectsFor(cfg)
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                           'reverse': '0'},))
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'},)
         # create a meeting with 6 items and display
         # items presented on meeting by batch of 2
         self.changeUser('pmManager')
@@ -3043,7 +3044,7 @@ class testViews(PloneMeetingTestCase):
         """POD templates are available on a per MeetingConfig basis and
            ConfigurablePODTemplates are available for meeting content, IMeeting as well."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
 
         self.changeUser('pmManager')
@@ -3249,8 +3250,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # now configure so powerobservers may not access history
-        cfg.setHideHistoryTo(
-            ('Meeting.powerobservers', 'MeetingItem.powerobservers', ))
+        cfg.hide_history_to = ('Meeting.powerobservers', 'MeetingItem.powerobservers', )
         self.assertFalse(contenthistory.show_history())
 
         # when power observer is also member of the item proposingGroup
@@ -3266,7 +3266,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(contenthistory.show_history())
-        cfg.setHideHistoryTo(())
+        cfg.hide_history_to = ()
         self.assertTrue(contenthistory.show_history())
 
     def test_pm_Get_meeting_assembly_stats(self):
@@ -3568,7 +3568,7 @@ class testViews(PloneMeetingTestCase):
         """Test labelsConfig so labels are editable and viewable only by
            "Vendors advisers"."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated', 'validated'))
+        cfg.item_advice_states = ('itemcreated', 'validated')
         cfg.item_advice_edit_states = ('itemcreated', 'validated')
         self._setup_for_labels_config()
         # remove pmManager from vendors_advisers
@@ -3623,7 +3623,7 @@ class testViews(PloneMeetingTestCase):
            ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
         self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
         cfg = self.meetingConfig
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         cfg.item_restricted_copy_groups_states = ('itemcreated', )
         cfg.selectable_restricted_copy_groups = (self.vendors_creators, )
         # editable and viewable only by proposingGroup
@@ -3797,7 +3797,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_AddAdviceBatchActionForm(self):
         """Test the @@add-advice-batch-action."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         # create some items and ask advice
         self.changeUser('pmCreator2')

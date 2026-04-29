@@ -29,6 +29,7 @@ from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import transaction
 
@@ -413,8 +414,8 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
         cfg = self.meetingConfig
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                           'reverse': '0'}, ))
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, )
         item_type_name = cfg.getItemTypeName()
         self._setupRecurringItems()
         self.changeUser('pmManager')
@@ -610,10 +611,10 @@ class testWorkflows(PloneMeetingTestCase):
            in the meeting are respecting the 'privacy' attribute.'''
         cfg = self.meetingConfig
         self._setupRecurringItems()
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_privacy',
                                            'reverse': '0'},
                                           {'insertingMethod': 'on_proposing_groups',
-                                           'reverse': '0'}, ))
+                                           'reverse': '0'}, )
         # set the first recurring item that will be inserted as 'secret'
         # when every recurring items are inserted, this will be at the very end
         # of the meeting presented items
@@ -702,8 +703,7 @@ class testWorkflows(PloneMeetingTestCase):
         # first, wrong tal_expression, nothing is done
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'freeze',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'item/unknown'},
              {'meeting_transition': 'freeze',
@@ -711,7 +711,7 @@ class testWorkflows(PloneMeetingTestCase):
               'tal_expression': ''},
              {'meeting_transition': 'freeze',
               'item_action': 'itemfreeze',
-              'tal_expression': ''}, ])
+              'tal_expression': ''}, ]
         self.changeUser('pmManager')
         # create a meeting with items
         meeting = self._createMeetingWithItems()
@@ -725,8 +725,7 @@ class testWorkflows(PloneMeetingTestCase):
 
         # now a valid config, append ('accepted') to item title when meeting is decided
         title_suffix = " (accepted)"
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'decide',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'decide',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.setTitle(item.Title() + "{0}")'.format(title_suffix)},
              {'meeting_transition': 'decide',
@@ -734,7 +733,7 @@ class testWorkflows(PloneMeetingTestCase):
               'tal_expression': ''},
              {'meeting_transition': 'decide',
               'item_action': 'accept',
-              'tal_expression': ''}])
+              'tal_expression': ''}]
         for item in meeting.get_items():
             self.assertFalse(title_suffix in item.Title())
         self.decideMeeting(meeting)
@@ -749,13 +748,13 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         if 'meetingmanager_correct_closed_meeting' in get_vocab_values(cfg, 'WorkflowAdaptations'):
-            cfg.setWorkflowAdaptations(list(cfg.wf_adaptations) +
+            cfg.wf_adaptations = (list(cfg.wf_adaptations) +
                                        ['meetingmanager_correct_closed_meeting'])
+            notify(ObjectModifiedEvent(cfg))
         # call.update_local_roles on item only if it not already decided
         # as.update_local_roles is called when item review_state changed
         self.assertTrue('accepted' in cfg.getItemDecidedStates())
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'decide',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'decide',
               'item_action': 'itemfreeze',
               'tal_expression': ''},
              {'meeting_transition': 'decide',
@@ -778,15 +777,16 @@ class testWorkflows(PloneMeetingTestCase):
              {'meeting_transition': 'backToDecided',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.update_local_roles()'},
-             ])
+             ]
         # configure access of powerobservers only access if meeting is 'closed'
-        cfg.setPowerObservers([
+        cfg.power_observers = [
             {'item_access_on': 'python: item.getMeeting().query_state() == "closed"',
              'item_states': ['accepted'],
              'label': 'Power observers',
              'meeting_access_on': '',
              'meeting_states': ['closed'],
-             'row_id': 'powerobservers'}])
+             'row_id': 'powerobservers'}]
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item1.setDecision(self.decisionText)
@@ -849,12 +849,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(late_item.query_state(), 'itemfrozen')
 
         # only late item is frozen, not freezing whole meeting
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'freeze',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.isLate() and '
                 'item.query_state() == "presented" and '
-                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}])
+                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}]
         item2 = self.create('MeetingItem')
         meeting2 = self.create('Meeting')
         self.presentItem(item2)
@@ -868,12 +867,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(late_item2.query_state(), 'itemfrozen')
 
         # items frozen when meeting frozen but not late items
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'freeze',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: not item.isLate() and '
                 'item.query_state() == "presented" and '
-                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}])
+                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}]
         item3 = self.create('MeetingItem')
         meeting3 = self.create('Meeting')
         self.presentItem(item3)
@@ -889,7 +887,8 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_MeetingNotClosableIfItemStillReturnedToProposingGroup(self):
         """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""
         cfg = self.meetingConfig
-        cfg.setWorkflowAdaptations(('return_to_proposing_group', ))
+        cfg.wf_adaptations = ('return_to_proposing_group', )
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -919,10 +918,10 @@ class testWorkflows(PloneMeetingTestCase):
 
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        cfg.setWorkflowAdaptations(
-            ('return_to_proposing_group',
+        cfg.wf_adaptations = ('return_to_proposing_group',
              'hide_decisions_when_under_writing',
-             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group')
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -937,18 +936,19 @@ class testWorkflows(PloneMeetingTestCase):
                          u'contains items returned to proposing group!')
         # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'
         # WFA not enabled
-        cfg.setWorkflowAdaptations(('return_to_proposing_group',
-                                    'hide_decisions_when_under_writing',))
+        cfg.wf_adaptations = ('return_to_proposing_group',
+                                    'hide_decisions_when_under_writing',)
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.do(meeting, 'publish_decisions')
         self.assertEqual(meeting.query_state(), 'decisions_published')
         self.do(meeting, 'backToDecided')
         self.assertEqual(meeting.query_state(), 'decided')
         # re-enable and test when no more items returned_to_proposing_group
-        cfg.setWorkflowAdaptations(
-            ('return_to_proposing_group',
+        cfg.wf_adaptations = ('return_to_proposing_group',
              'hide_decisions_when_under_writing',
-             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group')
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.do(meeting, 'publish_decisions')
@@ -967,7 +967,7 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_ItemMarginalNotes(self):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
-        cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
+        cfg.used_item_attributes = ('marginalNotes', 'observations')
         self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

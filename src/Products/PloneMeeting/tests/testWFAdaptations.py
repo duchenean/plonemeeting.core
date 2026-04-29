@@ -182,13 +182,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas([], cfg)
         self._activate_wfas([], cfg2)
         # use same WF
-        cfg2.item_workflow = cfg.getItemWorkflow()
-        cfg2.meeting_workflow = cfg.getMeetingWorkflow()
-        self.assertEqual(cfg.getItemWorkflow(), cfg2.getItemWorkflow())
-        self.assertEqual(cfg.getMeetingWorkflow(), cfg2.getMeetingWorkflow())
+        cfg2.item_workflow = cfg.item_workflow
+        cfg2.meeting_workflow = cfg.meeting_workflow
+        self.assertEqual(cfg.item_workflow, cfg2.item_workflow)
+        self.assertEqual(cfg.meeting_workflow, cfg2.meeting_workflow)
         # apply the 'return_to_proposing_group' WFAdaptation for cfg
         self._activate_wfas(('return_to_proposing_group', ))
-        originalWF = self.wfTool.get(cfg.getItemWorkflow())
+        originalWF = self.wfTool.get(cfg.item_workflow)
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
         self.assertTrue('returned_to_proposing_group' in cfgItemWF.states)
@@ -196,7 +196,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in cfg2ItemWF.states)
         # test again if saving cfg2
         notify(ObjectEditedEvent(cfg2))
-        originalWF = self.wfTool.get(cfg.getItemWorkflow())
+        originalWF = self.wfTool.get(cfg.item_workflow)
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
         self.assertTrue('returned_to_proposing_group' in cfgItemWF.states)
@@ -718,7 +718,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         if self._check_wfa_available(['removed_and_duplicated']):
             # possible to switch from one to the other
             self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated', )))
-            cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
+            cfg.wf_adaptations = ('removed_and_duplicated', )
+            notify(ObjectModifiedEvent(cfg))
             self.failIf(cfg.validate_workflowAdaptations(('removed', )))
 
     def test_pm_Validate_workflowAdaptations_removed_refused(self):
@@ -1079,7 +1080,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         self.assertEqual(cfg.validate_workflowAdaptations((MEETING_REMOVE_MOG_WFA, )), msg)
         # can not be removed, define MeetingConfig.usingGroups, it will be added automatically
-        cfg.setUsingGroups((self.vendors_uid, ))
+        cfg.using_groups = (self.vendors_uid, )
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg)
@@ -1913,7 +1915,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                              'hide_decisions_when_under_writing__po__powerobservers'))
         self._hide_decisions_when_under_writing_active()
         # test also for the meetingConfig2 if it uses a different workflow
-        if cfg.getMeetingWorkflow() == self.meetingConfig2.getMeetingWorkflow():
+        if cfg.meeting_workflow == self.meetingConfig2.meeting_workflow:
             return
         self.meetingConfig = self.meetingConfig2
         self._hide_decisions_when_under_writing_inactive()
@@ -2182,9 +2184,9 @@ class testWFAdaptations(PloneMeetingTestCase):
              'use_custom_back_transition_title_for': (),
              'use_custom_state_title': True, },), }
         # change the from_state title to check that it is not changed by the WFA (was the case...)
-        levels = self.meetingConfig.getItemWFValidationLevels()
+        levels = self.meetingConfig.item_wf_validation_levels
         levels[0]['state_title'] = "h\xc3\xa9h\xc3\xa9"
-        self.meetingConfig.setItemWFValidationLevels(levels)
+        self.meetingConfig.item_wf_validation_levels = levels
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
@@ -2789,8 +2791,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             ),
         }
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
-        cfg.setItemAdviceStates(
-            ('itemcreated_waiting_advices', 'proposed_waiting_advices', ))
+        cfg.item_advice_states = ('itemcreated_waiting_advices', 'proposed_waiting_advices', )
         # clean MeetingConfig.getItemAdviceStatesForOrg
         notify(ObjectModifiedEvent(self.vendors))
 
@@ -2995,8 +2996,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._select_organization(org3_uid)
         cfg.selectable_advisers = (self.vendors_uid, org1_uid, org2_uid, org3_uid)
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(org3_uid))
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
@@ -3007,7 +3007,8 @@ class testWFAdaptations(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
         cfg.power_advisers_groups = (org3_uid,)
         self._setPowerObserverStates(states=('itemcreated', ))
         cfg.item_advice_states = ('itemcreated',)
@@ -3560,7 +3561,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # check while the wfAdaptation is not activated
         self._meetingmanager_correct_closed_meeting_inactive()
         # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations(('meetingmanager_correct_closed_meeting', ))
+        cfg.wf_adaptations = ('meetingmanager_correct_closed_meeting', )
+        notify(ObjectModifiedEvent(cfg))
         self._meetingmanager_correct_closed_meeting_active()
 
     def _meetingmanager_correct_closed_meeting_inactive(self):

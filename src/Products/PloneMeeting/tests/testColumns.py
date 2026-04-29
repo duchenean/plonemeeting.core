@@ -29,7 +29,7 @@ class testColumns(PloneMeetingTestCase):
            - no link is rendred, only the title;
            - more infos are not displayed."""
         cfg = self.meetingConfig
-        cfg.setRestrictAccessToSecretItems(True)
+        cfg.restrict_access_to_secret_items = True
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(self._stateMappingFor('itemcreated'), ))
         self.request.cookies['pmShowDescriptions'] = 'true'

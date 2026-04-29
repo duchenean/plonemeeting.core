@@ -194,9 +194,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         # still not enough...
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
-        cfg2.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg.getId(),
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg2.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg.getId(),
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
         self.assertEqual(len(vocab_factory(aCatInMC2)), 3)
         # only terms of cfg
         self.assertFalse([term for term in vocab_factory(aCatInMC2)

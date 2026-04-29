@@ -14,6 +14,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from zope.component import getAdapter
 from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 class PloneMeetingTestingHelpers(object):
@@ -474,8 +475,9 @@ class PloneMeetingTestingHelpers(object):
         """Will setup "pmCreator2" as committee_1 editor."""
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['enable_editors'] = "1"
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
         notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self._addPrincipalToGroup(
             'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
 
@@ -586,7 +588,8 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees[0]['default_place'] = "Default place"
         cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
         cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
+        notify(ObjectModifiedEvent(cfg))
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         meeting.committees[0]['committee_observations'] = richtextval('<p>Committee observations</p>')
         return meeting

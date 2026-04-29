@@ -699,7 +699,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     po_infos['item_access_on'] = access_on
                 else:
                     po_infos['meeting_access_on'] = access_on
-        cfg.setPowerObservers(power_observers)
+        cfg.power_observers = power_observers
+        notify(ObjectModifiedEvent(cfg))
 
     def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
         """Activate given p_wfas, we clean wfas, apply,
@@ -711,13 +712,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if cfg is None:
             cfg = self.meetingConfig
         if not keep_existing:
-            cfg.setWorkflowAdaptations(())
+            cfg.wf_adaptations = ()
             notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         else:
             wfas = tuple(set(tuple(wfas) + tuple(cfg.wf_adaptations)))
         if wfas:
-            cfg.setWorkflowAdaptations(wfas)
+            cfg.wf_adaptations = wfas
             notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _deactivate_wfas(self, wfas, cfg=None):
@@ -730,8 +733,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg = self.meetingConfig
         wfas = [wfa for wfa in cfg.wf_adaptations
                 if wfa not in wfas]
-        cfg.setWorkflowAdaptations(wfas)
+        cfg.wf_adaptations = wfas
         notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _activate_config(self,

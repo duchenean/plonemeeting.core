@@ -1129,8 +1129,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         cfg.item_copy_groups_states = (item_initial_state,)
-        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
-                                                u'suffix_proposing_group_reviewers'))
+        cfg.item_annex_confidential_visible_for = (u'suffix_proposing_group_creators',
+                                                u'suffix_proposing_group_reviewers')
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
                 copyGroups=(self.vendors_creators, ))
@@ -1146,9 +1146,9 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
         # if may view confidential annex, it is kept
-        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
+        cfg.item_annex_confidential_visible_for = (u'suffix_proposing_group_creators',
                                                 u'suffix_proposing_group_reviewers',
-                                                u'reader_copy_groups'))
+                                                u'reader_copy_groups')
         update_all_categorized_elements(item)
         self.assertEqual(len(get_categorized_elements(item)), 2)
         clonedItem = item.clone()
@@ -1168,7 +1168,8 @@ class testAnnexes(PloneMeetingTestCase):
         if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'only_creator_may_delete' not in wfAdaptations:
             wfAdaptations = list(wfAdaptations) + ['only_creator_may_delete']
-            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.wf_adaptations = wfAdaptations
+            notify(ObjectModifiedEvent(cfg))
             notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
