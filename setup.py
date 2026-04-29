@@ -74,7 +74,7 @@ setup(name='Products.PloneMeeting',
           'imio.helpers[lxml]',
           'imio.migrator',
           'imio.pyutils',
-          'imio.zamqp.pm',
+          # 'imio.zamqp.pm',  # P6 migration: AMQP integration to be reimplemented in Stage D
           'imio.webspellchecker',
           'plone.app.lockingbehavior',
           'plone.app.versioningbehavior',
