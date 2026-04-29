@@ -5,6 +5,13 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
+- Removed dead/dev-only `install_requires` entries: `archetypes.schematuning`
+  (AT-only perf overlay, irrelevant once `MeetingItem`/`MeetingConfig`
+  go DX in Stage B/C) and `collective.usernamelogger` (dev-only login
+  event logger). Both are commented for reactivation in Stage D if
+  needed. Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
+  [duchenean]
+
 - Disabled the `communesplone.layout` integration (dead theme overlay
   with no Py3 release). No direct Python references existed; the
   ZCML include, profile dependency, and ``install_requires`` entry

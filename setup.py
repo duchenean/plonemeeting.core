@@ -47,7 +47,7 @@ setup(name='Products.PloneMeeting',
                           amqp=[]),
       install_requires=[
           'appy > 0.8.0',
-          'archetypes.schematuning',
+          # 'archetypes.schematuning',  # P6 migration: AT-only perf overlay, irrelevant once MeetingItem/MeetingConfig are DX (Stage B/C)
           'beautifulsoup4',
           'natsort',
           'setuptools',
@@ -64,7 +64,7 @@ setup(name='Products.PloneMeeting',
           'collective.iconifieddocumentactions',
           'collective.messagesviewlet',
           'collective.upgrade',
-          'collective.usernamelogger',
+          # 'collective.usernamelogger',  # P6 migration: dev-only login event logger; reintroduce as a tiny PAS plugin in Stage D if still wanted
           # 'communesplone.layout',  # P6 migration: dead theme overlay, no Py3 release; reimplement in Stage D if any feature is still needed
           'dexterity.localrolesfield',
           'ftw.labels',
