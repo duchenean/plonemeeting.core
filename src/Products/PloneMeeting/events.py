@@ -9,7 +9,9 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.documentviewer.async import queueJob
+# P6 migration: zc.async dropped, conversion runs inline. Reimplement as background job in Stage D.
+# from collective.documentviewer.async import queueJob
+from collective.documentviewer.convert import Converter
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -1148,9 +1150,11 @@ def _annexToPrintChanged(annex, event):
         # in case we are updating an annex that was already converted,
         # c.documentviewer does not manage that
         if tool.auto_convert_annexes() or cfg.getAnnexToPrintMode() == 'enabled_for_printing':
-            # queueJob manages the fact that annex is only converted again
-            # if it was really modified (ModificationDate + md5 filehash)
-            queueJob(annex)
+            # P6 migration: zc.async dropped, convert inline. Reimplement async in Stage D.
+            # # queueJob manages the fact that annex is only converted again
+            # # if it was really modified (ModificationDate + md5 filehash)
+            # queueJob(annex)
+            Converter(annex)()
 
 
 def onItemEditBegun(item, event):

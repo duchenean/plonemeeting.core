@@ -65,17 +65,16 @@ setup(name='Products.PloneMeeting',
           'collective.messagesviewlet',
           'collective.upgrade',
           # 'collective.usernamelogger',  # P6 migration: dev-only login event logger; reintroduce as a tiny PAS plugin in Stage D if still wanted
-          'communesplone.layout',
+          # 'communesplone.layout',  # P6 migration: dead theme overlay, no Py3 release; reimplement in Stage D if any feature is still needed
           'dexterity.localrolesfield',
           'ftw.labels',
           'imio.annex',
           'imio.pm.locales',
-          'imio.pm.ws',
           'imio.dashboard>=2.0',
           'imio.helpers[lxml]',
           'imio.migrator',
           'imio.pyutils',
-          'imio.zamqp.pm',
+          # 'imio.zamqp.pm',  # P6 migration: AMQP integration to be reimplemented in Stage D
           'imio.webspellchecker',
           'plone.app.lockingbehavior',
           'plone.app.versioningbehavior',
@@ -85,6 +84,7 @@ setup(name='Products.PloneMeeting',
           'Products.CPUtils',
           'Products.DataGridField',
           'Products.PasswordStrength',
-          'Products.cron4plone', ],
+          # 'Products.cron4plone',  # P6 migration: cron4plone dropped, schedule via Plone clock-server
+          ],
       entry_points={},
       )

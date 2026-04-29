@@ -15,19 +15,20 @@
     <dependency>profile-collective.js.iframeresizer:default</dependency>
     <dependency>profile-collective.js.tablednd:default</dependency>
     <dependency>profile-collective.messagesviewlet:messages</dependency>
-    <dependency>profile-communesplone.layout:default</dependency>
+    <!-- P6 migration: communesplone.layout dropped; reimplement in Stage D if any feature is still needed. -->
+    <!-- <dependency>profile-communesplone.layout:default</dependency> -->
     <dependency>profile-dexterity.localrolesfield:default</dependency>
     <dependency>profile-ftw.labels:default</dependency>
     <dependency>profile-imio.annex:default</dependency>
     <dependency>profile-imio.helpers:default</dependency>
-    <dependency>profile-imio.pm.ws:default</dependency>
     <dependency>profile-imio.webspellchecker:default</dependency>
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
     <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>
     <dependency>profile-Products.CPUtils:default</dependency>
     <dependency>profile-Products.DataGridField:default</dependency>
     <dependency>profile-Products.PasswordStrength:default</dependency>
-    <dependency>profile-Products.cron4plone:default</dependency>
+    <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
+    <!-- <dependency>profile-Products.cron4plone:default</dependency> -->
     <dependency>profile-plone.app.caching:default</dependency>
     <dependency>profile-plonemeeting.restapi:default</dependency>
   </dependencies>
