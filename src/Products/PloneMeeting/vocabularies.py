@@ -2638,7 +2638,7 @@ class ItemCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
                     terms.append(SimpleTerm(autoGroupId, autoGroupId, autoGroupId))
 
         # manage missing terms
-        copyGroups = context.getRestrictedCopyGroups() if restricted else context.getCopyGroups()
+        copyGroups = context.restricted_copy_groups if restricted else context.copy_groups
         if copyGroups:
             copyGroupsInVocab = [term.value for term in terms]
             for groupId in copyGroups:
@@ -2720,7 +2720,7 @@ class SelectableCommitteesVocabulary(object):
         # so we avoid cache by context
         committees = []
         if context.getTagName() == "MeetingItem":
-            committees = context.getCommittees()
+            committees = context.committees or []
         # check_is_manager_for_suppl depend on isManager
         isManager = tool.isManager(cfg)
         # cache by user_plone_groups if using committees "using_groups"
@@ -2869,7 +2869,7 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
         """Make it work when context is not an item."""
         res = []
         if IMeetingItem.providedBy(self.context):
-            res = self.context.getCommittees()
+            res = self.context.committees or []
         return res
 
     def __call__(self, context):
@@ -2929,8 +2929,8 @@ class OtherMCsClonableToVocabulary(object):
     def _get_stored_values(self, context):
         """ """
         values = []
-        if context.__class__.__name__ == 'MeetingItem':
-            values = context.getOtherMeetingConfigsClonableTo()
+        if context.__class__.__name__ in ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring'):
+            values = context.other_meeting_configs_clonable_to or []
         elif context.__class__.__name__ == 'Meeting':
             values = context.adopts_next_agenda_of
         # avoid returning None

@@ -78,7 +78,7 @@ class AdviceRemoveInheritanceForm(BaseAdviceInfoForm):
                     optionalAdvisers = list(self.context.getOptionalAdvisers(computed=True))
                     if data['advice_uid'] not in optionalAdvisers:
                         optionalAdvisers.append(data['advice_uid'])
-                        self.context.setOptionalAdvisers(optionalAdvisers)
+                        self.context.optional_advisers = list(optionalAdvisers)
                     advice_asked_locally = True
             if not advice_asked_locally:
                 api.portal.show_message(

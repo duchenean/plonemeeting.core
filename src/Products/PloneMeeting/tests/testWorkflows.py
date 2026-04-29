@@ -626,7 +626,7 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         # after every recurring items have been inserted, the last is the 'secret' one
         self.assertEqual(len(meeting.get_items()), 3)
-        self.assertEqual(meeting.get_items(ordered=True)[-1].getPrivacy(), 'secret')
+        self.assertEqual(meeting.get_items(ordered=True)[-1].privacy, 'secret')
 
     def test_pm_RecurringItemsWithUntriggerableTransitions(self):
         '''Tests the recurring items system when some transitions could not be triggered.'''

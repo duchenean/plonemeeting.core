@@ -452,7 +452,7 @@ class PloneMeetingTestingHelpers(object):
         cfg.item_advice_edit_states = (item_initial_state,)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = [self.vendors_uid]
         item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(

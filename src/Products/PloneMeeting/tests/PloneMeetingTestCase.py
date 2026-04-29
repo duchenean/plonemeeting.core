@@ -363,15 +363,22 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
         elif objectType == 'MeetingItem':
-            # optionalAdvisers are not set (???) by invokeFactory...
+            # optionalAdvisers are not always applied via invokeFactory's **kwargs.
             if 'optionalAdvisers' in attrs:
-                obj.setOptionalAdvisers(attrs['optionalAdvisers'])
-            # rich text fields are not set (???) by invokeFactory...
-            rich_fields = ['motivation', 'decision', 'decisionSuite', 'decisionEnd', 'votesResult']
-            for rich_field in rich_fields:
-                if rich_field in attrs:
-                    field = obj.getField(rich_field)
-                    field.set(obj, attrs[rich_field])
+                obj.optional_advisers = list(attrs['optionalAdvisers'])
+            # rich text fields: AT used to silently coerce strings; on DX we
+            # need to wrap them as RichTextValue so .raw / .output are usable.
+            from imio.helpers.content import richtextval
+            _DX_RICH = {
+                'motivation': 'motivation',
+                'decision': 'decision',
+                'decisionSuite': 'decision_suite',
+                'decisionEnd': 'decision_end',
+                'votesResult': 'votes_result',
+            }
+            for at_name, dx_name in _DX_RICH.items():
+                if at_name in attrs:
+                    setattr(obj, dx_name, richtextval(attrs[at_name]))
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.used_item_attributes and \

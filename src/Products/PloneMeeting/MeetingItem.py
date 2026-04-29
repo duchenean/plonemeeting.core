@@ -220,7 +220,7 @@ class MeetingItemWorkflowConditions(object):
 
     def _getLastValidationState_cachekey(method, self, before_last=False, return_level=False):
         '''cachekey method for self._getLastValidationState.'''
-        return self.context.getProposingGroup(), before_last, return_level
+        return self.context.proposing_group, before_last, return_level
 
     # not ramcached perf tests says it does not change much
     # and this avoid useless entry in cache
@@ -268,11 +268,11 @@ class MeetingItemWorkflowConditions(object):
             if self.context.attribute_is_used("category") and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
-            elif self.context.attribute_is_used('classifier') and not self.context.getClassifier():
+            elif self.context.attribute_is_used('classifier') and not self.context.classifier:
                 msg = No(_('required_classifier_ko'))
             elif (self.context.attribute_is_used('proposingGroupWithGroupInCharge') or
                   self.context.attribute_is_used('groupsInCharge')) and \
-                    not self.context.getGroupsInCharge():
+                    not self.context.groups_in_charge:
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
@@ -388,7 +388,7 @@ class MeetingItemWorkflowConditions(object):
                    ('item_validation_shortcuts' in self.cfg.wf_adaptations and
                     'item_validation_no_validate_shortcuts' not in self.cfg.wf_adaptations and
                         get_plone_group_id(
-                            self.context.getProposingGroup(),
+                            self.context.proposing_group,
                             last_level['suffix']) in get_plone_groups_for_user()):
                     res = True
                     if self._has_waiting_advices_transitions():
@@ -429,7 +429,7 @@ class MeetingItemWorkflowConditions(object):
             return No(_('mandatory_advice_ko'))
 
         # can not be presented if isAcceptableOutOfMeeting
-        if self.context.getIsAcceptableOutOfMeeting():
+        if self.context.is_acceptable_out_of_meeting:
             return False
 
         # all checks passed
@@ -507,7 +507,7 @@ class MeetingItemWorkflowConditions(object):
                 (may_eval_completeness and
                  not adapted._is_complete()) or
                 (not may_eval_completeness and
-                 self.context.getCompleteness() in ['completeness_evaluation_not_required',
+                 self.context.completeness in ['completeness_evaluation_not_required',
                                                     'completeness_not_yet_evaluated']) and
                 (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
                  not self.context.adviceIndex[org_uid]['advice_editable'])) and \
@@ -527,7 +527,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.query_state() != 'closed'):
-            proposingGroup = self.context.getProposingGroup()
+            proposingGroup = self.context.proposing_group
             # when item is validated, we may eventually send back to last validation state
             wfas = self.cfg.wf_adaptations
             last_val_state, last_level = self._getLastValidationState(return_level=True)
@@ -765,7 +765,7 @@ class MeetingItemWorkflowConditions(object):
     def mayAccept_out_of_meeting(self):
         """ """
         res = False
-        if self.context.getIsAcceptableOutOfMeeting():
+        if self.context.is_acceptable_out_of_meeting:
             if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
                 res = True
         return res
@@ -775,10 +775,10 @@ class MeetingItemWorkflowConditions(object):
     def mayAccept_out_of_meeting_emergency(self):
         """ """
         res = False
-        if self.context.getIsAcceptableOutOfMeeting() and \
+        if self.context.is_acceptable_out_of_meeting and \
            _checkPermission(ReviewPortalContent, self.context) and \
            self.tool.isManager(self.cfg):
-            emergency = self.context.getEmergency()
+            emergency = self.context.emergency
             if emergency == 'emergency_accepted':
                 res = True
             # if at least emergency is asked, then return a No message
@@ -841,7 +841,7 @@ class MeetingItemWorkflowActions(object):
 
     def doValidate(self, stateChange):
         # If it is a "late" item, we must potentially send a mail to warn MeetingManagers.
-        preferredMeetingUID = self.context.getPreferredMeeting()
+        preferredMeetingUID = self.context.preferred_meeting
         if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
             meeting = uuidToObject(preferredMeetingUID)
             if meeting and self.context.wfConditions().isLateFor(meeting):
@@ -1094,7 +1094,7 @@ class MeetingItemWorkflowActions(object):
             # remove the item from the meeting
             self.context.getMeeting().remove_item(self.context)
         # recompute when back to validated, this could be coming from a "accepted_out_of_meeting" like state
-        if stateChange.new_state.id == "validated" and self.context.getItemReference():
+        if stateChange.new_state.id == "validated" and self.context.item_reference:
             self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we

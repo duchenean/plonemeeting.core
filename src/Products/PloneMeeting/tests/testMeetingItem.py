@@ -2126,10 +2126,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # By default, adding an item does not add any copyGroup
         i1 = self.create('MeetingItem')
-        self.failIf(i1.getCopyGroups())
+        self.failIf(i1.copy_groups)
         # If we create an item with copyGroups, the copyGroups are there...
         i2 = self.create('MeetingItem', copyGroups=cfg.selectable_copy_groups)
-        self.assertEqual(i2.getCopyGroups(), tuple(cfg.selectable_copy_groups))
+        self.assertEqual(i2.copy_groups, tuple(cfg.selectable_copy_groups))
         # Now, define on an organization of the config that it will returns a particular suffixed group
         self.changeUser('admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
@@ -2216,7 +2216,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
         item.copy_groups = ()
-        self.failIf(item.getCopyGroups())
+        self.failIf(item.copy_groups)
         item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, [auto_vendors_reviewers])
 
@@ -2249,7 +2249,7 @@ class testMeetingItem(PloneMeetingTestCase):
         wf_name = self.wfTool.getWorkflowsFor(item)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
-        self.failIf(item.getCopyGroups())
+        self.failIf(item.copy_groups)
         # set a correct expression so vendors is set as copy group
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
@@ -2262,29 +2262,29 @@ class testMeetingItem(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no matter the expression is wrong now, when a group is added in copy, it is left
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: some syntax error"
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no more there
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
         self.vendors.as_copy_group_on = "python: item.getId() and True or True"
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId() and 'some_wrong_string' or 'some_wrong_string'"
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId()"
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: 123"
         notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
-        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+        self.assertFalse(item.copy_groups, item.autoCopyGroups)
 
     def test_pm_GetAllCopyGroups(self):
         '''Test the MeetingItem.getAllCopyGroups method.  It returns every copyGroups (manual and automatic)
@@ -2324,7 +2324,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem',
                            copyGroups=(self.developers_reviewers, ),
                            restrictedCopyGroups=(self.developers_observers, ))
-        self.assertEqual(item.getRestrictedCopyGroups(), ())
+        self.assertEqual(item.restricted_copy_groups, ())
         # as MeetingManager
         self.changeUser('pmManager')
         item = self.create('MeetingItem',
@@ -5971,7 +5971,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'accept')
         clonedItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEqual(clonedItem.Title(), item.Title())
-        self.assertEqual(clonedItem.getCopyGroups(), item.getCopyGroups())
+        self.assertEqual(clonedItem.copy_groups, item.copy_groups)
         # optionalAdvisers were not kept
         self.assertEqual(item.getOptionalAdvisers(), (self.developers_uid,))
         self.assertEqual(clonedItem.getOptionalAdvisers(), ())
@@ -5994,8 +5994,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         # only selectable copyGroups were kept
-        self.assertEqual(item.getCopyGroups(), (self.developers_reviewers, self.vendors_reviewers))
-        self.assertEqual(clonedItem.getCopyGroups(), (self.vendors_reviewers, ))
+        self.assertEqual(item.copy_groups, (self.developers_reviewers, self.vendors_reviewers))
+        self.assertEqual(clonedItem.copy_groups, (self.vendors_reviewers, ))
 
     def test_pm_CopiedFieldsOtherMeetingConfigsClonableToWhenDuplicated(self):
         '''Make sure field MeetingItem.otherMeetingConfigsClonableTo is not kept

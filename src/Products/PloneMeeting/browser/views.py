@@ -2238,7 +2238,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         html_pattern is used to add a html pattern around the list of groups.
         """
         res = []
-        copy_groups = self.context.getCopyGroups()
+        copy_groups = self.context.copy_groups or []
         for copy_group in copy_groups:
             if copy_group.endswith(tuple(suffixes)):
                 group = get_organization(copy_group)

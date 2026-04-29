@@ -1718,7 +1718,7 @@ class MeetingItem(Container):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         res = False
-        if item.getOtherMeetingConfigsClonableTo():
+        if item.other_meeting_configs_clonable_to:
             tool = api.portal.get_tool('portal_plonemeeting')
             res = tool.isManager(tool.getMeetingConfig(item))
         return res
@@ -2492,7 +2492,7 @@ class MeetingItem(Container):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        if item.getPrivacy().startswith('public'):
+        if item.privacy.startswith('public'):
             return True
         else:
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -2509,7 +2509,7 @@ class MeetingItem(Container):
         '''Check doc in interfaces.py.'''
         # Checking the 'privacy condition' is only done if privacy is 'secret'.
         item = self.getSelf()
-        privacy = item.getPrivacy()
+        privacy = item.privacy
         # 'public' or 'public_heading' items
         if privacy.startswith('public'):
             return True
@@ -6834,7 +6834,7 @@ class MeetingItem(Container):
         cfg = tool.getMeetingConfig(item)
 
         # item must be sendable and not already sent
-        if destMeetingConfigId not in item.getOtherMeetingConfigsClonableTo() or \
+        if destMeetingConfigId not in item.other_meeting_configs_clonable_to or \
            item._checkAlreadyClonedToOtherMC(destMeetingConfigId):
             return False
 
