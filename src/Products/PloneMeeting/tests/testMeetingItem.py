@@ -336,10 +336,9 @@ class testMeetingItem(PloneMeetingTestCase):
         org1_uid = org1.UID()
         cfg = self.meetingConfig
         cfg2_id = self.meetingConfig2.getId()
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2_id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'), )
         self._select_organization(org1_uid)
         self.developers.groups_in_charge = (org1_uid, )
 
@@ -360,12 +359,11 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg3.setTitle('Meeting config three')
         cfg3Id = cfg3.getId()
         cfg2Id = self.meetingConfig2.getId()
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
              {'meeting_config': '%s' % cfg3Id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'), )
         # create item and send it to cfg2 and cfg3
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -522,7 +520,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # if not activated in the config, it is not sendable anymore
         self.changeUser('admin')
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -533,9 +531,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # ok, activate it and send it!
         self.changeUser('admin')
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': otherMeetingConfigId,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': otherMeetingConfigId,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
         notify(ObjectEditedEvent(cfg))
         self.assertTrue(item.showClonableToOtherMCs())
         item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
@@ -610,7 +607,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(u"Create a %s from a %s" % (cfg2_title, cfg_title) in historyview)
         self.assertTrue(u"Create a %s from a %s comments" % (cfg2_title, cfg_title) in historyview)
         # now check that the item is sent to another meetingConfig for each
-        # cfg.getItemAutoSentToOtherMCStates() state
+        # cfg.item_auto_sent_to_other_mc_states state
         needToBackToPublished = True
         for state in cfg.item_auto_sent_to_other_mc_states:
             if needToBackToPublished:
@@ -644,15 +641,14 @@ class testMeetingItem(PloneMeetingTestCase):
         actionId = self.meetingConfig._getCloneToOtherMCActionId(cfg2.getId(), cfg.getId())
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # but if we remove the self.meetingConfig.meetingConfigsToCloneTos, then the action is remove too
-        cfg.setMeetingConfigsToCloneTo([])
+        cfg.meeting_configs_to_clone_to = []
         notify(ObjectEditedEvent(cfg))
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # ... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # let's activate the functionnality again and test
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2.getId(),
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': cfg2.getId(),
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
         notify(ObjectEditedEvent(cfg))
         # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
@@ -669,9 +665,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         # enable motivation and budgetInfos in cfg1, not in cfg2
-        cfg.setUsedItemAttributes(('description', 'motivation', 'budgetInfos'))
-        cfg2.setUsedItemAttributes(('description', 'itemIsSigned', 'privacy'))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        cfg.used_item_attributes = ('description', 'motivation', 'budgetInfos')
+        cfg2.used_item_attributes = ('description', 'itemIsSigned', 'privacy')
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'), )
 
         # create and send
         self.changeUser('pmManager')
@@ -731,15 +727,15 @@ class testMeetingItem(PloneMeetingTestCase):
             # add a normal and a delay-aware advice
             self.changeUser('admin')
             cfg.use_advices = True
-            cfg.setItemAdviceStates([self._stateMappingFor('proposed')])
+            cfg.item_advice_states = [self._stateMappingFor('proposed')]
             cfg.item_advice_edit_states = [self._stateMappingFor('proposed'), 'validated', ]
             cfg.item_advice_view_states = ['presented', ]
-            cfg.setCustomAdvisers(
-                [{'row_id': 'unique_id_123',
+            cfg.custom_advisers = [{'row_id': 'unique_id_123',
                   'org': self.developers_uid,
                   'gives_auto_advice_on': '',
                   'for_item_created_from': '2012/01/01',
-                  'delay': '5'}, ])
+                  'delay': '5'}, ]
+            notify(ObjectModifiedEvent(cfg))
             self.changeUser('pmManager')
             item.setOptionalAdvisers(
                 (self.vendors_uid,
@@ -971,7 +967,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_SendItemToOtherMCKeepAdvices(self):
         '''Test when sending an item to another MeetingConfig and every advices are kept.'''
         cfg = self.meetingConfig
-        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
+        cfg.contents_kept_on_sent_to_other_mc = ('advices', 'annexes', )
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
@@ -995,7 +991,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test when sending an item to another MeetingConfig and some advices are kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
+        cfg.contents_kept_on_sent_to_other_mc = ('advices', 'annexes', )
         cfg.advices_kept_on_sent_to_other_mc = ['delay_row_id__unique_id_123']
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
@@ -1017,7 +1013,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # a specific advice may be asked in addition to inherited ones
         cfg2.use_advices = True
-        cfg2.setItemAdviceStates([self._initial_state(newItem)])
+        cfg2.item_advice_states = [self._initial_state(newItem)]
         cfg2.item_advice_edit_states = [self._initial_state(newItem)]
         cfg2.item_advice_view_states = [self._initial_state(newItem)]
         newItem.setOptionalAdvisers((self.vendors_uid, self.developers_uid))
@@ -1034,7 +1030,7 @@ class testMeetingItem(PloneMeetingTestCase):
            Here we test that 'developers' advice is NOT kept as the asked advice
            is the 'row_id' developers advice and the one we keep is the normal developers advice.'''
         cfg = self.meetingConfig
-        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
+        cfg.contents_kept_on_sent_to_other_mc = ('advices', 'annexes', )
         cfg.advices_kept_on_sent_to_other_mc = ['real_group_id__developers']
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
@@ -1054,9 +1050,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.item_auto_sent_to_other_mc_states = ('validated', )
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2Id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(cfg2Id)
         item = self.create('MeetingItem')
@@ -1116,9 +1111,9 @@ class testMeetingItem(PloneMeetingTestCase):
                          [{'meeting_config': '%s' % cfg2Id,
                            'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}])
         # remove the items and define that we want the item to be 'validated' when sent
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
+                                         (cfg2Id, 'present')},)
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -1140,8 +1135,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # the required transitions should have been triggerd this time
         self._enableField('category', cfg=cfg2, enable=False)
         # change insert order method too as 'on_categories' for now
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, ))
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, )
         # remove items and try again
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
@@ -1157,9 +1152,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
+                                         (cfg2Id, 'present')},)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # could not be added because no meeting in initial_state is available
@@ -1211,12 +1206,12 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         self._enableField('category', enable=False)
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, ))
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, )
         cfg.item_auto_sent_to_other_mc_states = ('validated', )
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
+                                         (cfg2Id, 'present')},)
         self.changeUser('pmCreator2')
         self.tool.getPloneMeetingFolder(cfg2Id)
         vendorsItem = self.create('MeetingItem')
@@ -1249,15 +1244,15 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setUsedItemAttributes(cfg.used_item_attributes +
+        cfg.used_item_attributes = (cfg.used_item_attributes +
                                   ('otherMeetingConfigsClonableToEmergency', ))
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
+                                         (cfg2Id, 'present')},)
         # use insertion on groups for cfg2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, ))
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, )
 
         # setup, create item, meeting
         self.changeUser('pmCreator1')
@@ -1348,17 +1343,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setUsedItemAttributes(cfg.used_item_attributes +
+        cfg.used_item_attributes = (cfg.used_item_attributes +
                                   ('otherMeetingConfigsClonableToEmergency', ))
         # sendable when itemcreated
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until':
-                                         NO_TRIGGER_WF_TRANSITION_UNTIL},))
+                                         NO_TRIGGER_WF_TRANSITION_UNTIL},)
         # use insertion on groups for cfg2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, ))
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, )
 
         # create items in cfg1 and meetings in cfg2
         self.changeUser('pmCreator1')
@@ -1421,14 +1416,14 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setUsedItemAttributes(cfg.used_item_attributes +
+        cfg.used_item_attributes = (cfg.used_item_attributes +
                                   ('otherMeetingConfigsClonableToPrivacy', ))
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until':
-                                         NO_TRIGGER_WF_TRANSITION_UNTIL},))
+                                         NO_TRIGGER_WF_TRANSITION_UNTIL},)
         if 'privacy' not in cfg2.used_item_attributes:
-            cfg2.setUsedItemAttributes(cfg2.used_item_attributes +
+            cfg2.used_item_attributes = (cfg2.used_item_attributes +
                                        ('privacy', ))
 
         # create an item and sent it
@@ -1452,7 +1447,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # this only work if destination config uses privacy
         usedItemAttrs = list(cfg2.used_item_attributes)
         usedItemAttrs.remove('privacy')
-        cfg2.setUsedItemAttributes(usedItemAttrs)
+        cfg2.used_item_attributes = usedItemAttrs
         self.deleteAsManager(newItemSecret.UID())
         newItemSecret2 = itemSecret.cloneToOtherMeetingConfig(cfg2Id)
         # item is left 'public'
@@ -1488,7 +1483,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now test when using MeetingCategory.groups_in_charge and
         # MeetingConfig.includeGroupsInChargeDefinedOnCategory
         self.deleteAsManager(newItem.UID())
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
         cfg.include_groups_in_charge_defined_on_category = True
         originalItemCat.groups_in_charge = (self.vendors_uid, )
         cfg2.categories.get(catIdOfMC2Mapped).groups_in_charge = (self.developers_uid, )
@@ -1522,10 +1517,11 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('category')
         self._enableField("committees", related_to="Meeting")
-        cfg_committees = cfg.getCommittees()
+        cfg_committees = cfg.committees
         # configure auto committees
         cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
+        notify(ObjectModifiedEvent(cfg))
         self.assertTrue(cfg.is_committees_using("auto_from"))
         # create item
         self.changeUser('pmCreator1')
@@ -1534,7 +1530,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # change configuration, make committee_1 auto selected for developers
         cfg_committees[0]['auto_from'] = ["proposing_group__" + self.vendors_uid]
         cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
+        notify(ObjectModifiedEvent(cfg))
         # not changing already existing elements
         item._update_after_edit()
         self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
@@ -1558,11 +1555,11 @@ class testMeetingItem(PloneMeetingTestCase):
                 "transition \"validate\" does not exist in cfg2.")
             return
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'validate')},))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('proposed'),
-                                              'validated'))
+                                         (cfg2Id, 'validate')},)
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('proposed'),
+                                              'validated')
 
         # create a meeting in cfg2 that could receive the item
         # but that will not be the case as we stop at "validated"
@@ -1610,10 +1607,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self._setUpDefaultItemWFValidationLevels(cfg2)
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'propose')},))
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+                                         (cfg2Id, 'propose')},)
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
         cfg.item_auto_sent_to_other_mc_states = ('validated', )
 
         # automatically
@@ -1677,15 +1674,15 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
         if 'privacy' not in cfg2.used_item_attributes:
-            cfg2.setUsedItemAttributes(list(cfg2.used_item_attributes) + ['privacy'])
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+            cfg2.used_item_attributes = list(cfg2.used_item_attributes) + ['privacy']
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                         (cfg2Id, 'present')},)
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_privacy',
                                             'reverse': '0'},
                                            {'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'},))
+                                            'reverse': '0'},)
 
         # send an item and no meeting is available
         self.changeUser('pmManager')
@@ -1734,9 +1731,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
         self._enableField('motivation', cfg=cfg2)
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
-                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
         self._enableField('otherMeetingConfigsClonableToFieldTitle')
@@ -1825,8 +1822,9 @@ class testMeetingItem(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
-        cfg.setCustomAdvisers(customAdvisers)
-        cfg.setItemAdviceStates(('validated', ))
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
+        cfg.item_advice_states = ('validated', )
         cfg.item_advice_edit_states = ('validated', )
         cfg.item_advice_view_states = ('validated', )
         notify(ObjectEditedEvent(cfg))
@@ -1901,8 +1899,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._select_organization(org3_uid)
         cfg.selectable_advisers = (self.vendors_uid, org1_uid, org2_uid, org3_uid)
         self._addPrincipalToGroup('pmAdviser1', get_plone_group_id(org3_uid, 'advisers'))
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
@@ -1913,10 +1910,11 @@ class testMeetingItem(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
-        cfg.setPowerAdvisersGroups((org3_uid, ))
+              'delay_label': ''}, ]
+        notify(ObjectModifiedEvent(cfg))
+        cfg.power_advisers_groups = (org3_uid, )
         self._setPowerObserverStates(states=('itemcreated', ))
-        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated', )
         cfg.item_advice_edit_states = ('itemcreated', )
         cfg.item_advice_view_states = ('itemcreated', )
         notify(ObjectEditedEvent(cfg))
@@ -2151,7 +2149,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # relevant local roles for copyGroups
         wf_name = self.wfTool.getWorkflowsFor(i4)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
-        cfg.setItemCopyGroupsStates((initial_state, ))
+        cfg.item_copy_groups_states = (initial_state, )
         i5 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
         # relevant groups are auto added
         self.failIf(i5.getCopyGroups())
@@ -2244,7 +2242,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # activate copy groups at initial wf state
         wf_name = self.wfTool.getWorkflowsFor(item)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
-        self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
+        self.meetingConfig.item_copy_groups_states = (initial_state, )
         self.failIf(item.getCopyGroups())
         # set a correct expression so vendors is set as copy group
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
@@ -2312,7 +2310,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.vendors.as_copy_group_on = "python: ['creators']"
         self.developers.as_restricted_copy_group_on = "python: ['creators']"
         cfg = self.meetingConfig
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         cfg.selectable_restricted_copy_groups = (self.developers_observers, self.vendors_observers)
         cfg.item_restricted_copy_groups_states = ('validated', )
         # create item for vendors, field is only editable by MeetingManagers
@@ -2354,11 +2352,10 @@ class testMeetingItem(PloneMeetingTestCase):
            with advisers used for advices functionnality.'''
         cfg = self.meetingConfig
         # to ease test override, consider that we can give advices when the item is created for this test
-        cfg.setItemAdviceStates(
-            ['itemcreated', self._stateMappingFor('proposed'), 'validated', ])
+        cfg.item_advice_states = ['itemcreated', self._stateMappingFor('proposed'), 'validated', ]
         # activate copyGroups when the item is 'itemcreated' so we can check
         # behaviour between copyGroups and advisers
-        cfg.setItemCopyGroupsStates(['itemcreated', ])
+        cfg.item_copy_groups_states = ['itemcreated', ]
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
@@ -2408,7 +2405,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers, )
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates(('validated', ))
+        cfg.item_copy_groups_states = ('validated', )
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
         # by default 'pmCreator2' and 'pmReviewer2' can not see the item until it is validated
@@ -2537,7 +2534,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # add state 'refused' to item WF if available in WFAdaptations, if not already applied
         if 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'refused' not in cfg.wf_adaptations:
-            cfg.setWorkflowAdaptations(('refused', ))
+            cfg.wf_adaptations = ('refused', )
+            notify(ObjectModifiedEvent(cfg))
             notify(ObjectEditedEvent(cfg))
         self._setPowerObserverStates(states=(
             'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
@@ -2687,7 +2685,7 @@ class testMeetingItem(PloneMeetingTestCase):
         assembly_field_names = cfg._assembly_field_names()
         usedItemAttrs = cfg.used_item_attributes
         usedItemAttrs = set(assembly_field_names).union(usedItemAttrs)
-        cfg.setUsedItemAttributes(usedItemAttrs)
+        cfg.used_item_attributes = usedItemAttrs
         self._setPowerObserverStates(states=('presented', ))
         self._setPowerObserverStates(field_name='meeting_states', states=())
         self.changeUser('pmManager')
@@ -2709,7 +2707,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), 'validated', )
         cfg.item_budget_infos_states = ('validated', )
         # budget impact editors gets view on an item thru another role
         # here 'budgetimpacteditor' is a powerobserver
@@ -2884,10 +2882,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
         # copyGroups can access item
-        cfg.setItemCopyGroupsStates(('validated', ))
+        cfg.item_copy_groups_states = ('validated', )
         # activate privacy check
-        cfg.setRestrictAccessToSecretItems(True)
-        cfg.setItemCopyGroupsStates(('validated', ))
+        cfg.restrict_access_to_secret_items = True
+        cfg.item_copy_groups_states = ('validated', )
         # make powerobserver1 a PowerObserver
         self._addPrincipalToGroup('powerobserver1', '%s_powerobservers' % cfg.getId())
 
@@ -3002,7 +3000,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # when disabling MeetingConfig.restrictAccessToSecretItems
         # then everybody has access, the privacy is only an information
-        cfg.setRestrictAccessToSecretItems(False)
+        cfg.restrict_access_to_secret_items = False
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.failUnless(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
@@ -3016,7 +3014,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('validated', ))
-        cfg.setRestrictAccessToSecretItems(True)
+        cfg.restrict_access_to_secret_items = True
         self.assertTrue('restrictedpowerobservers' in cfg.restrict_access_to_secret_items_to)
         self._addPrincipalToGroup('restrictedpowerobserver1', self.developers_creators)
         # create his personal area because he is a creator now
@@ -3262,7 +3260,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('copyGroups')
         cfg.selectable_copy_groups = (self.vendors_creators, )
-        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
+        cfg.item_copy_groups_states = ('itemcreated', 'validated', )
         self._enable_action('duplication')
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
         # pmCreator1 may create items for both groups
@@ -3362,8 +3360,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.used_meeting_attributes = ('place', )
 
         # make items inserted in a meeting inserted in this order
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                           'reverse': '0'}, ))
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, )
         # remove recurring items if any as we are playing with item number here under
         self._removeConfigObjectsFor(cfg)
         # a user create an item and we insert it into a meeting
@@ -3979,7 +3977,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
         # 'associatedGroups' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         cfg = self.meetingConfig
-        cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        cfg.ordered_associated_organizations = (self.vendors_uid, self.developers_uid, self.endUsers_uid)
         # sorted alphabetically by default
         self.assertFalse('associatedGroups' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
@@ -3991,7 +3989,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          list(cfg.getOrderedAssociatedOrganizations()))
         # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
         # so when selected organizations displayed, sorted alphabetically
-        cfg.setOrderedAssociatedOrganizations(())
+        cfg.ordered_associated_organizations = ()
         cleanRamCache()
         self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
                          [self.vendors_uid])
@@ -4007,7 +4005,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         usedItemAttrs = cfg.used_item_attributes
         if 'groupsInCharge' not in usedItemAttrs:
-            cfg.setUsedItemAttributes(usedItemAttrs + ('groupsInCharge', ))
+            cfg.used_item_attributes = usedItemAttrs + ('groupsInCharge', )
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -4033,7 +4031,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # 'groupsInCharge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         self._select_organization(self.developers_uid)
         self._select_organization(self.endUsers_uid)
-        cfg.setOrderedGroupsInCharge((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        cfg.ordered_groups_in_charge = (self.vendors_uid, self.developers_uid, self.endUsers_uid)
         # sorted alphabetically by default
         self.assertFalse('groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
@@ -4217,7 +4215,8 @@ class testMeetingItem(PloneMeetingTestCase):
                            'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertFalse('{0}__rowid__unique_id_123'.format(self.developers_uid) in vocab_factory(item))
         self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid) in vocab_factory(item))
@@ -4358,7 +4357,8 @@ class testMeetingItem(PloneMeetingTestCase):
                            'gives_auto_advice_on': 'here/getBudgetRelated',
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
@@ -4371,7 +4371,8 @@ class testMeetingItem(PloneMeetingTestCase):
                           self.vendors_uid])
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
@@ -4384,7 +4385,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # here, first element is not available because 'available_on' is python:False
         customAdvisers[1]['for_item_created_until'] = ''
         customAdvisers[0]['available_on'] = 'python:False'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
@@ -4395,7 +4397,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # a wrong expression will not break the advisers
         # but the customAdviser is simply not taken into account
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
@@ -4457,7 +4460,7 @@ class testMeetingItem(PloneMeetingTestCase):
           Inherited will first have to be removed.
         '''
         # make advice givable when item is 'itemcreated'
-        self.meetingConfig.setItemAdviceStates(('itemcreated', ))
+        self.meetingConfig.item_advice_states = ('itemcreated', )
         self.meetingConfig.item_advice_edit_states = ('itemcreated', )
         self.changeUser('pmManager')
         # create an item to test the vocabulary
@@ -4497,7 +4500,8 @@ class testMeetingItem(PloneMeetingTestCase):
              'delay': '10',
              'delay_label': 'Delay label',
              'is_delay_calendar_days': '0'}, ]
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        self.meetingConfig.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(self.meetingConfig))
         self.changeUser('pmManager')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         # for now as developers advice is not given, we can unselect it
@@ -4533,7 +4537,8 @@ class testMeetingItem(PloneMeetingTestCase):
              'delay': '10',
              'delay_label': 'Delay label',
              'is_delay_calendar_days': '0', }, ]
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        self.meetingConfig.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(self.meetingConfig))
         self.changeUser('pmManager')
         # make item able to receive the automatic advice
         item.setBudgetRelated(True)
@@ -4665,7 +4670,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable 'publish_decisions' WFAdaptation
         if 'hide_decisions_when_under_writing' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             return
-        cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
+        cfg.wf_adaptations = ('hide_decisions_when_under_writing', )
+        notify(ObjectModifiedEvent(cfg))
         notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmManager')
@@ -4697,10 +4703,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item1.getDecision(), originalDecision)
         # configure onTransitionFieldTransforms and delay another item
         delayedItemDecision = '<p>This item has been delayed.</p>'
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'delay',
+        cfg.on_transition_field_transforms = ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
-              'tal_expression': 'string:%s' % delayedItemDecision},))
+              'tal_expression': 'string:%s' % delayedItemDecision},)
         item2 = items[1]
         item2.setDecision(originalDecision)
         # check not found for now in catalog
@@ -4717,19 +4722,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(duplicatedItem.getDecision(), originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
         item3 = items[2]
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'accept',
+        cfg.on_transition_field_transforms = ({'transition': 'accept',
               'field_name': 'MeetingItem.description',
-              'tal_expression': 'string:<p>My new description.</p>'},))
+              'tal_expression': 'string:<p>My new description.</p>'},)
         item3.setDescription('<p>My original description.</p>')
         self.do(item3, 'accept')
         self.assertEqual(item3.Description(), '<p>My new description.</p>')
         # if ever an error occurs with the TAL expression, the transition
         # is made but the rich text is not changed and a portal_message is displayed
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'accept',
+        cfg.on_transition_field_transforms = ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
-              'tal_expression': 'some_wrong_tal_expression'},))
+              'tal_expression': 'some_wrong_tal_expression'},)
         item4 = items[3]
         item4.setDecision('<p>My decision that will not be touched.</p>')
         self.do(item4, 'accept')
@@ -4742,10 +4745,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
                          ('MeetingItem.decision', "'some_wrong_tal_expression'"))
         # if the TAL expression returns something else than a string, it does not break
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'accept',
+        cfg.on_transition_field_transforms = ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
-              'tal_expression': 'python:False'},))
+              'tal_expression': 'python:False'},)
         item5 = items[4]
         self.do(item5, 'accept')
         # field was not changed
@@ -4756,10 +4758,9 @@ class testMeetingItem(PloneMeetingTestCase):
             ('MeetingItem.decision', "Value is not File or String (<type 'bool'> - <type 'bool'>)"))
         self.assertEqual(item5.query_state(), 'accepted')
         # when returning None
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'accept',
+        cfg.on_transition_field_transforms = ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
-              'tal_expression': 'python:None'},))
+              'tal_expression': 'python:None'},)
         item6 = items[5]
         self.do(item6, 'accept')
         self.assertFalse(IStatusMessage(self.request).show())
@@ -4767,10 +4768,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item6.decision.mimetype, 'text/html')
         self.assertEqual(item6.query_state(), 'accepted')
         # when using EXECUTE_EXPR_VALUE
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'accept',
+        cfg.on_transition_field_transforms = ({'transition': 'accept',
               'field_name': EXECUTE_EXPR_VALUE,
-              'tal_expression': 'python: wrong_expression'},))
+              'tal_expression': 'python: wrong_expression'},)
         item7 = items[6]
         self.do(item7, 'accept')
         messages = IStatusMessage(self.request).show()
@@ -4785,17 +4785,17 @@ class testMeetingItem(PloneMeetingTestCase):
         wfAdaptations = list(cfg.wf_adaptations)
         if 'no_publication' not in wfAdaptations:
             wfAdaptations.append('no_publication')
-            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.wf_adaptations = wfAdaptations
+            notify(ObjectModifiedEvent(cfg))
             notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.decideMeeting(meeting)
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'delay',
+        cfg.on_transition_field_transforms = ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
               'tal_expression': "python: imio_history_utils.getLastWFAction(context)['comments'] and "
                 "'<p>{0}</p>'.format(imio_history_utils.getLastWFAction(context)['comments']) or "
-                "'<p>Generic comment.</p>'"}, ))
+                "'<p>Generic comment.</p>'"}, )
         item = meeting.get_items()[0]
         item.setDecision(self.decisionText)
         wf_comment = 'Delayed for this precise reason \xc3\xa9'
@@ -4815,13 +4815,12 @@ class testMeetingItem(PloneMeetingTestCase):
         template = cfg.podtemplates.itemTemplate
         template.store_as_annex = cfg.annexes_types.item_annexes.get('financial-analysis').UID()
 
-        cfg.setOnTransitionFieldTransforms(
-            ({'transition': 'present',
+        cfg.on_transition_field_transforms = ({'transition': 'present',
               'field_name': EXECUTE_EXPR_VALUE,
               # expression to enable store_as_annex and generate the pod template
               'tal_expression': "python: context.REQUEST.set('store_as_annex', '1') or "
               "context.restrictedTraverse('@@document-generation')(template_uid='%s', output_format='odt')"
-              % template.UID()}, ))
+              % template.UID()}, )
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.create('Meeting')
@@ -4929,7 +4928,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not item.takenOverByInfos)
         # take item over
         item.setTakenOverBy('pmCreator1')
-        item_created_key = "%s__wfstate__%s" % (cfg.getItemWorkflow(), item.query_state())
+        item_created_key = "%s__wfstate__%s" % (cfg.item_workflow, item.query_state())
         self.assertEqual(item.takenOverByInfos[item_created_key], 'pmCreator1')
         # if takenOverBy is removed, takenOverByInfos is cleaned too
         item.setTakenOverBy('')
@@ -4963,7 +4962,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # we can set an arbitrary key in the takenOverByInfos
         # instead of current item state if directly passed
-        arbitraryKey = "%s__wfstate__%s" % (cfg.getItemWorkflow(), 'validated')
+        arbitraryKey = "%s__wfstate__%s" % (cfg.item_workflow, 'validated')
         self.assertTrue(arbitraryKey not in item.takenOverByInfos)
         item.setTakenOverBy('pmReviewer1', **{'wf_state': arbitraryKey})
         self.assertTrue(arbitraryKey in item.takenOverByInfos)
@@ -5206,17 +5205,17 @@ class testMeetingItem(PloneMeetingTestCase):
              'item_validation_no_validate_shortcuts'])
         cfg = self.meetingConfig
         # enable everything
-        cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.item_copy_groups_states = ('itemcreated', self._stateMappingFor('proposed'), 'validated')
         self._setPowerObserverStates(states=('itemcreated', self._stateMappingFor('proposed'), 'validated'))
-        cfg.setItemAdviceStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.item_advice_states = ('itemcreated', self._stateMappingFor('proposed'), 'validated')
         cfg.item_advice_edit_states = ('itemcreated', self._stateMappingFor('proposed'), 'validated')
         cfg.item_advice_view_states = ('itemcreated', self._stateMappingFor('proposed'), 'validated')
         # make reviewer able to edit when itemcreated so this will generate another cached value
         # creator is also able to duplicate, and after, an observer will have a different value as well
-        itemWFValLevels = cfg.getItemWFValidationLevels()
+        itemWFValLevels = cfg.item_wf_validation_levels
         itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
             states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
-        cfg.setItemWFValidationLevels(itemWFValLevels)
+        cfg.item_wf_validation_levels = itemWFValLevels
         notify(ObjectEditedEvent(cfg))
 
         # create item
@@ -5277,7 +5276,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(), 6)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
-        cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
+        cfg.hide_history_to = ('MeetingItem.powerobservers', )
         self.assertEqual(_sum_entries(), 7)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)
@@ -5393,7 +5392,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         # create an item and do some WF transitions so we have history events
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -5445,7 +5444,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1',
                           u'Function2', u'Name2',
@@ -5477,7 +5476,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
 
@@ -5505,7 +5504,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertEqual(item.getCertifiedSignatures(), [u'Function2', u'Name2'])
 
         # first discovered valid is used
@@ -5557,7 +5556,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid', u'Function2', u'Name2'])
 
@@ -5592,7 +5591,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid'])
 
@@ -5617,7 +5616,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg = self.meetingConfig
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         # set vendors in charge of developers
         self.developers.groups_in_charge = (self.vendors_uid, )
         # create an item for developers
@@ -5747,7 +5746,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg = self.meetingConfig
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
 
@@ -5973,7 +5972,7 @@ class testMeetingItem(PloneMeetingTestCase):
            in destination MeetingConfig.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated', )
         cfg2 = self.meetingConfig2
         cfg2Id = self.meetingConfig2.getId()
         self._enableField('copyGroups')
@@ -6000,9 +5999,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         # items are clonable to cfg2
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2Id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
@@ -6013,7 +6011,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          (self.meetingConfig2.getId(), ))
 
         # change configuration and clone again
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         notSendableItem = item.clone()
         # field was not kept as no more possible with current configuration
         self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
@@ -6526,7 +6524,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # current user may not quickEdit 'emergency' as it is not in cfg.usedItemAttributes
         self.assertFalse('emergency' in cfg.used_item_attributes)
         self.assertRaises(Unauthorized, form)
-        cfg.setUsedItemAttributes(cfg.used_item_attributes + ('emergency', ))
+        cfg.used_item_attributes = cfg.used_item_attributes + ('emergency', )
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         # not changed until required values are given
         request = TestRequest(form={
@@ -6613,7 +6611,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.used_meeting_attributes = ('attendees', 'excused', 'absents', 'signatories',)
         ordered_contacts = get_vocab_values(
             cfg, 'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        cfg.setOrderedContacts(ordered_contacts)
+        cfg.ordered_contacts = ordered_contacts
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')
@@ -6638,8 +6636,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates(('itemcreated',
-                                              self._stateMappingFor('proposed')))
+        cfg.item_manual_sent_to_other_mc_states = ('itemcreated',
+                                              self._stateMappingFor('proposed'))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -6737,7 +6735,7 @@ class testMeetingItem(PloneMeetingTestCase):
            it behaves correctly when the item was renamed.
            Item annexes and advice annexes are handled."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.item_advice_states = ('itemcreated', 'validated', )
         cfg.item_advice_edit_states = ('itemcreated', 'validated', )
         cfg.item_advice_view_states = ('itemcreated', 'validated', )
 
@@ -6934,8 +6932,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('copyGroups')
         cfg.selectable_copy_groups = (self.vendors_creators, )
         cfg.use_advices = True
-        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
-        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.item_copy_groups_states = ('itemcreated', 'validated', )
+        cfg.item_advice_states = ('itemcreated', 'validated', )
         cfg.item_advice_edit_states = ('itemcreated', 'validated', )
         cfg.item_advice_view_states = ('itemcreated', 'validated', )
         cfg.item_budget_infos_states = ('itemcreated', 'validated', )
@@ -7201,7 +7199,7 @@ class testMeetingItem(PloneMeetingTestCase):
         usedItemAttrs = list(cfg.used_item_attributes)
         if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttrs:
             usedItemAttrs.remove('otherMeetingConfigsClonableToPrivacy')
-            cfg.setUsedItemAttributes(tuple(usedItemAttrs))
+            cfg.used_item_attributes = tuple(usedItemAttrs)
         # create a third meetingConfig with special characters in it's title
         self.changeUser('siteadmin')
         cfg3 = self.create('MeetingConfig')
@@ -7230,7 +7228,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
 
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
-        cfg.setUsedItemAttributes(cfg.used_item_attributes +
+        cfg.used_item_attributes = (cfg.used_item_attributes +
                                   ('otherMeetingConfigsClonableToPrivacy', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
@@ -7305,7 +7303,7 @@ class testMeetingItem(PloneMeetingTestCase):
             if 'pmManager' in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember('pmManager')
         # make copyGroups able to see item in every states
-        cfg.setItemCopyGroupsStates(('validated', ))
+        cfg.item_copy_groups_states = ('validated', )
         self._enableField('copyGroups')
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         # make power observers able to see validated items
@@ -7477,7 +7475,7 @@ class testMeetingItem(PloneMeetingTestCase):
            to (restricted) power observers if defined in the MeetingConfig."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setHideNotViewableLinkedItemsTo(('powerobservers', ))
+        cfg.hide_not_viewable_linked_items_to = ('powerobservers', )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))
@@ -7550,7 +7548,7 @@ class testMeetingItem(PloneMeetingTestCase):
            the takenOverBy functionnality.  With this functionnality, an icon is displayed
            if item is takenOverBy and the icon color change depending on the fact that
            takenOverBy is the current user or not."""
-        self.meetingConfig.setUsedItemAttributes(('takenOverBy', ))
+        self.meetingConfig.used_item_attributes = ('takenOverBy', )
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -7597,9 +7595,9 @@ class testMeetingItem(PloneMeetingTestCase):
         usedItemAttrs = list(cfg2.used_item_attributes)
         if 'privacy' not in usedItemAttrs:
             usedItemAttrs.append('privacy')
-            cfg2.setUsedItemAttributes(usedItemAttrs)
+            cfg2.used_item_attributes = usedItemAttrs
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates([self._stateMappingFor('itemcreated')])
+        cfg.item_manual_sent_to_other_mc_states = [self._stateMappingFor('itemcreated')]
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -7640,7 +7638,7 @@ class testMeetingItem(PloneMeetingTestCase):
         usedItemAttributes = list(cfg.used_item_attributes)
         if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes:
             usedItemAttributes.remove('otherMeetingConfigsClonableToPrivacy')
-            cfg.setUsedItemAttributes(usedItemAttributes)
+            cfg.used_item_attributes = usedItemAttributes
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         # make sure 'privacy' is not in the usedItemAttributes
@@ -7648,8 +7646,8 @@ class testMeetingItem(PloneMeetingTestCase):
         usedItemAttributes = list(cfg2.used_item_attributes)
         if 'privacy' in usedItemAttributes:
             usedItemAttributes.remove('privacy')
-            cfg2.setUsedItemAttributes(usedItemAttributes)
-        cfg.setItemManualSentToOtherMCStates([self._stateMappingFor('itemcreated')])
+            cfg2.used_item_attributes = usedItemAttributes
+        cfg.item_manual_sent_to_other_mc_states = [self._stateMappingFor('itemcreated')]
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -7758,8 +7756,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         # change itemReferenceFormat to include an item data (Title)
         cfg = self.meetingConfig
-        cfg.setItemReferenceFormat(
-            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+        cfg.item_reference_format = ("python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "str(here.getProposingGroup(True).get_acronym().upper()) + '/' + "
             "str(here.getCategory()) + '/' + "
             "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
@@ -7861,8 +7858,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove recurring items in self.meetingConfig
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        cfg.setItemReferenceFormat(
-            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+        cfg.item_reference_format = ("python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "str(here.getMeeting().first_item_number) + '/' + "
             "str(here.getMeeting().meeting_number) + '/' + "
             "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
@@ -7909,8 +7905,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if we change another field, references are not updated
         # to test this, change the MeetingConfig.itemReferenceFormat
         # change value for field "place" and check
-        cfg.setItemReferenceFormat(
-            "python: str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
+        cfg.item_reference_format = ("python: str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
         meeting.place = 'Another place'
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'place')))
         self.assertEqual(item1.getItemReference(), '20170305/12/4/12')
@@ -8031,12 +8026,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item._may_update_item_reference())
         cfg.compute_item_reference_for_items_out_of_meeting = True
         # set a referenceFormat expecting a meeting
-        cfg.setItemReferenceFormat("python: item.getMeeting().Title()")
+        cfg.item_reference_format = "python: item.getMeeting().Title()"
         item.update_item_reference()
         self.assertEqual(item.getItemReference(), '')
         # set a referenceFormat compatible with no meeting
-        cfg.setItemReferenceFormat(
-            "python: item.hasMeeting() and "
+        cfg.item_reference_format = ("python: item.hasMeeting() and "
             "item.restrictedTraverse('@@pm_unrestricted_methods')."
             "getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
             "or (item.query_state() == 'accepted_out_of_meeting' and 'Ref/1') or 'No/Ref'")
@@ -8094,7 +8088,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.item_with_given_advice_is_not_deletable = True
         cfg.use_advices = True
-        cfg.setItemAdviceStates(['itemcreated'])
+        cfg.item_advice_states = ['itemcreated']
         cfg.item_advice_edit_states = ['itemcreated']
         cfg.item_advice_view_states = ['itemcreated']
         self.changeUser('pmCreator1')
@@ -8133,12 +8127,12 @@ class testMeetingItem(PloneMeetingTestCase):
            observations are shown if attribute used in configuration."""
         self.changeUser('pmCreator1')
         cfg = self.meetingConfig
-        cfg.setUsedItemAttributes(())
+        cfg.used_item_attributes = ()
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertFalse(item.adapted().showObservations())
-        cfg.setUsedItemAttributes(('observations', ))
+        cfg.used_item_attributes = ('observations', )
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
@@ -8260,9 +8254,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
-        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels = cfg.item_wf_validation_levels
         itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
-        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.item_wf_validation_levels = itemWFValidationLevels
         notify(ObjectEditedEvent(cfg))
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
@@ -8327,9 +8321,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['debug_sendMailIfRelevant'] = True
         self._enableField('copyGroups')
         cfg.selectable_copy_groups = cfg.listSelectableCopyGroups().keys()
-        cfg.setItemCopyGroupsStates(['validated'])
+        cfg.item_copy_groups_states = ['validated']
         cfg.mail_mode = "activated"
-        cfg.setMailItemEvents(("copyGroups", ))
+        cfg.mail_item_events = ("copyGroups", )
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem", title="My item")
         # no copy groups
@@ -8381,11 +8375,11 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg_title = cfg.Title()
         cfg.use_advices = True
         cfg.selectable_advisers = cfg.listSelectableAdvisers().keys()
-        cfg.setItemAdviceStates(['validated'])
+        cfg.item_advice_states = ['validated']
         cfg.item_advice_edit_states = ['validated']
         cfg.item_advice_view_states = ['validated']
         cfg.mail_mode = "activated"
-        cfg.setMailItemEvents(("adviceToGive", ))
+        cfg.mail_item_events = ("adviceToGive", )
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem", title="My item")
         item_url = item.absolute_url()
@@ -8431,7 +8425,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(item._send_proposing_group_suffix_if_relevant(
             'itemcreated', 'propose', 'proposed'))
 
-        cfg.setMailItemEvents(("item_state_changed_propose__proposing_group_suffix",))
+        cfg.mail_item_events = ("item_state_changed_propose__proposing_group_suffix",)
         recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
             'itemcreated', 'propose', 'proposed')
         self.assertEqual(sorted(recipients), [
@@ -8440,8 +8434,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'
         ])
 
-        cfg.setMailItemEvents(
-            ("item_state_changed_propose__proposing_group_suffix_except_manager",))
+        cfg.mail_item_events = ("item_state_changed_propose__proposing_group_suffix_except_manager",)
         recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
             'itemcreated', 'propose', 'proposed')
         self.assertEqual(sorted(recipients), [
@@ -8449,8 +8442,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'
         ])
 
-        cfg.setMailItemEvents(
-            ("item_state_changed_backToItemCreated__proposing_group_suffix",))
+        cfg.mail_item_events = ("item_state_changed_backToItemCreated__proposing_group_suffix",)
         recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
             'proposed', 'backToItemCreated', 'itemcreated')
         self.assertEqual(sorted(recipients), [
@@ -8458,8 +8450,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'M. PMManager <pmmanager@plonemeeting.org>'
         ])
 
-        cfg.setMailItemEvents(
-            ("item_state_changed_backToItemCreated__proposing_group_suffix_except_manager",))
+        cfg.mail_item_events = ("item_state_changed_backToItemCreated__proposing_group_suffix_except_manager",)
 
         recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
             'proposed', 'backToItemCreated', 'itemcreated')
@@ -8499,7 +8490,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(item._send_history_aware_mail_if_relevant(
             'itemcreated', 'propose', 'proposed'))
 
-        cfg.setMailItemEvents(("item_state_changed_propose__history_aware",))
+        cfg.mail_item_events = ("item_state_changed_propose__history_aware",)
         self.proposeItem(item, as_manager=False)
         recipients, subject, body = item._send_history_aware_mail_if_relevant(
             'itemcreated', 'propose', 'proposed')
@@ -8536,8 +8527,8 @@ class testMeetingItem(PloneMeetingTestCase):
         ])
 
         self.changeUser('siteadmin')
-        cfg.setMailItemEvents(("item_state_changed_backToItemCreated__history_aware",
-                               "item_state_changed_backToProposed__history_aware",))
+        cfg.mail_item_events = ("item_state_changed_backToItemCreated__history_aware",
+                               "item_state_changed_backToProposed__history_aware",)
 
         self.changeUser("pmManager")
         self.backToState(item, 'itemcreated', as_manager=False)
@@ -8615,7 +8606,7 @@ class testMeetingItem(PloneMeetingTestCase):
         attrs = [term.value for term in get_vocab(
             cfg, 'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary',
             only_factory=True)(cfg) if term.value != 'proposingGroupWithGroupInCharge']
-        cfg.setUsedItemAttributes(attrs)
+        cfg.used_item_attributes = attrs
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)
         self.assertTrue(item.restrictedTraverse('base_edit')())
@@ -8670,7 +8661,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('category')
         self._enableField("committees", related_to="Meeting")
-        cfg_committees = cfg.getCommittees()
+        cfg_committees = cfg.committees
         # by default auto mode is not enabled
         self.assertFalse(cfg.is_committees_using("auto_from"))
         self.changeUser('pmCreator1')
@@ -8718,7 +8709,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # when no auto_from can be determinated, the NO_COMMITTEE value is used
         cfg_committees[0]['auto_from'] = []
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
+        notify(ObjectModifiedEvent(cfg))
         item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
         self.assertEqual(item.getCommittees(), (NO_COMMITTEE, ))
 
@@ -8749,7 +8741,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('category')
         self._enableField("committees", related_to="Meeting")
-        cfg_committees = cfg.getCommittees()
+        cfg_committees = cfg.committees
         cfg_committees[0]["using_groups"] = [self.developers_uid]
         cfg_committees[1]["using_groups"] = [self.vendors_uid]
         self.changeUser('pmCreator1')
@@ -8774,7 +8766,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('category')
         self._enableField("committees", related_to="Meeting")
-        cfg.getCommittees()[1]['enabled'] = 'item_only'
+        cfg.committees[1]['enabled'] = 'item_only'
         # MeetingItem, item_only committee is selectable
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -8805,13 +8797,14 @@ class testMeetingItem(PloneMeetingTestCase):
            also be triggered when item sent to another MC."""
         cfg = self.meetingConfig
         self._enableField('category', enable=False)
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
-        cfg_committees = cfg.getCommittees()
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'), )
+        cfg_committees = cfg.committees
         # configure committees for cfg2
         cfg2 = self.meetingConfig2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setCommittees(cfg_committees)
-        cfg2_committees = cfg2.getCommittees()
+        cfg2.committees = cfg_committees
+        notify(ObjectModifiedEvent(cfg2))
+        cfg2_committees = cfg2.committees
         cfg2_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
         cfg2_id = cfg2.getId()
         self._enableField("committees", cfg=cfg2, related_to='Meeting')
@@ -8990,10 +8983,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2Id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'), )
+        cfg.meeting_configs_to_clone_to = ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
         # create item and send it to cfg2 and cfg3
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -9036,7 +9028,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemMailNotificationLateItem(self):
         """Test the "lateItem" notification."""
         cfg = self.meetingConfig
-        cfg.setMailItemEvents(('lateItem', ))
+        cfg.mail_item_events = ('lateItem', )
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.freezeMeeting(meeting)
@@ -9051,7 +9043,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_send_powerobservers_mail_if_relevant(self):
         """Test the "late_item_in_meeting" notification to powerobservers."""
         cfg = self.meetingConfig
-        cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
+        cfg.mail_item_events = ('late_item_in_meeting__powerobservers',)
         self.request['debug_sendMailIfRelevant'] = True
         self.changeUser('pmManager')
 
@@ -9072,7 +9064,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
                       self.request["debug_sendMailIfRelevant_result"][0])
 
-        cfg.setMailItemEvents(())
+        cfg.mail_item_events = ()
         self.request["debug_sendMailIfRelevant_result"] = None
         late_item2 = self.create('MeetingItem', preferredMeeting=meeting.UID())
         self.presentItem(late_item2)
@@ -9190,8 +9182,8 @@ class testMeetingItem(PloneMeetingTestCase):
            MeetingConfig.itemFieldsConfig.
            Moreover, test that if edit condition is False, it can not be edited."""
         cfg = self.meetingConfig
-        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
-        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        cfg.ordered_groups_in_charge = (self.developers_uid, self.vendors_uid)
+        cfg.item_groups_in_charge_states = [self._stateMappingFor('itemcreated')]
         self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])

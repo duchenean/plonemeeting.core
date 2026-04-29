@@ -566,7 +566,7 @@ class testVotes(PloneMeetingTestCase):
         # make hp no more selectable
         ordered_contacts = list(cfg.ordered_contacts)
         ordered_contacts.remove(hp4_uid)
-        cfg.setOrderedContacts(ordered_contacts)
+        cfg.ordered_contacts = ordered_contacts
         cleanRamCache()
         self.assertTrue(hp4_uid in votes_form.render())
 
@@ -1272,8 +1272,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show()[0].message,
                          u'Votes result is not HTML')
         # is_all_count is also available on pm_utils
-        cfg.setVotesResultTALExpr(
-            "python: pm_utils.is_all_count(item) and '<p>All OK</p>' or '<p>Not all OK</p>'")
+        cfg.votes_result_tal_expr = ("python: pm_utils.is_all_count(item) and '<p>All OK</p>' or '<p>Not all OK</p>'")
         cleanRamCache()
         self.assertEqual(public_item.getVotesResult(), '<p>Not all OK</p>')
         self.assertEqual(yes_secret_item.getVotesResult(), '<p>All OK</p>')

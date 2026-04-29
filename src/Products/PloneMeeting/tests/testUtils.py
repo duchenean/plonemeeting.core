@@ -396,11 +396,10 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(meeting.first_item_number, 50)
         # make sure it is useable in TAL expressions
         self.changeUser('pmManager')
-        cfg.setOnMeetingTransitionItemActionToExecute(
-            [{'meeting_transition': 'freeze',
+        cfg.on_meeting_transition_item_action_to_execute = [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression':
-                'python: pm_utils.set_dx_value(meeting, "meeting_number", 25)'}, ])
+                'python: pm_utils.set_dx_value(meeting, "meeting_number", 25)'}, ]
         self.assertEqual(meeting.meeting_number, -1)
         self.freezeMeeting(meeting)
         # if was initialized to "1" by doFreeze but onMeetingTransitionItemActionToExecute

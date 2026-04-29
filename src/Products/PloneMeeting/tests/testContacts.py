@@ -99,12 +99,12 @@ class testContacts(PloneMeetingTestCase):
         # select new hp
         ordered_contacts = get_vocab_values(
             cfg, 'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        cfg.setOrderedContacts(ordered_contacts)
+        cfg.ordered_contacts = ordered_contacts
         self.assertEqual(
             meeting.get_all_attendees(the_objects=True) + (new_hp, ),
             get_all_usable_held_positions(meeting))
         # unselect everything on MeetingConfig, all values still available on meeting
-        cfg.setOrderedContacts(())
+        cfg.ordered_contacts = ()
         self.assertEqual(
             meeting.get_all_attendees(the_objects=True),
             get_all_usable_held_positions(meeting))
@@ -127,7 +127,7 @@ class testContacts(PloneMeetingTestCase):
         # still not deletable because used by a meeting
         orderedContacts = list(cfg.ordered_contacts)
         orderedContacts.remove(hp_uid)
-        cfg.setOrderedContacts(orderedContacts)
+        cfg.ordered_contacts = orderedContacts
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting, now it is deletable
@@ -135,7 +135,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(hp_uid in meeting.get_attendees())
 
         # test that held positition cannot be delete if used for itemInitiator
-        cfg.setOrderedItemInitiators((hp_uid,))
+        cfg.ordered_item_initiators = (hp_uid,)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.presentItem(item)
@@ -150,7 +150,7 @@ class testContacts(PloneMeetingTestCase):
         # still not deletable because used by a meeting item
         orderedItemInitiators = list(cfg.getOrderedItemInitiators())
         orderedItemInitiators.remove(hp_uid)
-        cfg.setOrderedItemInitiators(orderedItemInitiators)
+        cfg.ordered_item_initiators = orderedItemInitiators
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting item, now it is deletable
@@ -176,9 +176,9 @@ class testContacts(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
-        cfg.setCertifiedSignatures([])
+        cfg.certified_signatures = []
         # organization
         group_certified_signatures = [
             {'signature_number': '2',
@@ -1703,9 +1703,9 @@ class testContacts(PloneMeetingTestCase):
         disable_link_integrity_checks()
         cfg = self.meetingConfig
         cfg.selectable_advisers = ()
-        cfg.setOrderedGroupsInCharge(())
+        cfg.ordered_groups_in_charge = ()
         cfg2 = self.meetingConfig2
-        cfg2.setOrderedGroupsInCharge(())
+        cfg2.ordered_groups_in_charge = ()
         self.changeUser('pmManager')
         # delete recurring items, just keep item templates
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', ])
@@ -1752,57 +1752,60 @@ class testContacts(PloneMeetingTestCase):
         cfg.selectable_advisers = ()
 
         # define customAdvisers, the exception is also raised
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
+        cfg.custom_advisers = [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
-              'delay': '5', }, ])
+              'delay': '5', }, ]
+        notify(ObjectModifiedEvent(cfg))
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove customAdvisers
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
+        notify(ObjectModifiedEvent(cfg))
 
         # define powerAdvisersGroups, the exception is also raised
-        cfg.setPowerAdvisersGroups([self.developers_uid, ])
+        cfg.power_advisers_groups = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove powerAdvisersGroups
-        cfg.setPowerAdvisersGroups([])
+        cfg.power_advisers_groups = []
 
         # define usingGroups, the exception is also raised
-        cfg.setUsingGroups([self.developers_uid, ])
+        cfg.using_groups = [self.developers_uid, ]
+        notify(ObjectModifiedEvent(cfg))
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove usingGroups
-        cfg.setUsingGroups([])
+        cfg.using_groups = []
+        notify(ObjectModifiedEvent(cfg))
 
         # define orderedAssociatedOrganizations, the exception is also raised
-        cfg.setOrderedAssociatedOrganizations([self.developers_uid, ])
+        cfg.ordered_associated_organizations = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedAssociatedOrganizations
-        cfg.setOrderedAssociatedOrganizations([])
+        cfg.ordered_associated_organizations = []
 
         # define orderedGroupsInCharge, the exception is also raised
-        cfg.setOrderedGroupsInCharge([self.developers_uid, ])
+        cfg.ordered_groups_in_charge = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedGroupsInCharge
-        cfg.setOrderedGroupsInCharge([])
+        cfg.ordered_groups_in_charge = []
 
         # 2) fails because the corresponding Plone groups are not empty
         transaction.commit()
@@ -2049,8 +2052,8 @@ class testContacts(PloneMeetingTestCase):
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
         cfg.selectable_copy_groups = (self.developers_reviewers, )
-        cfg.setOrderedGroupsInCharge(())
-        cfg2.setOrderedGroupsInCharge(())
+        cfg.ordered_groups_in_charge = ()
+        cfg2.ordered_groups_in_charge = ()
         cfg2.selectable_advisers = (self.developers_uid,)
         cfg2.selectable_copy_groups = (self.developers_reviewers, )
         # and remove users from vendors Plone groups
@@ -2109,7 +2112,7 @@ class testContacts(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         # called without computed=True, the actual values defined on the MeetingGroup is returned
         self.assertEqual(self.vendors.get_certified_signatures(), [])
         # with a cfg, cfg values are returned if not overrided

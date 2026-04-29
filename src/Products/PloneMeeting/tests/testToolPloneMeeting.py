@@ -41,6 +41,7 @@ from Products.PloneMeeting.utils import get_annexes
 from zope.event import notify
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import os
 import transaction
@@ -467,7 +468,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # If we disable one meetingConfig, it is no more shown
         self.changeUser('admin')
         # to be deactivated, a MeetingConfig can not be used in another
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         self.do(cfg2, 'deactivate')
         transaction.commit()
         self.changeUser('restrictedpowerobserver2')
@@ -477,7 +478,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Test shown tab when MeetingConfig.usingGroups is used.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
+        notify(ObjectModifiedEvent(cfg2))
         self.changeUser('pmCreator1')
         self.assertFalse(self.vendors_uid in self.tool.get_orgs_for_user())
         self.assertTrue(self.tool.showPloneMeetingTab(cfg))
@@ -685,7 +687,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            configuration, the annex is not kept (it is deleted).
         '''
         cfg = self.meetingConfig
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to nothing
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
@@ -718,7 +720,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to nothing
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
@@ -747,7 +749,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to annex not kept
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
@@ -826,7 +828,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -842,7 +844,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), )
         self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
@@ -1038,7 +1040,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # configure usingGroups
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
+        notify(ObjectModifiedEvent(cfg2))
         self.changeUser('pmCreator1')
         self.assertFalse(self.vendors_creators in self.member.getGroups())
         self.assertTrue(self.tool.userIsAmong(['creators']))
@@ -1209,7 +1212,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.get_selectable_orgs(cfg, only_selectable=False),
                          [self.developers, self.vendors])
         # do not return more than MeetingConfig.usingGroups
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
+        notify(ObjectModifiedEvent(cfg2))
         self.assertEqual(self.tool.get_selectable_orgs(cfg2), [])
         self.assertEqual(self.tool.get_selectable_orgs(cfg2, only_selectable=False),
                          [self.vendors])
@@ -1325,7 +1329,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
+        notify(ObjectModifiedEvent(cfg))
         # configure a holday for tomorrow
         tomorrow = (date.today() + timedelta(days=1)).strftime('%Y/%m/%d')
         self.tool.setHolidays(({'date': tomorrow}, ))
