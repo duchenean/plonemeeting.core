@@ -6291,17 +6291,20 @@ class MeetingItem(Container):
             is_given = False
         return is_given
 
-    security.declareProtected(ModifyPortalContent, 'initializeArchetype')
-
-    def initializeArchetype(self, **kwargs):
-        '''Override to call item_added_or_initialized to make plone.restapi happy.'''
-        item_added_or_initialized(self)
-        return BaseFolder.initializeArchetype(self, **kwargs)
+    # initializeArchetype was an AT-only hook called by the AT factory after
+    # creation. On DX the equivalent work (item_added_or_initialized) runs
+    # via the IObjectAddedEvent subscriber wired in events.zcml.
 
     security.declareProtected(ModifyPortalContent, 'processForm')
 
     def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
-        ''' '''
+        '''Pre-save bookkeeping that AT used to run inside processForm.
+
+        The AT delegate to BaseFolder.processForm has no DX equivalent —
+        z3c.form drives the form lifecycle and IObjectModifiedEvent is
+        responsible for post-save reactions. The bookkeeping below remains
+        callable from tests / programmatic flows that mirror the AT API.
+        '''
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
             self._v_previousData = rememberPreviousData(self)
@@ -6311,8 +6314,6 @@ class MeetingItem(Container):
                 self._historizeAdvicesOnItemEdit()
         # unmark deferred SearchableText reindexing
         setattr(self, REINDEX_NEEDED_MARKER, False)
-        return BaseFolder.processForm(
-            self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -6929,7 +6930,7 @@ class MeetingItem(Container):
             for adviceId in item.adviceIndex.keys():
                 self._cleanAdviceInheritance(item, adviceId)
 
-        BaseFolder.manage_beforeDelete(self, item, container)
+        super(MeetingItem, self).manage_beforeDelete(item, container)
 
     def _cleanAdviceInheritance(self, item, adviceId):
         '''Clean advice inheritance for given p_adviceId on p_item.'''
