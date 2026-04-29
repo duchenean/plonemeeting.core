@@ -3433,7 +3433,9 @@ class MeetingConfig(Container):
 
     security.declareProtected(WriteRiskyConfig, 'setInsertingMethodsOnAddItem')
     def setInsertingMethodsOnAddItem(self, value, **kwargs):
-        self.inserting_methods_on_add_item = list(value)
+        col_map = _DATAGRID_COL_KEY_MAP.get('inserting_methods_on_add_item', {})
+        self.inserting_methods_on_add_item = [
+            {col_map.get(k, k): v for k, v in row.items()} for row in value]
 
     security.declareProtected(WriteRiskyConfig, 'setUsedItemAttributes')
     def setUsedItemAttributes(self, value, **kwargs):
@@ -5138,6 +5140,9 @@ class MeetingConfig(Container):
 
     def setCertifiedSignatures(self, value):
         '''Set certified_signatures field value.'''
+        col_map = _DATAGRID_COL_KEY_MAP.get('certified_signatures', {})
+        if col_map and value:
+            value = [{col_map.get(k, k): v for k, v in row.items()} for row in value]
         self.certified_signatures = value
 
     def setOrderedAssociatedOrganizations(self, value):
