@@ -13,6 +13,12 @@ Changelog
   tagged ``P6 migration:`` so the TinyMCE setup in Stage D can
   cherry-pick the menu styles, AjaxSave logic, and quick-edit
   bindings. Tracked in repo-root ``MIGRATION_REIMPLEMENT.md``.
+- Disabled AMQP/scan_id integration (`imio.zamqp.pm`, `imio.zamqp.core`,
+  `collective.zamqp`, `imio.dataexchange.core`). Code preserved as
+  comments tagged ``P6 migration:`` and tracked in repo-root
+  ``MIGRATION_REIMPLEMENT.md`` for reactivation in the Plone 6 cutover.
+- Dropped `imio.pm.ws` (SOAP webservice). External consumers should
+  migrate to `plonemeeting.restapi`.
   [duchenean]
 
 

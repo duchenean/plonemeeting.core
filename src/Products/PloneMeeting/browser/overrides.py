@@ -394,9 +394,6 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
             versions.insert(1, "%s %s (%s)" % (plugin_package_name.split('.')[1],
                                                plugin_version,
                                                plugin_ps_version))
-        # WS, imio.pm.ws
-        ws_soap_version = api.env.get_distribution('imio.pm.ws')._version
-        versions.insert(2, 'imio.pm.ws %s' % ws_soap_version)
         # plonemeeting.restapi could be not found on older versions
         if HAS_RESTAPI:
             ws_rest_version = api.env.get_distribution('plonemeeting.restapi')._version

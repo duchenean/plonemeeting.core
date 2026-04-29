@@ -18,8 +18,14 @@ from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
-from imio.zamqp.core.utils import next_scan_id
-from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# from imio.zamqp.core.utils import next_scan_id
+# from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
+DEFAULT_SCAN_ID = u'013999900000001'  # local stand-in matching imio.zamqp.pm tests
+def next_scan_id(file_portal_types=None):
+    """P6 migration stub: returns a deterministic test scan_id.
+       Original implementation lives in imio.zamqp.core.utils."""
+    return DEFAULT_SCAN_ID
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects

@@ -25,13 +25,14 @@ import Products.PloneMeeting
 class PMLayer(PloneWithPackageLayer):
 
     def setUpZope(self, app, configurationContext):
-        from App.config import _config
-        if not base_hasattr(_config, 'product_config'):
-            _config.product_config = {
-                'imio.zamqp.core':
-                {'ws_url': 'http://localhost:6543', 'ws_password': 'test',
-                 'ws_login': 'testuser', 'routing_key': '019999',
-                 'client_id': '019999'}}
+        # P6 migration: AMQP integration to be reimplemented in Stage D.
+        # from App.config import _config
+        # if not base_hasattr(_config, 'product_config'):
+        #     _config.product_config = {
+        #         'imio.zamqp.core':
+        #         {'ws_url': 'http://localhost:6543', 'ws_password': 'test',
+        #          'ws_login': 'testuser', 'routing_key': '019999',
+        #          'client_id': '019999'}}
         super(PMLayer, self).setUpZope(app, configurationContext)
 
     def setUpPloneSite(self, portal):

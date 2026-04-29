@@ -14,11 +14,12 @@ import pkg_resources
 
 PMMessageFactory = MessageFactory("PloneMeeting")
 
-HAS_ZAMQP = True
-try:
-    pkg_resources.get_distribution('imio.zamqp.pm')
-except pkg_resources.DistributionNotFound:
-    HAS_ZAMQP = False
+# P6 migration: AMQP integration to be reimplemented in Stage D.
+# HAS_ZAMQP = True
+# try:
+#     pkg_resources.get_distribution('imio.zamqp.pm')
+# except pkg_resources.DistributionNotFound:
+#     HAS_ZAMQP = False
 
 HAS_SOLR = True
 try:
