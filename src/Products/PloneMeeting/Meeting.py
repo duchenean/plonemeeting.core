@@ -1789,21 +1789,29 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Set, by default, end date to start date + 2 hours.
         if 'endDate' in usedAttrs:
             self.setEndDate(meetingDate + 2 / 24.0)
-        # Compute the publish deadline
-        if 'deadlinePublish' in usedAttrs and not self.getDeadlinePublish():
-            delta = cfg.getPublishDeadlineDefault()
-            if not delta.strip() in ('', '0',):
-                self.setDeadlinePublish(getDateFromDelta(meetingDate, '-' + delta))
+        # B.1.6: dead code — `publishDeadlineDefault` was renamed to
+        # `validationDeadlineDefault` by migrate_to_4200, and
+        # `preMeetingDateDefault` was deleted in the same migration.
+        # The `'preMeetingDate'` AT field name was also renamed to
+        # `pre_meeting_date` (migrate_to_4200:198), so the conditional
+        # never matches against post-migration usedAttrs anyway. Keep
+        # the freeze-deadline branch (still valid) and comment the
+        # other two pending a Stage D decision on whether to wire up
+        # `validation_deadline_default` here or drop the branches.
+        # if 'deadlinePublish' in usedAttrs and not self.getDeadlinePublish():
+        #     delta = cfg.getPublishDeadlineDefault()
+        #     if not delta.strip() in ('', '0',):
+        #         self.setDeadlinePublish(getDateFromDelta(meetingDate, '-' + delta))
         if 'deadlineFreeze' in usedAttrs and not self.getDeadlineFreeze():
             # Compute the freeze deadline
             delta = cfg.freeze_deadline_default
             if not delta.strip() in ('', '0',):
                 self.setDeadlineFreeze(getDateFromDelta(meetingDate, '-' + delta))
-        if 'preMeetingDate' in usedAttrs and not self.getPreMeetingDate():
-            # Compute the date for the pre-meeting
-            delta = cfg.getPreMeetingDateDefault()
-            if not delta.strip() in ('', '0',):
-                self.setPreMeetingDate(getDateFromDelta(meetingDate, '-' + delta))
+        # if 'preMeetingDate' in usedAttrs and not self.getPreMeetingDate():
+        #     # Compute the date for the pre-meeting
+        #     delta = cfg.getPreMeetingDateDefault()
+        #     if not delta.strip() in ('', '0',):
+        #         self.setPreMeetingDate(getDateFromDelta(meetingDate, '-' + delta))
 
     security.declarePublic('getUserReplacements')
 

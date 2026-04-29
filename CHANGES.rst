@@ -5,6 +5,18 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
+- Stage B.1 final cleanup: comment out unreachable dead code in
+  `Meeting.py::_setDateInfos` referencing `cfg.getPublishDeadlineDefault()`
+  and `cfg.getPreMeetingDateDefault()` (both AT fields removed by
+  `migrate_to_4200`). Updated `MIGRATION_SUMMARY.md` to flag
+  `getMaxShownListings` as a method-retention case (do not
+  blind-rewrite — DX class still overrides it for faceted criterion
+  resolution) and to enumerate the downstream packages that must
+  migrate their `pm_updates.py`-style schema injections to a
+  Dexterity behavior or `plone.supermodel` policy before the new
+  `MeetingConfigView` ships.
+  [duchenean]
+
 - Removed dead/dev-only `install_requires` entries: `archetypes.schematuning`
   (AT-only perf overlay, irrelevant once `MeetingItem`/`MeetingConfig`
   go DX in Stage B/C) and `collective.usernamelogger` (dev-only login

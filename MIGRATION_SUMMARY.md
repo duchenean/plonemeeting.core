@@ -183,7 +183,7 @@ All AT `getXxx()` accessor calls must be replaced with direct attribute access.
 | `cfg.getListTypes()` | `cfg.list_types` |
 | `cfg.getMailMode()` | `cfg.mail_mode` |
 | `cfg.getMaxShownAvailableItems()` | `cfg.max_shown_available_items` |
-| `cfg.getMaxShownListings()` | `cfg.max_shown_listings` |
+| `cfg.getMaxShownListings()` | ⚠️ **DO NOT blind-rewrite** — DX class still overrides this method to read from a faceted `ResultsPerPageWidget` criterion before falling back to `cfg.max_shown_listings`. Keep call sites as method calls. |
 | `cfg.getMaxShownMeetingItems()` | `cfg.max_shown_meeting_items` |
 | `cfg.getMeetingAnnexConfidentialVisibleFor()` | `cfg.meeting_annex_confidential_visible_for` |
 | `cfg.getMeetingColumns()` | `cfg.meeting_columns` |
@@ -441,13 +441,35 @@ FTI change: `immediate_view`, `default_view`, and `view_methods` now point to `v
 instead of `@@edit`. Browsing to a MeetingConfig URL lands on the DX view; editing is
 reached via the `Edit` link in the tab bar.
 
-⚠️ **`getCustomFields(2)` pane not ported.** The AT template contained a dynamic
-fieldset rendered by `here.getCustomFields(2)` which surfaced schema fields added by
-downstream packages via AT-style `pm_updates.py` modifications. There is no DX
-equivalent. Packages that extended `MeetingConfig` via AT schema injection will no
-longer see those fields on the view. They should migrate to a DX behavior or a
-`plone.supermodel` schema extension policy registered for
-`schema_policy_meetingconfig`.
+⚠️ **`getCustomFields(2)` pane not ported — downstream action required.** The
+AT template contained a dynamic fieldset rendered by `here.getCustomFields(2)`
+which surfaced schema fields added by downstream packages via AT-style
+`pm_updates.py` modifications.
+
+There is no DX equivalent of `getCustomFields(2)`. Packages that extended
+`MeetingConfig` via AT schema injection (`pm_updates.py`-style) will **not**
+see those fields on the new DX `MeetingConfigView` until they migrate to one
+of:
+
+1. **A `plone.app.dexterity` behavior** registered against
+   `Products.PloneMeeting.content.meetingconfig.IMeetingConfig`, declaring
+   the additional fields. Then the field renders via `view.group_widgets(...)`
+   on the appropriate pane.
+2. **A `plone.supermodel` schema extension policy** registered as
+   `schema_policy_meetingconfig` (the policy name `MeetingConfig`'s FTI
+   already declares). The policy gets a chance to extend the schema when
+   it's looked up by Dexterity.
+3. **A custom `MeetingConfigView` subclass** override registered with a
+   higher-priority `<browser:page name="view">` directive, overriding
+   `default_pane_widgets` / `group_widgets` to inject the extra renders.
+
+Confirmed-affected downstream packages (must update before the rebased
+master is consumed):
+- `Products.MeetingCommunes`
+- `Products.MeetingCharleroi`
+- `Products.MeetingLiege`
+- `Products.MeetingPROVHainaut`
+- (any other in-tree `Meeting<Profile>` package using `pm_updates.py` schema injection)
 
 ⚠️ Downstream add-ons that override `meetingconfig_view` via skin layers
 (`Products.MeetingCommunes`, `Products.MeetingCollege`, etc.) must switch their
