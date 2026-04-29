@@ -1394,7 +1394,7 @@ class MeetingItem(Container):
                     removedAdviser, userid = removedAdviser.split('__userid__')
                 if removedAdviser in givenAdvices and \
                    givenAdvices[removedAdviser]['optional'] is True:
-                    vocab = get_vocab(self, self.getField('optionalAdvisers').vocabulary_factory)  # B.2.x TODO: AT widget/getField API
+                    vocab = get_vocab(self, u'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary')
                     # use term.sortable_title that contains the adviser title
                     # when removing an advice asked to a userid
                     return translate(
@@ -2850,7 +2850,8 @@ class MeetingItem(Container):
         # make sure current category is listed here
         field_name = classifiers and "classifier" or "category"
         storedKeys = [elt[0] for elt in res]
-        current_cat = self.getField(field_name).getAccessor(self)(theObject=True)  # B.2.x TODO: AT widget/getField API
+        current_cat_id = getattr(self, field_name, None)
+        current_cat = current_cat_id and cfg.categories.get(current_cat_id) or None
         if current_cat and not current_cat.getId() in storedKeys:
             res.append((current_cat.getId(), safe_unicode(current_cat.Title())))
 
@@ -6576,12 +6577,11 @@ class MeetingItem(Container):
             optionalAdvisers = list(newItem.getOptionalAdvisers())
             advisers_vocab = get_vocab(
                 newItem,
-                newItem.getField('optionalAdvisers').vocabulary_factory,  # B.2.x TODO: AT widget/getField API
+                u'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
                 **{'include_selected': False, 'include_not_selectable_values': False})
             selectableAdvisers = advisers_vocab.by_token
-            # make sure we only have selectable advisers
-            newItem.setOptionalAdvisers(
-                tuple(set(optionalAdvisers).intersection(set(selectableAdvisers))))
+            newItem.optional_advisers = \
+                tuple(set(optionalAdvisers).intersection(set(selectableAdvisers)))
 
         # automatically set current item as predecessor for newItem?
         inheritedAdviserUids = []

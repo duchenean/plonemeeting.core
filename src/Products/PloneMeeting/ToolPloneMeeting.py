@@ -1223,12 +1223,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
-            # B.2.x TODO: AT schema/mutator/default introspection. Replace with
-            # plone.dexterity default-factory walking once MeetingItem FTI swap (B.2.8) lands.
-            for field in newItem.Schema().filterFields(isMetadata=False):
-                if field.getName() not in fieldsToKeep:
-                    # Set the field to its default value
-                    field.getMutator(newItem)(field.getDefault(newItem))
+            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            from plone.dexterity.utils import iterSchemata
+            dx_fields_to_keep = set(
+                _at_to_dx(name) for name in fieldsToKeep)
+            dx_fields_to_keep.add('id')
+            for iface in iterSchemata(newItem):
+                for field_name, field in iface.namesAndDescriptions():
+                    if field_name in dx_fields_to_keep:
+                        continue
+                    default = field.default
+                    setattr(newItem, field_name, default)
             newItem._at_creation_flag = False
 
             if newPortalType:
@@ -1327,11 +1332,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 person = get_person_from_userid(get_current_user_id())
                 primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
-                # B.2.x TODO: getField() pulls AT widget config — after MeetingItem
-                # FTI swap, look up vocabulary_factory from the DX schema.
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
-                    field = newItem.getField('proposingGroupWithGroupInCharge')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    vocab = get_vocab(
+                        newItem,
+                        u'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary',
+                        only_factory=True)
                     userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
                     if userProposingGroupTerms:
                         token = userProposingGroupTerms[0].token
@@ -1339,13 +1344,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             tokens = [term.token for term in userProposingGroupTerms
                                       if term.token.startswith(primary_org)]
                             token = tokens[0] if tokens else token
-                        newItem.setProposingGroupWithGroupInCharge(token)
+                        newItem.proposing_group_with_group_in_charge = token
                 else:
                     # proposingGroup
-                    # B.2.x TODO: getField() pulls AT widget config — after MeetingItem
-                    # FTI swap, look up vocabulary_factory from the DX schema.
-                    field = newItem.getField('proposingGroup')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
+                    vocab = get_vocab(
+                        newItem,
+                        u'Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary',
+                        include_stored=False)
                     if vocab._terms:
                         token = vocab._terms[0].token
                         if primary_org:
@@ -1353,7 +1358,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                 token = vocab.getTermByToken(primary_org).token
                             except LookupError:
                                 pass
-                        newItem.setProposingGroup(token)
+                        newItem.proposing_group = token
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)

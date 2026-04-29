@@ -4177,7 +4177,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         vocab_factory = get_vocab(
             item,
-            item.getField('optionalAdvisers').vocabulary_factory,
+            u'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
             only_factory=True)
         # relies on MeetingConfig.selectableAdvisers
         self.assertEqual(cfg.selectable_advisers, [self.developers_uid, self.vendors_uid])
@@ -4342,7 +4342,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, nothing is defined as delay-aware adviser in the configuration
         cfg = self.meetingConfig
         self.failIf(cfg.custom_advisers)
-        vocab_factory_name = item.getField('optionalAdvisers').vocabulary_factory
+        vocab_factory_name = u'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary'
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          [self.developers_uid, self.vendors_uid])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
@@ -8143,13 +8143,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUsedItemAttributes(())
         item = self.create('MeetingItem')
-        widget = item.getField('observations').widget
-        self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertFalse(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
-        self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
 
     def test_pm_DefaultItemTemplateNotRemovable(self):

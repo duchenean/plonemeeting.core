@@ -5114,7 +5114,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         insertMethods = cfg.inserting_methods_on_add_item
         for insertMethod in insertMethods:
-            order = item._findOrderFor(insertMethod['insertingMethod'])
+            order = item._findOrderFor(insertMethod['inserting_method'])
             if insertMethod['reverse'] == '1':
                 order = - order
             res.append(order)
