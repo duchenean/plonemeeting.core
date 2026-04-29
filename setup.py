@@ -85,6 +85,7 @@ setup(name='Products.PloneMeeting',
           'Products.CPUtils',
           'Products.DataGridField',
           'Products.PasswordStrength',
-          'Products.cron4plone', ],
+          # 'Products.cron4plone',  # P6 migration: cron4plone dropped, schedule via Plone clock-server
+          ],
       entry_points={},
       )

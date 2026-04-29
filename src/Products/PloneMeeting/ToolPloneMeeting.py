@@ -14,7 +14,9 @@ from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.documentviewer.async import queueJob
+# P6 migration: zc.async dropped, conversion runs inline. Reimplement as background job in Stage D.
+# from collective.documentviewer.async import queueJob
+from collective.documentviewer.convert import Converter
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
@@ -1515,7 +1517,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if (self.auto_convert_annexes() or
                     (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
                    not IIconifiedPreview(annex).converted:
-                    queueJob(annex)
+                    # P6 migration: zc.async dropped, convert inline. Reimplement async in Stage D.
+                    # queueJob(annex)
+                    Converter(annex)()
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 

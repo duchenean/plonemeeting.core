@@ -24,7 +24,8 @@ from plone import api
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import configure_ckeditor
-from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
+# P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D.
+# from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_LDAP
@@ -283,15 +284,16 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
     viewer_settings['storage_type'] = 'Blob'
 
-    # configure Products.cron4plone
-    # add a call to @@update-delay-aware-advices that will update
-    # data regarding the delay-aware advices : call updateAdvices on every items
-    # and update the indexAdvisers index in portal_catalog
-    cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
-    if not cron_configlet.cronjobs:
-        # add a cron job that will be launched at 02:00 so set 01:45
-        # Syntax: m h dom mon command.
-        cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
+    # P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D.
+    # # configure Products.cron4plone
+    # # add a call to @@update-delay-aware-advices that will update
+    # # data regarding the delay-aware advices : call updateAdvices on every items
+    # # and update the indexAdvisers index in portal_catalog
+    # cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
+    # if not cron_configlet.cronjobs:
+    #     # add a cron job that will be launched at 02:00 so set 01:45
+    #     # Syntax: m h dom mon command.
+    #     cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
 
     # add a collective.messagesviewlet message that will be used to warn MeetingManagers
     # that there are no more holidays in the configuration in less that 2 months

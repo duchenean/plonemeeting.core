@@ -5,7 +5,17 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Disabled the cron4plone integration (`@@pm-night-tasks` registration
+  in `setuphandlers`, ZCML include, profile dependency). Scheduled
+  tasks are no longer triggered automatically; reimplement with an
+  external scheduler in Stage D. Also switched annex preview
+  generation in `ToolPloneMeeting.convertAnnexes` and
+  `events._annexToPrintChanged` from `collective.documentviewer.async.queueJob`
+  to direct synchronous `Converter(annex)()` calls so `zc.async` /
+  `plone.app.async` can be dropped. All disabled code preserved as
+  comments tagged ``P6 migration:`` and tracked in repo-root
+  ``MIGRATION_REIMPLEMENT.md``.
+  [duchenean]
 
 
 4.2.28.15 (2026-04-24)

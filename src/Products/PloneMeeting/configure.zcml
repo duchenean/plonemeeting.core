@@ -43,7 +43,8 @@
   <include package="plonemeeting.restapi" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.CPUtils"/>
-  <include package="Products.cron4plone" />
+  <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
+  <!-- <include package="Products.cron4plone" /> -->
   <include package="Products.DataGridField" />
   <include package=".behaviors" />
   <include package=".browser" />
