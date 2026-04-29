@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.content import richtextval
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.statusmessages.interfaces import IStatusMessage
@@ -583,7 +584,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         for item in meeting.get_items():
-            item.setDecision('<p>Dummy decision</p>')
+            item.decision = richtextval('<p>Dummy decision</p>')
         # freeze the meeting to be able to add late items
         self.freezeMeeting(meeting)
         # create 4 items that will be late
@@ -647,7 +648,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view('down')
         # add decision to items so meeting can be decided
         for item in meeting.get_items():
-            item.setDecision('<p>Dummy decision</p>')
+            item.decision = richtextval('<p>Dummy decision</p>')
             item.reindexObject(idxs=['getDecision', ])
         # items order is changeable until the meeting is in a closed state
         for tr in self._getTransitionsToCloseAMeeting():

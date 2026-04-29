@@ -168,7 +168,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.item_advice_states = (item_initial_state,)
         cfg.item_advice_edit_states = (item_initial_state,)
         cfg.item_annex_confidential_visible_for = ('reader_advices',)
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item.update_local_roles()
 
         self.changeUser('pmAdviser1')
@@ -184,7 +184,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._enableField('copyGroups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.item_annex_confidential_visible_for = ('reader_copy_groups',)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
 
         self.changeUser('pmReviewer2')
@@ -364,7 +364,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.item_advice_edit_states = (item_initial_state,)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
@@ -442,7 +442,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._enableField('copyGroups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.advice_annex_confidential_visible_for = ('reader_copy_groups',)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
 
         self.changeUser('pmReviewer2')
@@ -744,9 +744,9 @@ class testAnnexes(PloneMeetingTestCase):
         ITEM_DECISION = "Item decision text"
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title=ITEM_TITLE)
-        item.setDescription(ITEM_DESCRIPTION)
-        item.setDecision(ITEM_DECISION)
-        item.setMotivation('')
+        item.description = richtextval(ITEM_DESCRIPTION)
+        item.decision = richtextval(ITEM_DECISION)
+        item.motivation = richtextval('')
         self._manage_custom_searchable_fields(item)
         item.reindexObject(idxs=['SearchableText', ])
         index = self.catalog.Indexes['SearchableText']
@@ -1154,7 +1154,7 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
         # check that local_roles regarding proposingGroup are correctly set on new annexes
-        item.setCopyGroups(())
+        item.copy_groups = ()
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
 
@@ -1172,7 +1172,7 @@ class testAnnexes(PloneMeetingTestCase):
             notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision('<p>Decision</p>')
+        item.decision = richtextval('<p>Decision</p>')
         annex1 = self.addAnnex(item)
         annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annex2 = self.addAnnex(item)
@@ -1228,7 +1228,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision('<p>Decision</p>')
+        item.decision = richtextval('<p>Decision</p>')
         self.validateItem(item)
         # when an item is 'accepted', the MeetingMember may add annexDecision
         self.changeUser('pmManager')
@@ -1752,7 +1752,7 @@ class testAnnexes(PloneMeetingTestCase):
         meeting_annex = self.addAnnex(meeting)
         _check_catalog()
         # advice
-        item.setOptionalAdvisers([self.developers_uid])
+        item.optional_advisers = [self.developers_uid]
         item._update_after_edit()
         _check_catalog(step=0)
         advice = createContentInContainer(

@@ -342,7 +342,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid,))
+        item1.optional_advisers = (self.developers_uid,)
         self.proposeItem(item1)
         # give an advice
         self.changeUser('pmAdviser1')
@@ -365,7 +365,7 @@ class testSearches(PloneMeetingTestCase):
         # it will be returned for pmManager but not for pmAdviser1
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers((self.vendors_uid,))
+        item2.optional_advisers = (self.vendors_uid,)
         self.proposeItem(item2)
         self.changeUser('pmManager')
         createContentInContainer(item2,
@@ -437,7 +437,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid,))
+        item1.optional_advisers = (self.developers_uid,)
         self.proposeItem(item1)
         # give a non delay-aware advice
         self.changeUser('pmAdviser1')
@@ -463,7 +463,7 @@ class testSearches(PloneMeetingTestCase):
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
+        item2.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid),)
         self.proposeItem(item2)
         self.changeUser('pmAdviser1')
         createContentInContainer(item2,
@@ -511,7 +511,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failIf(collection.results())
@@ -597,7 +597,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(collection.results())
         # takenOverBy is set back to '' on each transition
         self.proposeItem(item)
-        self.assertTrue(not item.getTakenOverBy())
+        self.assertTrue(not item.taken_over_by)
         self.failIf(collection.results())
 
         # query is not cached (this was the case before and there was a bug
@@ -678,7 +678,7 @@ class testSearches(PloneMeetingTestCase):
         if 'prereviewers' in reviewers:
             review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item
@@ -1269,15 +1269,15 @@ class testSearches(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(len(collection.results()), 1)
         # ask advices
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), )
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 0)
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 1)
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 0)

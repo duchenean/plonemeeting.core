@@ -161,10 +161,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Clones a given item in parent item folder.'''
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
-        item1.setItemKeywords('My keywords')
+        item1.item_keywords = 'My keywords'
         item1.setTitle('My title')
-        item1.setBudgetRelated(True)
-        item1.setBudgetInfos('<p>My budget</p>')
+        item1.budget_related = True
+        item1.budget_infos = richtextval('<p>My budget</p>')
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEqual(
@@ -172,10 +172,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Test that some fields are kept...
         self.assertEqual(clonedItem.Title(), item1.Title())
         self.assertEqual(clonedItem.getCategory(), item1.getCategory())
-        self.assertEqual(clonedItem.getBudgetRelated(), item1.getBudgetRelated())
+        self.assertEqual(clonedItem.budget_related, item1.budget_related)
         self.assertEqual(clonedItem.getBudgetInfos(), item1.getBudgetInfos())
         # ... but not others
-        self.failIf(clonedItem.getItemKeywords() == item1.getItemKeywords())
+        self.failIf(clonedItem.item_keywords == item1.item_keywords)
         # The default value is set for unkept fields
         self.assertEqual(clonedItem.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
@@ -346,7 +346,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item2)
         # Add advices to item2
-        item2.setOptionalAdvisers((self.vendors_uid, ))
+        item2.optional_advisers = (self.vendors_uid, )
         # propose the item so the advice can be given
         self.proposeItem(item2)
         self.changeUser('pmReviewer2')
@@ -831,10 +831,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
-        item1.setCopyGroups((self.vendors_reviewers,))
+        item1.copy_groups = (self.vendors_reviewers,)
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setCopyGroups((self.vendors_reviewers,))
+        item2.copy_groups = (self.vendors_reviewers,)
         self.proposeItem(item2)
         # copyGroups roles are set for item1, not for item2
         self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)

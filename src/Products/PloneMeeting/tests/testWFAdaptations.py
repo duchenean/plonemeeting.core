@@ -760,14 +760,14 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.failIf(cfg.validate_workflowAdaptations((wfa_name, )))
             # do transition available
             if wfa_name.startswith('accepted_out_of_meeting_emergency'):
-                item.setEmergency('emergency_accepted')
-                item.setIsAcceptableOutOfMeeting(True)
+                item.emergency = 'emergency_accepted'
+                item.is_acceptable_out_of_meeting = True
             elif wfa_name.startswith('transfered'):
                 item.setOtherMeetingConfigsClonableTo((
                     self.meetingConfig2.getId(), ))
             else:
                 # accepted_out_of_meeting/accepted_out_of_meeting_and_duplicated
-                item.setIsAcceptableOutOfMeeting(True)
+                item.is_acceptable_out_of_meeting = True
             # transition
             self.do(item, transition)
             self.assertEqual(
@@ -835,7 +835,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
 
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         self.proposeItem(item)
         proposedState = item.query_state()
         self._setItemToWaitingAdvices(item,
@@ -1116,7 +1116,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         m1 = self._createMeetingWithItems()
         self.failIf('publish' in self.transitions(m1))
         for item in m1.get_items():
-            item.setDecision('<p>My decision<p>')
+            item.decision = richtextval('<p>My decision<p>')
         for tr in self._getTransitionsToCloseAMeeting():
             if tr in self.transitions(m1):
                 lastTriggeredTransition = tr
@@ -1931,8 +1931,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
-        item.setMotivation('<p>testing motivation field</p>')
-        item.setDecision('<p>testing decision field</p>')
+        item.motivation = richtextval('<p>testing motivation field</p>')
+        item.decision = richtextval('<p>testing decision field</p>')
         self.presentItem(item)
         self.changeUser('pmCreator1')
         # relevant users can see the decision
@@ -1951,8 +1951,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(item.getDecision(), '<p>testing decision field</p>')
         self.decideMeeting(meeting)
         # set a decision...
-        item.setMotivation('<p>Motivation adapted by pmManager</p>')
-        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.motivation = richtextval('<p>Motivation adapted by pmManager</p>')
+        item.decision = richtextval('<p>Decision adapted by pmManager</p>')
         item.reindexObject()
         # it is immediatelly viewable by the item's creator as
         # the 'hide_decisions_when_under_writing' wfAdaptation is not enabled
@@ -1973,8 +1973,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
-        item.setMotivation('<p>testing motivation field</p>')
-        item.setDecision('<p>testing decision field</p>')
+        item.motivation = richtextval('<p>testing motivation field</p>')
+        item.decision = richtextval('<p>testing decision field</p>')
         self.presentItem(item)
         self.changeUser('pmCreator1')
         # relevant users can see the decision
@@ -1993,8 +1993,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(item.getDecision(), '<p>testing decision field</p>')
         self.decideMeeting(meeting)
         # set a decision...
-        item.setMotivation('<p>Motivation adapted by pmManager</p>')
-        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.motivation = richtextval('<p>Motivation adapted by pmManager</p>')
+        item.decision = richtextval('<p>Decision adapted by pmManager</p>')
         # getDecision must return 'utf-8' encoded string, make sure it is
         item.reindexObject()
         self.assertTrue(isinstance(item.getDecision(), basestring))
@@ -2085,8 +2085,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # may edit the decision, then a MeetingObserverLocal may see it also evern if he may not edit it
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
-        item.setMotivation('<p>Motivation field</p>')
-        item.setDecision('<p>Decision field</p>')
+        item.motivation = richtextval('<p>Motivation field</p>')
+        item.decision = richtextval('<p>Decision field</p>')
         self.presentItem(item)
         # maybe we have a 'publish' transition
         if 'publish' in self.transitions(meeting):
@@ -2094,8 +2094,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
 
         # set another decision...
-        item.setMotivation('<p>Motivation adapted by pmManager</p>')
-        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.motivation = richtextval('<p>Motivation adapted by pmManager</p>')
+        item.decision = richtextval('<p>Decision adapted by pmManager</p>')
         item.reindexObject()
 
         # not viewable for now
@@ -2118,7 +2118,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # but another user that may see the item but not edit it may not see the decision
         self._enableField('copyGroups')
         cfg.item_copy_groups_states = (item.query_state(),)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
@@ -2240,7 +2240,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 proposed_state, waiting_state_name).msg, context=self.request),
             advice_required_to_ask_advices)
         # ask an advice so transition is available
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         # still not available because no advice may be asked in state waiting_state_name
         self.assertNotIn(waiting_state_name, self.vendors.item_advice_states)
@@ -2275,7 +2275,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(WriteInternalNotes, item))
         # change text and add image
         text = '<p>Internal note with image <img src="%s"/>.</p>' % self.external_image1
-        item.setInternalNotes(text)
+        item.internal_notes = richtextval(text)
         item.at_post_edit_script()
 
         # right come back to 'proposed'
@@ -2324,7 +2324,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # right, create an item and set it to 'proposed__or__prevalidated_waiting_advices'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         self._afterItemCreatedWaitingAdviceWithPrevalidation(item)
         self.do(item, 'propose')
@@ -2399,7 +2399,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         # from 'itemcreated'
         self.do(item, 'wait_advices_from_itemcreated')
@@ -2450,7 +2450,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         # from 'itemcreated'
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
@@ -3384,7 +3384,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # not available until MeetingItem.isAcceptableOutOfMeeting is True
         self.assertFalse('accept_out_of_meeting' in self.transitions(item))
         self.assertTrue('present' in self.transitions(item))
-        item.setIsAcceptableOutOfMeeting(True)
+        item.is_acceptable_out_of_meeting = True
         self.assertTrue('accept_out_of_meeting' in self.transitions(item))
         self.assertFalse('present' in self.transitions(item))
         # in case 'reviewers_take_back_validated_item' is available
@@ -3413,7 +3413,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(duplicated_item.get_predecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item is not more isAcceptableOutOfMeeting
-            self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
+            self.assertFalse(duplicated_item.is_acceptable_out_of_meeting)
 
     def test_pm_WFA_accepted_out_of_meeting_emergency(self):
         '''Test the workflowAdaptation 'accepted_out_of_meeting_emergency'.'''
@@ -3450,10 +3450,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.validateItem(item)
         # not available until MeetingItem.isAcceptableOutOfMeeting is True
         self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
-        item.setIsAcceptableOutOfMeeting(True)
+        item.is_acceptable_out_of_meeting = True
         # not available until emergency is 'emergency_accepted'
         self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
-        item.setEmergency('emergency_accepted')
+        item.emergency = 'emergency_accepted'
         self.assertTrue('accept_out_of_meeting_emergency' in self.transitions(item))
         # in case 'reviewers_take_back_validated_item' is available
         self.changeUser('pmReviewer1')
@@ -3481,9 +3481,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(duplicated_item.get_predecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item emergency is no more asked
-            self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
+            self.assertEqual(duplicated_item.emergency, 'no_emergency')
             # duplicated_item is not more isAcceptableOutOfMeeting
-            self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
+            self.assertFalse(duplicated_item.is_acceptable_out_of_meeting)
 
     def test_pm_WFA_transfered(self):
         '''Test the workflowAdaptation 'transfered'.'''

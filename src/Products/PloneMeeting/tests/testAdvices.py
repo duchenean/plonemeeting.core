@@ -68,9 +68,9 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'development'
         }
         item1 = self.create('MeetingItem', **data)
-        item1.setOptionalAdvisers((self.vendors_uid, ))
+        item1.optional_advisers = (self.vendors_uid, )
         item2 = self.create('MeetingItem', **data)
-        item2.setOptionalAdvisers((self.developers_uid, ))
+        item2.optional_advisers = (self.developers_uid, )
         item3 = self.create('MeetingItem', **data)
         # at this state, the item is not viewable by the advisers
         self.changeUser('pmReviewer2')
@@ -121,11 +121,11 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertFalse(item.adapted().showAdvices())
         # if an advice is asked, it will be shown
-        item.setOptionalAdvisers((self.vendors_uid,))
+        item.optional_advisers = (self.vendors_uid,)
         item._update_after_edit()
         self.assertTrue(item.adapted().showAdvices())
         # shown if cfg.useAdvices
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit()
         self.assertFalse(item.adapted().showAdvices())
         cfg.use_advices = True
@@ -143,7 +143,7 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'development'
         }
         item1 = self.create('MeetingItem', **data)
-        item1.setOptionalAdvisers((self.vendors_uid, ))
+        item1.optional_advisers = (self.vendors_uid, )
         item1._update_after_edit()
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
@@ -250,7 +250,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
         self.changeUser('pmManager')
-        item1.setOptionalAdvisers([])
+        item1.optional_advisers = []
         item1._update_after_edit()
         self.changeUser('pmReviewer2')
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
@@ -267,7 +267,7 @@ class testAdvices(PloneMeetingTestCase):
                                      self._stateMappingFor('validated'), ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         # an advice can be given when an item is 'proposed'
         self.proposeItem(item)
@@ -303,7 +303,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask advice of 'vendors'
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
+        item.optional_advisers = (self.developers_uid, self.vendors_uid, )
         item._update_after_edit()
         # an advice can be given when an item is 'proposed'
         self.proposeItem(item)
@@ -344,7 +344,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask advice of 'vendors'
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.vendors_uid,))
+        item1.optional_advisers = (self.vendors_uid,)
         item1._update_after_edit()
         self.proposeItem(item1)
         # if a user tries to give an advice for the 'developers' group,
@@ -411,7 +411,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # modifying the item will not invalidate the advices because not 'validated'
         self.failIf(item.willInvalidateAdvices())
-        item.setDecision(item.getDecision() + '<p>New line</p>')
+        item.decision = richtextval(item.getDecision() + '<p>New line</p>')
         item._update_after_edit()
         # check that advices are still there
         self.failUnless(item.hasAdvices())
@@ -462,7 +462,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(item.getGivenAdvices())
         # editing the item will invalidate advices
         self.failUnless(item.willInvalidateAdvices())
-        item.setDecision(item.getDecision() + '<p>Still another new line</p>')
+        item.decision = richtextval(item.getDecision() + '<p>Still another new line</p>')
         item._update_after_edit()
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
@@ -913,13 +913,13 @@ class testAdvices(PloneMeetingTestCase):
         # create 3 items with various advices
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
+        item1.optional_advisers = (self.developers_uid, self.vendors_uid, )
         item1.update_local_roles()
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers((self.developers_uid, ))
+        item2.optional_advisers = (self.developers_uid, )
         item2.update_local_roles()
         item3 = self.create('MeetingItem')
-        item3.setOptionalAdvisers(())
+        item3.optional_advisers = ()
         item3.update_local_roles()
 
         # query not_given advices
@@ -1023,7 +1023,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item._update_after_edit()
         self.assertTrue(self.developers_uid in item.adviceIndex)
         self.assertFalse(self.vendors_uid in item.adviceIndex)
@@ -1038,7 +1038,7 @@ class testAdvices(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertFalse(self.vendors_uid in item.adviceIndex)
         # but if the condition is True, then the advice is automatically asked
-        item.setBudgetRelated(True)
+        item.budget_related = True
         item._update_after_edit()
         self.assertTrue(self.vendors_uid in item.adviceIndex)
         # moreover, this automatic advice is not considered as optional
@@ -1125,7 +1125,7 @@ class testAdvices(PloneMeetingTestCase):
                                 'delay': '10'}, ])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setBudgetRelated(True)
+        item.budget_related = True
         item._update_after_edit()
         # the automatic advice is asked
         self.assertTrue(self.vendors_uid in item.adviceIndex)
@@ -1139,7 +1139,7 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': richtextval(u'My comment')})
-        item.setBudgetRelated(False)
+        item.budget_related = False
         item._update_after_edit()
         # the automatic advice is still there even if no more returned by getAutomaticAdvisersData
         self.assertTrue(self.vendors_uid in item.adviceIndex)
@@ -1179,7 +1179,7 @@ class testAdvices(PloneMeetingTestCase):
         # one wrong condition (raising an error when evaluated) and one returning False
         self.failIf(item.getAutomaticAdvisersData())
         # now make the second row expression return True, set item.budgetRelated
-        item.setBudgetRelated(True)
+        item.budget_related = True
         self.assertEqual(
             sorted(item.getAutomaticAdvisersData()),
             sorted(
@@ -1253,7 +1253,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item._update_after_edit()
 
         # add the optional advice
@@ -1273,7 +1273,7 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'delay': '10'}, ])
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), )
         item._update_after_edit()
         advice = createContentInContainer(item,
                                           'meetingadvice',
@@ -1342,7 +1342,7 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'development'
         }
         item = self.create('MeetingItem', **data)
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         # advice are correctly asked
         self.assertEqual(
@@ -1422,7 +1422,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': ''}, ])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the advice is asked but not giveable
@@ -1499,7 +1499,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # ask 'vendors' advice
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item.at_post_create_script()
         self.proposeItem(item)
         self.assertEqual(item.query_state(), self._stateMappingFor('proposed'))
@@ -1654,7 +1654,7 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.item_advice_view_states = (self._stateMappingFor('proposed', ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         self.proposeItem(item)
         # advice should be giveable during 7 working days, we set manually 'delay_started_on'
@@ -1753,7 +1753,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(self.tool.getNonWorkingDayNumbers(), [])
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         self.proposeItem(item)
         # now test that limit_date is just now + delay of 10 days
@@ -1827,7 +1827,7 @@ class testAdvices(PloneMeetingTestCase):
                             'is_linked_to_previous_row': '0'}, ]
         cfg.setCustomAdvisers(custom_advisers)
         # select delay of 5 days
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         available_delays_view = item.restrictedTraverse('@@advice-available-delays')
         available_delays_view._initAttributes(self.vendors_uid)
@@ -1886,7 +1886,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(custom_advisers)
         # MeetingConfig._findLinkedRowsFor is ram cached
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit()
         self.assertEqual(available_delays_view.listSelectableDelays(), [])
         # access to delay changes history
@@ -2015,7 +2015,7 @@ class testAdvices(PloneMeetingTestCase):
                             'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(custom_advisers)
         # select delay of 5 days
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         # for now, delay is 5 days and 'row_id' is unique_id_123
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
@@ -2049,7 +2049,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(custom_advisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         cfg.processForm({'dummy': ''})
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit()
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '5')
@@ -2085,8 +2085,8 @@ class testAdvices(PloneMeetingTestCase):
         # create item and ask advices
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
-        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
-        item.setCopyGroups((self.vendors_creators, ))
+        item.optional_advisers = (self.developers_uid, self.vendors_uid, )
+        item.copy_groups = (self.vendors_creators, )
         item._update_after_edit()
         # add comment to developers advice
         comment = u"Proposing group comment héhé"
@@ -2194,7 +2194,7 @@ class testAdvices(PloneMeetingTestCase):
                             'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(custom_advisers)
         # select delay of 5 days
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         # delay was started
         original_delay_started_on = item.getAdviceDataFor(item, self.vendors_uid)['delay_started_on']
@@ -2236,7 +2236,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask advice of 'developers'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item._update_after_edit()
         # must be MeetingManager to be able to change advice confidentiality
         self.assertFalse(item.adapted().mayEditAdviceConfidentiality(self.developers_uid))
@@ -2246,7 +2246,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex[self.developers_uid]['isConfidential'])
         cfg.advice_confidentiality_default = False
         # ask 'vendors' advice
-        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
+        item.optional_advisers = (self.developers_uid, self.vendors_uid, )
         item._update_after_edit()
         # still confidential for 'developers'
         self.assertTrue(item.adviceIndex[self.developers_uid]['isConfidential'])
@@ -2310,7 +2310,7 @@ class testAdvices(PloneMeetingTestCase):
         # it is viewable by MeetingManager when validated
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         # validate the item and advice it
         self.validateItem(item)
         self.changeUser('pmReviewer2')
@@ -2612,7 +2612,7 @@ class testAdvices(PloneMeetingTestCase):
         item, advice = self._setUpHistorizedAdvice()
         # historize advice
         self.changeUser('pmCreator1')
-        item.setCopyGroups((self.vendors_observers, ))
+        item.copy_groups = (self.vendors_observers, )
         self.proposeItem(item)
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
@@ -2658,9 +2658,9 @@ class testAdvices(PloneMeetingTestCase):
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
-        item.setDetailedDescription('<p>Item detailed description</p>')
-        item.setMotivation('<p>Item motivation</p>')
-        item.setDecision('<p>Item decision</p>')
+        item.detailed_description = richtextval('<p>Item detailed description</p>')
+        item.motivation = richtextval('<p>Item motivation</p>')
+        item.decision = richtextval('<p>Item decision</p>')
         self.proposeItem(item)
         # give advice
         self.changeUser('pmReviewer2')
@@ -2695,7 +2695,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(last_action_time1, last_action['time'])
 
         # come back to 'proposed' and edit advice
-        item.setDecision('<p>Another decision</p>')
+        item.decision = richtextval('<p>Another decision</p>')
         self.backToState(item, self._stateMappingFor('proposed'))
         notify(ObjectModifiedEvent(advice))
         self.validateItem(item)
@@ -2805,9 +2805,9 @@ class testAdvices(PloneMeetingTestCase):
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
-        item.setDetailedDescription('<p>Item detailed description</p>')
-        item.setMotivation('<p>Item motivation</p>')
-        item.setDecision('<p>Item decision</p>')
+        item.detailed_description = richtextval('<p>Item detailed description</p>')
+        item.motivation = richtextval('<p>Item motivation</p>')
+        item.decision = richtextval('<p>Item decision</p>')
         self.proposeItem(item)
         # give advice
         self.changeUser('pmReviewer2')
@@ -3105,7 +3105,7 @@ class testAdvices(PloneMeetingTestCase):
         # just check that an adviser may add images to an editable advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
 
         # give advice
@@ -3143,7 +3143,7 @@ class testAdvices(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
 
         # give advice
@@ -3176,7 +3176,7 @@ class testAdvices(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, self.developers_uid, ))
+        item.optional_advisers = (self.vendors_uid, self.developers_uid, )
         item._update_after_edit()
 
         # give 'vendors' advice and test
@@ -3217,7 +3217,7 @@ class testAdvices(PloneMeetingTestCase):
         # create 2 items and inheritate from an advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.vendors_uid, '{0}__rowid__unique_id_123'.format(self.developers_uid)))
+        item1.optional_advisers = (self.vendors_uid, '{0}__rowid__unique_id_123'.format(self.developers_uid))
         item1.update_local_roles()
         self.changeUser('pmAdviser1')
         vendors_advice = createContentInContainer(
@@ -3686,7 +3686,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
         # remove the optional advice asked
         self.deleteAsManager(item1.adviceIndex[self.developers_uid]['advice_uid'])
-        item1.setOptionalAdvisers((self.vendors_uid, ))
+        item1.optional_advisers = (self.vendors_uid, )
         item1._update_after_edit()
         # item1 and item2 adviceIndex is correct
         self.assertFalse(self.developers_uid in item1.adviceIndex)
@@ -3715,7 +3715,7 @@ class testAdvices(PloneMeetingTestCase):
         # item4 will inherits from both 'developers' and 'vendors' but
         # change this to only keep the 'vendors' advice
         item4 = item2.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
-        item4.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item4.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), )
         del item4.adviceIndex[self.vendors_uid]
         item4.update_local_roles()
         self.assertFalse(self.vendors_uid in item4.adviceIndex)
@@ -3828,7 +3828,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) test removing inheritance, make sure 'vendors' not in optionalAdvisers
-        item2.setOptionalAdvisers(())
+        item2.optional_advisers = ()
         self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
@@ -3871,7 +3871,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(messages[-1].message, ask_locally_not_configured_msg)
 
         # MeetingManager may remove inherited advice as long as item is not decided
-        item2.setDecision(self.decisionText)
+        item2.decision = richtextval(self.decisionText)
         meeting = self.create('Meeting')
         advice_infos = form._advice_infos(data={'advice_uid': self.vendors_uid})
         self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
@@ -3894,7 +3894,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) check 'remove', for now, not removeable because item not in relevant state
-        item2.setOptionalAdvisers(())
+        item2.optional_advisers = ()
         self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
@@ -3986,7 +3986,7 @@ class testAdvices(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         self.proposeItem(item)
         # add advice for 'vendors'
@@ -4110,7 +4110,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item._update_after_edit()
 
         # pmAdviser is able to add advice but not annexes
@@ -4365,7 +4365,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_view_states = ('itemcreated',)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, self.developers_uid, ))
+        item.optional_advisers = (self.vendors_uid, self.developers_uid, )
         item._update_after_edit()
 
         # give 'vendors' advice and test
@@ -4383,7 +4383,7 @@ class testAdvices(PloneMeetingTestCase):
         self.request["debug_sendMailIfRelevant_result"] = None
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, self.developers_uid, ))
+        item.optional_advisers = (self.vendors_uid, self.developers_uid, )
         item._update_after_edit()
 
         # give 'vendors' advice and test

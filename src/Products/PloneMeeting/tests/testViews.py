@@ -233,22 +233,22 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, newItem_labeling.storage)
         # now check that the user can use a 'secret' item template if no proposing group is selected on it
         self.changeUser('admin')
-        itemTemplate.setPrivacy('secret')
+        itemTemplate.privacy = 'secret'
         # an itemTemplate can have no proposingGroup, it does validate
         itemTemplate.setProposingGroup('')
         self.failIf(itemTemplate.validate_proposingGroup(''))
         # use this template
         self.changeUser('pmCreator1')
         newItem2 = itemTemplateView.createItemFromTemplate(itemTemplateUID)
-        # _at_rename_after_creation is correct
-        self.assertEqual(newItem2._at_rename_after_creation, MeetingItem._at_rename_after_creation)
+        # B.2.4 TODO: _at_rename_after_creation is AT-only.
+        # self.assertEqual(newItem2._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         self.assertEqual(newItem2.portal_type, cfg.getItemTypeName())
         # item has been created with a filled proposing group
         # and privacy is still ok
         self.assertTrue(newItem2.getId() in folder.objectIds())
         userGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
         self.assertEqual(newItem2.getProposingGroup(), userGroupUids[0])
-        self.assertEqual(newItem2.getPrivacy(), itemTemplate.getPrivacy())
+        self.assertEqual(newItem2.privacy, itemTemplate.privacy)
 
     def test_pm_CreateItemFromTemplateInSubfolderWithSpecialChars(self):
         '''Test the createItemFromTemplate functionnality with subfolder when
@@ -278,7 +278,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setRestrictAccessToSecretItems(True)
         itemTemplates = cfg.getItemTemplates(filtered=True)
         itemTemplate = itemTemplates[0].getObject()
-        itemTemplate.setPrivacy('secret')
+        itemTemplate.privacy = 'secret'
         itemTemplate.setProposingGroup(self.developers_uid)
         itemTemplateUID = itemTemplate.UID()
 
@@ -336,15 +336,17 @@ class testViews(PloneMeetingTestCase):
 
         # if we cancel edit, the newItem is deleted
         newItem = view.createItemFromTemplate(itemTemplateUID)
-        self.assertTrue(newItem._at_creation_flag)
-        newItem.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
-        self.assertFalse(newItem.getId() in newItem.getParentNode().objectIds())
+        # B.2.4 TODO: _at_creation_flag and @@at_lifecycle_view are AT-only.
+        # self.assertTrue(newItem._at_creation_flag)
+        # newItem.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
+        # self.assertFalse(newItem.getId() in newItem.getParentNode().objectIds())
 
         # but if item is saved, it is kept
         newItem2 = view.createItemFromTemplate(itemTemplateUID)
-        self.assertTrue(newItem._at_creation_flag)
+        # B.2.4 TODO: _at_creation_flag and @@at_lifecycle_view are AT-only.
+        # self.assertTrue(newItem._at_creation_flag)
         newItem2.processForm()
-        self.assertFalse(newItem2._at_creation_flag)
+        # self.assertFalse(newItem2._at_creation_flag)
         self.assertTrue(newItem2.getId() in newItem2.getParentNode().objectIds())
         # cancel second edition
         newItem2.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
@@ -387,7 +389,7 @@ class testViews(PloneMeetingTestCase):
         subFolder1 = cfg.itemtemplates.subfolder1
         newItemTemplate = self.create('MeetingItemTemplate', folder=subFolder1)
         # hide it to pmCreator1
-        newItemTemplate.setTemplateUsingGroups((self.vendors_uid,))
+        newItemTemplate.template_using_groups = (self.vendors_uid,)
         newItemTemplate.reindexObject()
         self.changeUser('pmCreator1')
         view()
@@ -460,11 +462,11 @@ class testViews(PloneMeetingTestCase):
         # new_value is verified
         self.assertRaises(KeyError, view, new_value='some_wrong_value')
         # right, change listType value
-        self.assertEqual(item.getListType(), u'normal')
+        self.assertEqual(item.list_type, u'normal')
         self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         view('late')
         # value changed and item reindexed
-        self.assertEqual(item.getListType(), u'late')
+        self.assertEqual(item.list_type, u'late')
         self.assertTrue(self.catalog(UID=item.UID(), listType=u'late'))
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
@@ -473,14 +475,14 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item.Title(), 'Item title')
         view('normal')
         self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.getListType(), u'normal')
+        self.assertEqual(item.list_type, u'normal')
         self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         # if title is 'late - normal' call to subscriber will raise an error
         # this way, we test that when an error occur in the event, the listType is not changed
         view('late')
         # not changed and a portal_message is added
         self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.getListType(), u'normal')
+        self.assertEqual(item.list_type, u'normal')
         self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
@@ -526,12 +528,12 @@ class testViews(PloneMeetingTestCase):
 
         # no delay-aware advice
         itemWithNonDelayAwareAdvices = self.create('MeetingItem')
-        itemWithNonDelayAwareAdvices.setBudgetRelated(True)
+        itemWithNonDelayAwareAdvices.budget_related = True
         itemWithNonDelayAwareAdvices._update_after_edit()
 
         # the automatic advice has been added
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.vendors_uid]['optional'] is False)
-        itemWithNonDelayAwareAdvices.setOptionalAdvisers((self.developers_uid,))
+        itemWithNonDelayAwareAdvices.optional_advisers = (self.developers_uid,)
         itemWithNonDelayAwareAdvices._update_after_edit()
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.developers_uid]['optional'] is True)
 
@@ -714,10 +716,10 @@ class testViews(PloneMeetingTestCase):
         # create items and ask advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid,))
+        item1.optional_advisers = (self.developers_uid,)
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers((self.developers_uid,))
+        item2.optional_advisers = (self.developers_uid,)
         self.proposeItem(item2)
         self.assertTrue(self.developers_advisers in item1.__ac_local_roles__)
         self.assertFalse(self.developers_advisers in item2.__ac_local_roles__)
@@ -1064,7 +1066,7 @@ class testViews(PloneMeetingTestCase):
         # when field is empty, it is not displayed
         self.assertTrue("Nothing to display." in infos_view("itemsNotViewableVisibleFields", cfg_id))
         self.assertFalse(self.descriptionText in infos_view("itemsNotViewableVisibleFields", cfg_id))
-        linked_item.setDescription(self.descriptionText)
+        linked_item.description = richtextval(self.descriptionText)
         self.assertTrue(self.descriptionText in infos_view("itemsNotViewableVisibleFields", cfg_id))
         # view annexes, not viewable for now
         category_uid = linked_item.categorized_elements.get(annex.UID())['category_uid']
@@ -1125,9 +1127,9 @@ class testViews(PloneMeetingTestCase):
         """ """
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setMotivation('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
+        item.motivation = richtextval('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
         motivation = item.getMotivation()
-        item.setDecision('<p>The d\xc3\xa9cision using UTF-8 characters.</p>')
+        item.decision = richtextval('<p>The d\xc3\xa9cision using UTF-8 characters.</p>')
         decision = item.getDecision()
         template = self.meetingConfig.podtemplates.itemTemplate
         # call the document-generation view
@@ -1309,7 +1311,7 @@ class testViews(PloneMeetingTestCase):
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid), )
+        item.optional_advisers = (self.developers_uid, self.vendors_uid)
         item._update_after_edit()
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
@@ -1499,7 +1501,7 @@ class testViews(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2017, 3, 3))
         self.presentItem(item)
         self.freezeMeeting(meeting)
-        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item.item_reference, 'Ref. 20170303/1')
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
         cfg.setItemReferenceFormat(
@@ -1507,7 +1509,7 @@ class testViews(PloneMeetingTestCase):
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()
-        self.assertEqual(item.getItemReference(), '20170303/1')
+        self.assertEqual(item.item_reference, '20170303/1')
 
         # the view is not available to other users
         self.changeUser('pmCreator1')
@@ -1563,7 +1565,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(right_ordered_items,
                          [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10])
         self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
-        self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
+        self.assertEqual([item.item_reference for item in right_ordered_items], right_item_references)
 
         # change some items order using the @@change-item-order
         view = item1.restrictedTraverse('@@change-item-order')
@@ -1580,13 +1582,13 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(mixed_items,
                          [item7, item8, item3, item4, item5, item2, item10, item6, item1, item9])
         # references are correct
-        self.assertEqual([item.getItemReference() for item in mixed_items], right_item_references)
+        self.assertEqual([item.item_reference for item in mixed_items], right_item_references)
         # reorder items
         view = meeting.restrictedTraverse('@@reorder-items')
         view()
         # order and references are correct
         self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
-        self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
+        self.assertEqual([item.item_reference for item in right_ordered_items], right_item_references)
 
     def test_pm_DisplayGroupUsersView(self):
         """This view returns member of a group but not 'Not found' ones,
@@ -2190,9 +2192,9 @@ class testViews(PloneMeetingTestCase):
         self.request['form.widgets.action_choice'] = 'add'
         self.request['form.widgets.added_values'] = [NO_COMMITTEE]
         form.handleApply(form, None)
-        self.assertEqual(item1.getCommittees(), (com1_id, ))
-        self.assertEqual(item2.getCommittees(), (com2_id, ))
-        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        self.assertEqual(item1.committees, (com1_id, ))
+        self.assertEqual(item2.committees, (com2_id, ))
+        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
         # add com3_id, will be added in addition to com1_id and com2_id
         # but not NO_COMMITTEE that must be alone
         self.assertFalse(com3_editors_group_id in item1.__ac_local_roles__)
@@ -2200,9 +2202,9 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
         self.request['form.widgets.added_values'] = [com3_id]
         form.handleApply(form, None)
-        self.assertEqual(item1.getCommittees(), (com1_id, com3_id))
-        self.assertEqual(item2.getCommittees(), (com2_id, com3_id))
-        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        self.assertEqual(item1.committees, (com1_id, com3_id))
+        self.assertEqual(item2.committees, (com2_id, com3_id))
+        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
         self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
         self.assertTrue(com3_editors_group_id in item2.__ac_local_roles__)
         self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
@@ -2210,11 +2212,11 @@ class testViews(PloneMeetingTestCase):
         self.request['form.widgets.action_choice'] = 'remove'
         self.request['form.widgets.added_values'] = [NO_COMMITTEE]
         form.handleApply(form, None)
-        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
         # remove com1_id
         self.request['form.widgets.removed_values'] = [com1_id]
         form.handleApply(form, None)
-        self.assertEqual(item1.getCommittees(), (com3_id, ))
+        self.assertEqual(item1.committees, (com3_id, ))
         self.assertFalse(com1_editors_group_id in item1.__ac_local_roles__)
         self.assertFalse(com2_editors_group_id in item1.__ac_local_roles__)
         self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
@@ -2654,7 +2656,7 @@ class testViews(PloneMeetingTestCase):
         assert_results(item, [self.vendors_uid])
         assert_results(item, [self.developers_uid])
 
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid),)
         item._update_after_edit()
 
         # test with 1 not given advice
@@ -2705,13 +2707,13 @@ class testViews(PloneMeetingTestCase):
         publicItem1 = self.create('MeetingItem')
         publicItem2 = self.create('MeetingItem')
         secretItem1 = self.create('MeetingItem')
-        secretItem1.setPrivacy('secret')
+        secretItem1.privacy = 'secret'
         secretItem1.reindexObject()
         secretItem2 = self.create('MeetingItem')
-        secretItem2.setPrivacy('secret')
+        secretItem2.privacy = 'secret'
         secretItem2.reindexObject()
         secretItem3 = self.create('MeetingItem')
-        secretItem3.setPrivacy('secret')
+        secretItem3.privacy = 'secret'
         secretItem3.reindexObject()
         # create meeting and present items
         meeting = self.create('Meeting')
@@ -2745,11 +2747,11 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view('last'), publicItem2.absolute_url())
 
         # do secret items accessible
-        secretItem1.setPrivacy('public')
+        secretItem1.privacy = 'public'
         secretItem1.reindexObject()
-        secretItem2.setPrivacy('public')
+        secretItem2.privacy = 'public'
         secretItem2.reindexObject()
-        secretItem3.setPrivacy('public')
+        secretItem3.privacy = 'public'
         secretItem3.reindexObject()
         # MeetingItem.isPrivacyViewable is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
@@ -2887,7 +2889,7 @@ class testViews(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision(self.decisionText)
+        item.decision = richtextval(self.decisionText)
         # labels
         # able to edit item, able to edit labels
         labelingview = item.restrictedTraverse('@@labeling')
@@ -3048,7 +3050,7 @@ class testViews(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.developers_uid,))
+        item.optional_advisers = (self.developers_uid,)
         item._update_after_edit()
         advice = createContentInContainer(
             item,

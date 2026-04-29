@@ -14,6 +14,7 @@ from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import richtextval
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import _checkPermission
@@ -87,7 +88,7 @@ class testPerformances(PloneMeetingTestCase):
             # create the item
             data['title'] = 'Item number %d' % i
             item = self.create('MeetingItem', **data)
-            item.setDecision('<p>A decision</p>')
+            item.decision = richtextval('<p>A decision</p>')
             # add annexes
             if number_of_annexes:
                 for j in range(number_of_annexes):
@@ -176,7 +177,7 @@ class testPerformances(PloneMeetingTestCase):
         '''Helper method that actually compute every items itemReference for p_meeting.'''
         # set back every items reference to '' so the entire process including reindex of SearchableText is done
         for item in meeting.get_items():
-            item.setItemReference('')
+            item.item_reference = ''
         meeting.update_item_references(start_number=start_number)
 
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
@@ -284,7 +285,7 @@ class testPerformances(PloneMeetingTestCase):
             for j in range(number_of_items):
                 data['title'] = 'Item number %d' % j
                 item = self.create('MeetingItem', **data)
-                item.setDecision('<p>A decision</p>')
+                item.decision = richtextval('<p>A decision</p>')
                 # present the item
                 self.presentItem(item)
         # now we have number_of_meetings meetings containing number_of_items items
@@ -511,7 +512,6 @@ class testPerformances(PloneMeetingTestCase):
                                  title='Category %d' % i)
             if withUsingGroups:
                 catObj.setUsingGroups(('developers', ))
-            catObj._at_creation_flag = False
             catObj.at_post_create_script()
 
     def test_pm_GetCategoriesCaching(self):

@@ -395,7 +395,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.item_advice_states = ('itemcreated',)
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
-        item.setBudgetRelated(True)
+        item.budget_related = True
         item._update_after_edit()
         # the automatic advice has been asked
         self.assertEqual(item.adviceIndex[self.developers_uid]['row_id'], 'unique_id_123')
@@ -519,7 +519,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             optionalAdvisers=['{0}__rowid__unique_id_123'.format(self.developers_uid)])
         # can not remove configuration
         self.failUnless(cfg.validate_customAdvisers([]))
-        item.setOptionalAdvisers([])
+        item.optional_advisers = []
         item._update_after_edit()
         # now may be removed
         self.failIf(cfg.validate_customAdvisers([]))
@@ -535,7 +535,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers = [{'row_id': 'unique_id_123',
                            'org': self.vendors_uid,
                            # empty
-                           'gives_auto_advice_on': 'python: item.getBudgetRelated()',
+                           'gives_auto_advice_on': 'python: item.budget_related',
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
@@ -543,7 +543,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_left_alert': '',
                            'delay_label': '',
                            'is_delay_calendar_days': '0',
-                           'available_on': 'python: item.getItemIsSigned()',
+                           'available_on': 'python: item.item_is_signed',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
         available_on_msg = translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
@@ -560,7 +560,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )
         item._update_after_edit()
         customAdvisers[0]['available_on'] = ''
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
@@ -760,7 +760,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item and ask advice relative to second row, row_id 'unique_id_456'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_456'.format(self.vendors_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_456'.format(self.vendors_uid), )
         # 'is_linked_to_previous_row' can be changed if the row is used as optional adviser
         customAdvisers[1]['is_linked_to_previous_row'] = '0'
         self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
@@ -774,7 +774,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # 'is_linked_to_previous_row' can not be changed
         # when used as an automatic adviser because this is the only link
         # when updating advices
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         customAdvisers[2]['gives_auto_advice_on'] = 'python:True'
         cfg.setCustomAdvisers(customAdvisers)
         item._update_after_edit()
@@ -1102,7 +1102,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.list_types = valuesWithExtra
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setListType('extra')
+        item.list_type = 'extra'
         item.reindexObject()
         already_used_msg = _('error_list_types_identifier_removed_already_used',
                              mapping={'url': item.absolute_url()})
@@ -2181,7 +2181,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('waiting_advices', ))
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         self.proposeItem(item)
         self._setItemToWaitingAdvices(item, 'wait_advices_from_{}'.format(proposed_state))
         # values_disabled_proposed
@@ -2460,7 +2460,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_committees(cfg_committees))
         self.failUnless(cfg.validate_committees([cfg_committees[1]]))
         # supplement, second committee cfg has a supplement
-        item.setCommittees(["{0}__suppl__1".format(cfg_committees[1]['row_id'])])
+        item.committees = ["{0}__suppl__1".format(cfg_committees[1]['row_id'])]
         item.reindexObject(idxs=["committees_index"])
         self.failIf(cfg.validate_committees(cfg_committees))
         self.failUnless(cfg.validate_committees([cfg_committees[0]]))
