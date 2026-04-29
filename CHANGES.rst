@@ -86,7 +86,7 @@ Changelog
   manager-only guard, admin action forms, annex types, categories, recurring
   items, item templates, searches/topics, and podtemplates tables. DX schema
   fields are rendered via z3c.form widgets from `view.groups`. The AT-only
-  `getCustomFields(2)` fieldset is not reproduced (see `MIGRATION_SUMMARY.md`).
+  `getCustomFields(2)` fieldset is not reproduced (see `MIGRATION_SUMMARY_MEETINGCONFIG.md`).
   [duchenean]
 - Fixed `AttributeError: 'NO_VALUE' object has no attribute ...` raised by
   `item_fields_config_vocabulary`, `workflow_adaptations_vocabulary` and
