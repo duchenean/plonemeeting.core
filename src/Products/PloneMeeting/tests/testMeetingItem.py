@@ -1530,14 +1530,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # create item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.committees, (cfg_committees[0]['row_id'], ))
+        self.assertEqual(item.committees, [cfg_committees[0]['row_id']])
         # change configuration, make committee_1 auto selected for developers
         cfg_committees[0]['auto_from'] = ["proposing_group__" + self.vendors_uid]
         cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
         cfg.setCommittees(cfg_committees)
         # not changing already existing elements
         item._update_after_edit()
-        self.assertEqual(item.committees, (cfg_committees[0]['row_id'], ))
+        self.assertEqual(item.committees, [cfg_committees[0]['row_id']])
         # but when duplicating the item, the new configuration is used
         # make sure need_MeetingItem_update_committees is False for now
         self.request.set('need_MeetingItem_update_committees', False)
@@ -5829,7 +5829,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.internal_notes = richtextval('<p>Internal notes.</p>')
         # every item fields except ones considered as metadata
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
-        itemFields = [field.getName() for field in item.Schema().filterFields(isMetadata=False)]
+        from Products.PloneMeeting.content.meetingitem import IMeetingItem
+        itemFields = [name for name, _field in IMeetingItem.namesAndDescriptions()]
         # fields not taken into account are following
         # XXX toDiscuss is a neutral field because it is managed manually depending
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
@@ -5863,10 +5864,10 @@ class testMeetingItem(PloneMeetingTestCase):
             item.adapted().getExtraFieldsToCopyWhenCloning(
                 cloned_to_same_mc=False, cloned_from_item_template=False))
         copiedFields = set(_at_to_dx(name) for name in all_field_names)
-        # showinsearch and searchwords must be ignored when using Solr
-        item_field_set = set([field_name for field_name in itemFields
-                              if field_name not in ('showinsearch', 'searchwords')])
-        self.assertEqual(copiedFields, item_field_set)
+        # 'id' and 'title' are implicit DX Container attributes (not in the schema),
+        # 'external_identifier' was an AT-only field not migrated to DX
+        copiedFields -= {'id', 'title', 'external_identifier'}
+        self.assertEqual(copiedFields, set(itemFields))
 
         newItem = item.clone()
         self.assertEqual(item.Title(), newItem.Title())
@@ -8699,21 +8700,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertTrue(item.show_committees())
         self.changeUser('pmCreator1')
-        self.assertEqual(item.committees, ('committee_2',))
+        self.assertEqual(item.committees, ['committee_2'])
         # if changing the configuration, existing items are not impacted
         cfg_committees[0]['auto_from'] = ["category__development"]
         self.request.set('need_MeetingItem_update_committees', False)
         item.update_committees()
-        self.assertEqual(item.committees, ('committee_2',))
+        self.assertEqual(item.committees, ['committee_2'])
         # except if something changed, in this case,
         # value 'need_MeetingItem_update_committees' in REQUEST is True
         self.request.set('need_MeetingItem_update_committees', True)
         item.update_committees()
-        self.assertEqual(item.committees, ('committee_1', 'committee_2',))
+        self.assertEqual(item.committees, ['committee_1', 'committee_2'])
         # back to previous value
         cfg_committees[0]['auto_from'] = ["category__research"]
         item.update_committees()
-        self.assertEqual(item.committees, ('committee_2',))
+        self.assertEqual(item.committees, ['committee_2'])
 
         # when item in meeting, committees are never changed anymore
         cfg_committees[0]['auto_from'] = ["category__development"]
@@ -8721,29 +8722,30 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('Meeting')
         self.presentItem(item)
         item.update_committees()
-        self.assertEqual(item.committees, ('committee_2',))
+        self.assertEqual(item.committees, ['committee_2'])
 
         # when no auto_from can be determinated, the NO_COMMITTEE value is used
         cfg_committees[0]['auto_from'] = []
         cfg.setCommittees(cfg_committees)
         item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
-        self.assertEqual(item.committees, (NO_COMMITTEE, ))
+        self.assertEqual(item.committees, [NO_COMMITTEE])
 
     def test_pm_CommitteesSupplements(self):
         """When defined in MeetingConfig.committees, column "supplements"
            will add additional values to the MeetingItem.committees vocabulary,
            these values are only selectable by MeetingManagers."""
         self._enableField("committees", related_to="Meeting")
+        committees_vocab = u'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.Vocabulary('committees')[0].keys(),
+        self.assertEqual(list(get_vocab(item, committees_vocab).by_token),
                          [NO_COMMITTEE,
                           'committee_1',
                           'committee_2',
                           'committee_for_item'])
         self.changeUser('pmManager')
         self.assertEqual(
-            item.Vocabulary('committees')[0].keys(),
+            list(get_vocab(item, committees_vocab).by_token),
             [NO_COMMITTEE,
              'committee_1',
              'committee_2',
@@ -8759,20 +8761,21 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]["using_groups"] = [self.developers_uid]
         cfg_committees[1]["using_groups"] = [self.vendors_uid]
+        committees_vocab = u'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
         self.changeUser('pmCreator1')
         dev_item = self.create('MeetingItem')
-        self.assertEqual(dev_item.Vocabulary('committees')[0].keys(),
+        self.assertEqual(list(get_vocab(dev_item, committees_vocab).by_token),
                          [NO_COMMITTEE, 'committee_1', u'committee_for_item'])
         self.changeUser('pmCreator2')
         vendors_item = self.create('MeetingItem')
-        self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
+        self.assertEqual(list(get_vocab(vendors_item, committees_vocab).by_token),
                          [NO_COMMITTEE, 'committee_2', u'committee_for_item'])
         # when committee no accessible but stored on context it is part of the vocabulary
         self.assertFalse(cfg_committees[0]['row_id'] in
-                         vendors_item.Vocabulary('committees')[0].keys())
-        vendors_item.committees = (cfg_committees[0]['row_id'], )
+                         get_vocab(vendors_item, committees_vocab).by_token)
+        vendors_item.committees = [cfg_committees[0]['row_id']]
         self.assertTrue(cfg_committees[0]['row_id'] in
-                        vendors_item.Vocabulary('committees')[0].keys())
+                        get_vocab(vendors_item, committees_vocab).by_token)
 
     def test_pm_CommitteesItemOnly(self):
         """It is possible to display a committee only on the item and not on the meeting,
@@ -8785,7 +8788,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # MeetingItem, item_only committee is selectable
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        vocab = item.Vocabulary('committees')[0]
+        vocab = get_vocab(
+            item,
+            u'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary')
         self.assertTrue('committee_1' in vocab)
         self.assertTrue('committee_2' in vocab)
         # Meeting, item_only committee is not selectable

@@ -3289,6 +3289,19 @@ class MeetingItem(Container):
                 reindex_object(self, idxs=idxs, update_metadata=0)
         return res
 
+    security.declarePublic('getItemReference')
+
+    def getItemReference(self):
+        return self.item_reference or ''
+
+    security.declarePublic('getBudgetInfos')
+
+    def getBudgetInfos(self):
+        value = self.budget_infos
+        if isinstance(value, RichTextValue):
+            return safe_encode(value.output or u'')
+        return value or ''
+
     def update_groups_in_charge(self, force=False):
         """When MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
            MeetingConfig.includeGroupsInChargeDefinedOnCategory is used,
@@ -4621,7 +4634,7 @@ class MeetingItem(Container):
         '''Override MeetingItem.optionalAdvisers accessor
            to handle p_computed parameters that will turn a "__userid__" value
            to it's corresponding adviser value.'''
-        optionalAdvisers = self.optional_advisers
+        optionalAdvisers = self.optional_advisers or ()
         if computed:
             res = []
             for adviser in optionalAdvisers:
@@ -4648,6 +4661,8 @@ class MeetingItem(Container):
             if '__rowid__' in adviser:
                 org_uid, row_id = decodeDelayAwareId(adviser)
                 customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
+                if customAdviserInfos is None:
+                    continue
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
                 delay_label = customAdviserInfos['delay_label']

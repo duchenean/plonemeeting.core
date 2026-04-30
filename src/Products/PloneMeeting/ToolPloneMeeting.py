@@ -1246,16 +1246,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
             newItem._at_creation_flag = True
             from Products.PloneMeeting.content.meetingconfig import _at_to_dx
-            from plone.dexterity.utils import iterSchemata
+            from Products.PloneMeeting.content.meetingitem import IMeetingItem
             dx_fields_to_keep = set(
                 _at_to_dx(name) for name in fieldsToKeep)
             dx_fields_to_keep.add('id')
-            for iface in iterSchemata(newItem):
-                for field_name, field in iface.namesAndDescriptions():
-                    if field_name in dx_fields_to_keep:
-                        continue
-                    default = field.default
-                    setattr(newItem, field_name, default)
+            for field_name, field in IMeetingItem.namesAndDescriptions():
+                if field_name in dx_fields_to_keep:
+                    continue
+                setattr(newItem, field_name, field.default)
             if 'preferredMeeting' not in fieldsToKeep:
                 newItem.preferred_meeting_path = None
             newItem._at_creation_flag = False
