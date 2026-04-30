@@ -874,9 +874,9 @@ class testMeetingConfig(PloneMeetingTestCase):
            - if 'at_the_end' is selected, no other is selected;
            - the same inserting method is not selected twice;
            - if categories are not used, we can not select the 'on_categories' method;
-           - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
+           - fi the 'to_discuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
-        cfg.used_item_attributes = ('pollType', 'toDiscuss', 'privacy')
+        cfg.used_item_attributes = ('poll_type', 'to_discuss', 'privacy')
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = translate('inserting_methods_at_the_end_not_alone_error',
                                          domain='PloneMeeting',
@@ -919,60 +919,60 @@ class testMeetingConfig(PloneMeetingTestCase):
         # this time it validates as redefining it to using category
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
-        # test when selecting 'on_poll_type' without using the 'pollType' field
+        # test when selecting 'on_poll_type' without using the 'poll_type' field
         inserting_methods_not_using_poll_type_error_msg = \
             translate('inserting_methods_not_using_poll_type_error',
                       domain='PloneMeeting',
                       context=self.request)
         values = ({'insertingMethod': 'on_poll_type',
                    'reverse': '0'}, )
-        self._enableField('pollType')
+        self._enableField('poll_type')
         del self.request.other['usedItemAttributes']
         # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
-        # check on using 'pollType' is made on presence of 'pollType' in 'usedItemAttributes' in the
+        # check on using 'poll_type' is made on presence of 'poll_type' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
-        # unselect 'pollType', validation fails
+        # unselect 'poll_type', validation fails
         usedItemAttrsWithoutPollType = list(cfg.used_item_attributes)
-        usedItemAttrsWithoutPollType.remove('pollType')
-        self._enableField('pollType', enable=False)
+        usedItemAttrsWithoutPollType.remove('poll_type')
+        self._enableField('poll_type', enable=False)
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_poll_type_error_msg)
         # it validates if 'usedItemAttributes' found in the REQUEST
-        # and 'pollType' in the 'usedItemAttributes', if not it fails...
+        # and 'poll_type' in the 'usedItemAttributes', if not it fails...
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPollType)
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_poll_type_error_msg)
-        # but validates if 'pollType' in 'usedItemAttributes' found in the REQUEST
-        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPollType + ['pollType', ])
+        # but validates if 'poll_type' in 'usedItemAttributes' found in the REQUEST
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPollType + ['poll_type', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
-        # test when selecting 'on_to_discuss' without using the 'toDiscuss' field
+        # test when selecting 'on_to_discuss' without using the 'to_discuss' field
         inserting_methods_not_using_to_discuss_error_msg = \
             translate('inserting_methods_not_using_to_discuss_error',
                       domain='PloneMeeting',
                       context=self.request)
         values = ({'insertingMethod': 'on_to_discuss',
                    'reverse': '0'}, )
-        self.assertTrue('toDiscuss' in cfg.used_item_attributes)
+        self.assertTrue('to_discuss' in cfg.used_item_attributes)
         # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
-        # check on using 'toDiscuss' is made on presence of 'toDiscuss' in 'usedItemAttributes' in the
+        # check on using 'to_discuss' is made on presence of 'to_discuss' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
-        # unselect 'toDiscuss', validation fails
+        # unselect 'to_discuss', validation fails
         usedItemAttrsWithoutToDiscuss = list(cfg.used_item_attributes)
-        usedItemAttrsWithoutToDiscuss.remove('toDiscuss')
+        usedItemAttrsWithoutToDiscuss.remove('to_discuss')
         cfg.used_item_attributes = usedItemAttrsWithoutToDiscuss
         self.portal.REQUEST.set('usedItemAttributes', ())
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_to_discuss_error_msg)
         # it validates if 'usedItemAttributes' found in the REQUEST
-        # and 'toDiscuss' in the 'usedItemAttributes', if not it fails...
+        # and 'to_discuss' in the 'usedItemAttributes', if not it fails...
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss)
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_to_discuss_error_msg)
-        # but validates if 'toDiscuss' in 'usedItemAttributes' found in the REQUEST
-        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['toDiscuss', ])
+        # but validates if 'to_discuss' in 'usedItemAttributes' found in the REQUEST
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['to_discuss', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
         # test when selecting 'on_privacy' without using the 'privacy' field
@@ -2686,14 +2686,14 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_ItemTemplatesManagersMayEditMeetingManagersReservedFields(self):
         """Make sure itemtemplates managers may edit MeetingManagers reserved
            fields on the item, like for example the "checklist" field."""
-        self._enableField('textCheckList', enable=False)
+        self._enableField('text_check_list', enable=False)
         self.changeUser('templatemanager1')
         template = self.meetingConfig.itemtemplates.template1
-        self.assertFalse(template.attribute_is_used('textCheckList'))
-        self.assertFalse(template.showMeetingManagerReservedField('textCheckList'))
-        self._enableField('textCheckList')
-        self.assertTrue(template.attribute_is_used('textCheckList'))
-        self.assertTrue(template.showMeetingManagerReservedField('textCheckList'))
+        self.assertFalse(template.attribute_is_used('text_check_list'))
+        self.assertFalse(template.showMeetingManagerReservedField('text_check_list'))
+        self._enableField('text_check_list')
+        self.assertTrue(template.attribute_is_used('text_check_list'))
+        self.assertTrue(template.showMeetingManagerReservedField('text_check_list'))
         # with a RichText field
         self._enableField('notes')
         self.assertTrue(template.attribute_is_used('notes'))
@@ -2702,8 +2702,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # but it does not have access on a real item
         self._addPrincipalToGroup(self.member.id, self.developers_creators)
         item = self.create('MeetingItem')
-        self.assertTrue(item.attribute_is_used('textCheckList'))
-        self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))
+        self.assertTrue(item.attribute_is_used('text_check_list'))
+        self.assertFalse(item.showMeetingManagerReservedField('text_check_list'))
         self.assertTrue(item.attribute_is_used('notes'))
         self.assertFalse(item.mayQuickEdit('notes'))
 

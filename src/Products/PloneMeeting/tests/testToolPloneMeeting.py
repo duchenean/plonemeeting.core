@@ -300,7 +300,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_CloneItemKeepProposingGroupWithGroupInCharge(self):
         '''Test keepProposingGroup when using field proposingGroupWithGroupInCharge.'''
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         # make pmCreator2 able to see item of pmCreator1 so he may duplicate it
         self._addPrincipalToGroup('pmCreator2', self.developers_observers)
         # set vendors in charge of dev and vice versa
@@ -829,7 +829,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')

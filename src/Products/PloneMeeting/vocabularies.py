@@ -66,7 +66,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
-from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
@@ -411,7 +411,7 @@ class UserProposingGroupsVocabulary(object):
         return terms
 
     def __call__(self, context, include_stored=True):
-        '''This is used as vocabulary for field 'MeetingItem.proposingGroup'.
+        '''This is used as vocabulary for field 'MeetingItem.proposing_group'.
            Return the organization(s) the user is creator for.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
@@ -424,7 +424,7 @@ class UserProposingGroupsVocabulary(object):
         if include_stored:
             terms = self._handle_include_stored(context, term_values, terms)
         # sort correctly
-        if 'proposingGroup' not in cfg.item_fields_to_keep_config_sorting_for:
+        if 'proposing_group' not in cfg.item_fields_to_keep_config_sorting_for:
             terms = humansorted(terms, key=attrgetter('title'))
         # add a 'make_a_choice' value when used on an itemtemplate
         if context.isDefinedInTool(item_type='itemtemplate'):
@@ -517,7 +517,7 @@ class GroupsInChargeVocabulary(object):
         res = []
         is_using_cfg_order = False
         used_item_attrs = cfg.used_item_attributes
-        if 'groupsInCharge' not in used_item_attrs:
+        if 'groups_in_charge' not in used_item_attrs:
             # groups in charge are defined on organizations or categories
             # organizations
             orgs = get_organizations(only_selected=only_selected)
@@ -581,7 +581,7 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for:
+        if 'groups_in_charge' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(
             context, sort=sort)._terms)
@@ -2556,7 +2556,7 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'associatedGroups' in cfg.item_fields_to_keep_config_sorting_for:
+        if 'associated_groups' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # make sure we have a copy of _terms because we will add some
@@ -3456,7 +3456,7 @@ class ItemFieldsConfigVocabulary(object):
         if context is None:
             return SimpleVocabulary([])
         terms = []
-        item_attrs = context.listAttributes(MeetingItem.schema)
+        item_attrs = get_dx_attrs('MeetingItem', optional_only=False)
         for k, v in item_attrs.items():
             if k in CONFIGURABLE_FIELD_NAMES:
                 terms.append(SimpleTerm(k, k, v))

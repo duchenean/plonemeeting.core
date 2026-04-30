@@ -371,7 +371,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid,)
+            'optional_advisers': (self.vendors_uid,)
         }
         item1 = self.create('MeetingItem', **data)
         # check than the adviser can see the item
@@ -392,7 +392,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid,)
+            'optional_advisers': (self.vendors_uid,)
         }
         item = self.create('MeetingItem', **data)
         self.failIf(item.willInvalidateAdvices())
@@ -2078,7 +2078,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated'),
                                        self._stateMappingFor('proposed')]
         cfg.keep_access_to_item_when_advice = "was_giveable"
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = [self._stateMappingFor('itemcreated'),
                                        self._stateMappingFor('proposed')]
         cfg.enable_advice_proposing_group_comment = True
@@ -2344,7 +2344,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, )
+            'optional_advisers': (self.vendors_uid, )
         }
         item = self.create('MeetingItem', **data)
         # give advice
@@ -2396,7 +2396,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, self.developers_uid, )
+            'optional_advisers': (self.vendors_uid, self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
         self.proposeItem(item)
@@ -2521,7 +2521,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_states = [self._stateMappingFor('itemcreated')]
         cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated')]
         cfg.item_advice_view_states = [self._stateMappingFor('itemcreated'), self._stateMappingFor('proposed')]
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = [self._stateMappingFor('proposed')]
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
@@ -2529,7 +2529,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, self.developers_uid, )
+            'optional_advisers': (self.vendors_uid, self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
         # give advice
@@ -2643,7 +2643,7 @@ class testAdvices(PloneMeetingTestCase):
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.historize_item_data_when_advice_is_given)
         # make sure we know what item rich text fields are enabled
-        cfg.used_item_attributes = ('description', 'detailedDescription', 'motivation',)
+        cfg.used_item_attributes = ('description', 'detailed_description', 'motivation',)
         cfg.item_advice_states = [self._stateMappingFor('proposed')]
         cfg.item_advice_edit_states = [self._stateMappingFor('proposed')]
         cfg.item_advice_view_states = [self._stateMappingFor('proposed')]
@@ -2654,7 +2654,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, self.developers_uid, ),
+            'optional_advisers': (self.vendors_uid, self.developers_uid, ),
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
@@ -2682,7 +2682,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title', 'field_content': 'Item to advice'},
                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                          {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                          {'field_name': 'detailed_description', 'field_content': '<p>Item detailed description</p>'},
                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
@@ -2705,7 +2705,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title', 'field_content': 'Item to advice'},
                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                          {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                          {'field_name': 'detailed_description', 'field_content': '<p>Item detailed description</p>'},
                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                           {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
@@ -2789,7 +2789,7 @@ class testAdvices(PloneMeetingTestCase):
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.historize_item_data_when_advice_is_given)
         # make sure we know what item rich text fields are enabled
-        cfg.used_item_attributes = ('description', 'detailedDescription', 'motivation',)
+        cfg.used_item_attributes = ('description', 'detailed_description', 'motivation',)
         cfg.item_advice_states = [self._stateMappingFor('proposed')]
         cfg.item_advice_edit_states = [self._stateMappingFor('proposed')]
         cfg.item_advice_view_states = [self._stateMappingFor('proposed')]
@@ -2801,7 +2801,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, self.developers_uid, ),
+            'optional_advisers': (self.vendors_uid, self.developers_uid, ),
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
@@ -2824,7 +2824,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         self.assertIsNone(getLastAction(adapter))
-        self.request.form['detailedDescription'] = '<p>Item detailed description not active</p>'
+        self.request.form['detailed_description'] = '<p>Item detailed description not active</p>'
         item.processForm()
         self.assertEqual(item.getDetailedDescription(),
                          '<p>Item detailed description not active</p>')
@@ -2846,7 +2846,7 @@ class testAdvices(PloneMeetingTestCase):
                            'field_content': 'Item to advice'},
                           {'field_name': 'description',
                            'field_content': '<p>Item description</p>'},
-                          {'field_name': 'detailedDescription',
+                          {'field_name': 'detailed_description',
                            'field_content': '<p>Item detailed description not active</p>'},
                           {'field_name': 'motivation',
                            'field_content': '<p>Item motivation</p>'},
@@ -2854,8 +2854,8 @@ class testAdvices(PloneMeetingTestCase):
                            'field_content': '<p>Item decision</p>'}])
 
         # when editing item a second time, if advice is not edited, it is not historized uselessly
-        self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'
-        item.processForm({'detailedDescription': '<p>Item detailed description edited 2</p>'})
+        self.request.form['detailed_description'] = '<p>Item detailed description edited 2</p>'
+        item.processForm({'detailed_description': '<p>Item detailed description edited 2</p>'})
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 2</p>')
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
@@ -2885,8 +2885,8 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer1')
-        self.request.form['detailedDescription'] = '<p>Item detailed description edited 3</p>'
-        item.processForm({'detailedDescription': '<p>Item detailed description edited 3</p>'})
+        self.request.form['detailed_description'] = '<p>Item detailed description edited 3</p>'
+        item.processForm({'detailed_description': '<p>Item detailed description edited 3</p>'})
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 3</p>')
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
@@ -2898,7 +2898,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
-        item.setFieldFromAjax('detailedDescription', '<p>Item detailed description edited 4</p>')
+        item.setFieldFromAjax('detailed_description', '<p>Item detailed description edited 4</p>')
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 4</p>')
         # advice was historized again
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
@@ -2911,7 +2911,7 @@ class testAdvices(PloneMeetingTestCase):
                            'field_content': 'Item to advice'},
                           {'field_name': 'description',
                            'field_content': '<p>Item description</p>'},
-                          {'field_name': 'detailedDescription',
+                          {'field_name': 'detailed_description',
                            'field_content': '<p>Item detailed description edited 3</p>'},
                           {'field_name': 'motivation',
                            'field_content': '<p>Item motivation</p>'},
@@ -2958,7 +2958,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         data = {
             'title': 'Item to advice',
-            'optionalAdvisers': (self.vendors_uid, self.developers_uid),
+            'optional_advisers': (self.vendors_uid, self.developers_uid),
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
@@ -3407,7 +3407,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.vendors_uid, )
+            'optional_advisers': (self.vendors_uid, )
         }
         item = self.create('MeetingItem', **data)
         # give advice
@@ -3800,7 +3800,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.developers_uid, )
+            'optional_advisers': (self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
 
@@ -4129,7 +4129,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_view_states = [self._stateMappingFor('itemcreated')]
         cfg.power_advisers_groups = (self.vendors_uid,)
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (self._stateMappingFor('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))
@@ -4141,8 +4141,8 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'development',
-            'optionalAdvisers': (self.developers_uid, ),
-            'copyGroups': (self.vendors_advisers, ),
+            'optional_advisers': (self.developers_uid, ),
+            'copy_groups': (self.vendors_advisers, ),
             'privacy': 'secret'
         }
         item = self.create('MeetingItem', **data)

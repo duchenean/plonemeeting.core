@@ -2116,7 +2116,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
         # but another user that may see the item but not edit it may not see the decision
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (item.query_state(),)
         item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
@@ -2215,7 +2215,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.item_budget_infos_states = (waiting_state_name,)
         # check that the internalNotes functionnality works as well
         # enable field internalNotes
-        self._enableField('internalNotes', reload=True)
+        self._enableField('internal_notes', reload=True)
         # make internal notes editable by copyGroups
         self._activate_config('itemInternalNotesEditableBy',
                               'reader_copy_groups')

@@ -968,34 +968,34 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_ItemMarginalNotes(self):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
-        cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
+        cfg.setUsedItemAttributes(('marginal_notes', 'observations'))
         self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.decision = richtextval(self.decisionText)
         # field not writeable
-        marginal_notes_field = item.getField('marginalNotes')
+        marginal_notes_field = item.getField('marginal_notes')
         self.assertFalse(marginal_notes_field.writeable(item))
-        self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        self.assertFalse(item.mayQuickEdit('marginal_notes'))
         self.validateItem(item)
 
         # as MeetingManager
         self.changeUser('pmManager')
         # field not writeable
         self.assertFalse(marginal_notes_field.writeable(item))
-        self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        self.assertFalse(item.mayQuickEdit('marginal_notes'))
         # writeable when "presented"
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(item.query_state(), 'presented')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
 
         # writeable when meeting frozen
         self.freezeMeeting(meeting)
         self.assertEqual(item.query_state(), 'itemfrozen')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
         # as other fields
         obsField = item.getField('observations')
         self.assertTrue(obsField.writeable(item))
@@ -1006,7 +1006,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(item.query_state(), 'accepted')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
         # but not other fields
         self.assertFalse(obsField.writeable(item))
         self.assertFalse(item.mayQuickEdit('observations'))
@@ -1015,7 +1015,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
         self._enableField('category')
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')
@@ -1048,7 +1048,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When using proposingGroupWithGroupInCharge, groupsInCharge
            must be set on an item so it may be presented."""
         self.developers.groups_in_charge = (self.vendors_uid, )
-        self._enableField("proposingGroupWithGroupInCharge")
+        self._enableField("proposing_group_with_group_in_charge")
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')

@@ -144,7 +144,7 @@ class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
     """ """
 
     label = _CEBA("Update groups in charge for selected elements")
-    modified_attr_name = "groupsInCharge"
+    modified_attr_name = "groups_in_charge"
     required = True
 
     def available(self):
@@ -168,7 +168,7 @@ class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
     """ """
 
     label = _CEBA("Update copy groups for selected elements")
-    modified_attr_name = "copyGroups"
+    modified_attr_name = "copy_groups"
     required = False
 
     def _vocabulary(self):

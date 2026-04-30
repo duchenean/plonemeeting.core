@@ -508,7 +508,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
             # manage the otherMeetingConfigsClonableToPrivacy
             suffix = ''
-            if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
+            if 'other_meeting_configs_clonable_to_privacy' in usedItemAttributes and \
                'privacy' in otherMeetingConfigClonableTo.used_item_attributes:
                 if otherMeetingConfigClonableToId in (self.context.other_meeting_configs_clonable_to_privacy or ()):
                     suffix = "_secret"
@@ -583,7 +583,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                context=self.request)))
 
         # In some cases, it does not matter if an item is inMeeting or not.
-        if 'oralQuestion' in usedItemAttributes:
+        if 'oral_question' in usedItemAttributes:
             if self.context.oral_question:
                 res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
                                                           domain="PloneMeeting",
@@ -603,7 +603,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 res.append(('emergency_refused.png', translate('emergency_refused',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
-        if 'takenOverBy' in usedItemAttributes:
+        if 'taken_over_by' in usedItemAttributes:
             takenOverBy = self.context.taken_over_by
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not

@@ -181,7 +181,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.item_annex_confidential_visible_for = ('reader_copy_groups',)
         item.copy_groups = (self.vendors_reviewers, )
@@ -439,7 +439,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.advice_annex_confidential_visible_for = ('reader_copy_groups',)
         item.copy_groups = (self.vendors_reviewers, )
@@ -1123,7 +1123,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_ConfidentialAnnexesWhenItemDuplicated(self):
         """When an item is duplicated, if there were confidential annexes, accesses are correct."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.vendors_creators,)
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
@@ -1818,7 +1818,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_AnnexShowPreview(self):
         """Test when show_preview is defined on annex type."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         cfg.item_copy_groups_states = (item_initial_state,)

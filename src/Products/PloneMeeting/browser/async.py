@@ -497,7 +497,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
         # when using votesResult, invalidate cache if field content changed
         votesResult = None
-        if self.context.attribute_is_used('votesResult'):
+        if self.context.attribute_is_used('votes_result'):
             votesResult = self.context.getRawVotesResult(real=True)
         return (date,
                 context_uid,

@@ -181,7 +181,7 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_ItemTemplateView(self):
         '''As some fields behaves differently on an item template,
-           check that the view is still working correctly, for example if 'proposingGroup' is empty
+           check that the view is still working correctly, for example if 'proposing_group' is empty
            (possible on an item template but not on a item in the application).'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
@@ -190,10 +190,10 @@ class testViews(PloneMeetingTestCase):
         for brain in itemTemplates:
             itemTemplate = brain.getObject()
             itemTemplate()
-        # test when 'proposingGroupWithGroupInCharge' is used
+        # test when 'proposing_group_with_group_in_charge' is used
         usedItemAttrs = cfg.used_item_attributes
-        if 'proposingGroupWithGroupInCharge' not in usedItemAttrs:
-            cfg.setUsedItemAttributes(usedItemAttrs + ('proposingGroupWithGroupInCharge', ))
+        if 'proposing_group_with_group_in_charge' not in usedItemAttrs:
+            cfg.setUsedItemAttributes(usedItemAttrs + ('proposing_group_with_group_in_charge', ))
         for brain in itemTemplates:
             itemTemplate = brain.getObject()
             itemTemplate()
@@ -1538,23 +1538,23 @@ class testViews(PloneMeetingTestCase):
         )
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2019, 1, 18))
-        item1 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
-        item2 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
-        item3 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
-        item4 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='development')
-        item5 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='research')
-        item6 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='research')
-        item7 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='events')
-        item8 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='events')
+        item1 = self.create('MeetingItem', proposing_group=self.developers_uid, category='development')
+        item2 = self.create('MeetingItem', proposing_group=self.developers_uid, category='development')
+        item3 = self.create('MeetingItem', proposing_group=self.developers_uid, category='development')
+        item4 = self.create('MeetingItem', proposing_group=self.vendors_uid, category='development')
+        item5 = self.create('MeetingItem', proposing_group=self.developers_uid, category='research')
+        item6 = self.create('MeetingItem', proposing_group=self.vendors_uid, category='research')
+        item7 = self.create('MeetingItem', proposing_group=self.developers_uid, category='events')
+        item8 = self.create('MeetingItem', proposing_group=self.vendors_uid, category='events')
         right_ordered_items = [item1, item2, item3, item4, item5, item6, item7, item8]
         for item in right_ordered_items:
             self.presentItem(item)
         # present 2 late items
         self.freezeMeeting(meeting)
         meeting_uid = meeting.UID()
-        item9 = self.create('MeetingItem', proposingGroup=self.developers_uid,
+        item9 = self.create('MeetingItem', proposing_group=self.developers_uid,
                             category='development', preferredMeeting=meeting_uid)
-        item10 = self.create('MeetingItem', proposingGroup=self.vendors_uid,
+        item10 = self.create('MeetingItem', proposing_group=self.vendors_uid,
                              category='events', preferredMeeting=meeting_uid)
         self.presentItem(item9)
         self.presentItem(item10)
@@ -1654,7 +1654,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))
@@ -1817,7 +1817,7 @@ class testViews(PloneMeetingTestCase):
         """Check labels change batch action."""
         cfg = self.meetingConfig
         self._setupLabelsEditableWhenItemEditable(cfg)
-        self._enableField(('copyGroups', ))
+        self._enableField(('copy_groups', ))
         cfg.setItemCopyGroupsStates(('itemcreated', ))
 
         # create some items
@@ -2016,7 +2016,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(searches_items.unrestrictedTraverse(
             '@@update-groups-in-charge-batch-action').available())
         # enable groupsInCharge
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
         self.assertTrue(searches_items.unrestrictedTraverse(
             '@@update-groups-in-charge-batch-action').available())
 
@@ -2109,7 +2109,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(searches_items.unrestrictedTraverse(
             '@@update-copy-groups-batch-action').available())
         # enable copyGroups
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         self.assertTrue(searches_items.unrestrictedTraverse(
             '@@update-copy-groups-batch-action').available())
 
@@ -3624,7 +3624,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_LabelsConfigViewableByCopyGroups(self):
         """Test labelsConfig so "label" is viewable by copy groups
            ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
-        self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
+        self._enableField(['copy_groups', 'restricted_copy_groups', 'labels'])
         cfg = self.meetingConfig
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         cfg.item_restricted_copy_groups_states = ('itemcreated', )
@@ -3679,7 +3679,7 @@ class testViews(PloneMeetingTestCase):
         """Test labelsConfig when a configuration specify to update_local_roles.
            Here a copyGroup will be added when a label is selected."""
         cfg = self.meetingConfig
-        self._enableField(['copyGroups', 'labels'])
+        self._enableField(['copy_groups', 'labels'])
         # vendors_reviewers will be set as copyGroup when label is selected
         self.vendors.as_copy_group_on = \
             "python: 'label' in utils.get_labels(item) and ['reviewers']"

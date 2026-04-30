@@ -1849,7 +1849,7 @@ class testContacts(PloneMeetingTestCase):
         # item.itemInitiator
         # so check the 6 possible "states"
 
-        # first check when the item is using 'proposingGroup', it is the case here
+        # first check when the item is using 'proposing_group', it is the case here
         # for item, make sure other conditions are False
         item.associated_groups = ()
         item.optional_advisers = ()
@@ -1914,7 +1914,7 @@ class testContacts(PloneMeetingTestCase):
 
         # check with item having copyGroups
         item.item_initiator = ()
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         item.copy_groups = (self.developers_reviewers, )
         item._update_after_edit()
         transaction.commit()
@@ -2071,20 +2071,20 @@ class testContacts(PloneMeetingTestCase):
             item,
             'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
             only_factory=True)
-        self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
-        self.assertTrue(self.developers_uid in item.Vocabulary('proposingGroup')[0])
-        self.assertTrue(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
+        self.assertTrue(self.developers_uid in item.Vocabulary('associated_groups')[0])
+        self.assertTrue(self.developers_uid in item.Vocabulary('proposing_group')[0])
+        self.assertTrue(self.developers_reviewers in item.Vocabulary('copy_groups')[0])
         self.assertTrue(self.developers_uid in advisers_vocab_factory(item))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
-        self.assertFalse(self.developers_uid in item.Vocabulary('associatedGroups')[0])
+        self.assertFalse(self.developers_uid in item.Vocabulary('associated_groups')[0])
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
-        self.assertFalse(self.developers_uid in item.Vocabulary('proposingGroup')[0])
-        self.assertFalse(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
+        self.assertFalse(self.developers_uid in item.Vocabulary('proposing_group')[0])
+        self.assertFalse(self.developers_reviewers in item.Vocabulary('copy_groups')[0])
         self.assertFalse(self.developers_uid in advisers_vocab_factory(item))
         self.assertFalse(self.tool.userIsAmong(['creators']))
 
@@ -2643,7 +2643,7 @@ class testContacts(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(hp1))
         notify(ObjectModifiedEvent(hp2))
         # now enable groupsInCharge
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
 
         # create item without groupsInCharge
         self.changeUser('pmCreator1')
@@ -2686,7 +2686,7 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_HeldPositionBackRefs(self):
         """This will display back references on a held_position
            to see where it is used."""
-        self._enableField("itemInitiator")
+        self._enableField("item_initiator")
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()

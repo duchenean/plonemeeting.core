@@ -1229,8 +1229,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 del annotations[FTW_LABELS_ANNOTATION_KEY]
 
             # Set fields not in the copyFields list to their default value
-            # 'id' and  'proposingGroup' will be kept in anyway
-            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+            # 'id' and 'proposing_group' will be kept in anyway
+            fieldsToKeep = ['id', 'proposing_group'] + copyFields
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(theObject=True)
@@ -1245,16 +1245,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
-            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
             from Products.PloneMeeting.content.meetingitem import IMeetingItem
-            dx_fields_to_keep = set(
-                _at_to_dx(name) for name in fieldsToKeep)
-            dx_fields_to_keep.add('id')
+            fieldsToKeepSet = set(fieldsToKeep)
+            fieldsToKeepSet.add('id')
             for field_name, field in IMeetingItem.namesAndDescriptions():
-                if field_name in dx_fields_to_keep:
+                if field_name in fieldsToKeepSet:
                     continue
                 setattr(newItem, field_name, field.default)
-            if 'preferredMeeting' not in fieldsToKeep:
+            if 'preferred_meeting_path' not in fieldsToKeep:
                 newItem.preferred_meeting_path = None
             newItem._at_creation_flag = False
 
@@ -1273,7 +1271,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             break
 
             # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
+            if 'to_discuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
                 toDiscussDefault = destCfg.to_discuss_default
                 newItem.to_discuss = toDiscussDefault
 

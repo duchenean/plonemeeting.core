@@ -484,7 +484,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
@@ -530,7 +530,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         # configure an auto copyGroup, vendors_reviewers will be set
         # as auto copyGroup for every items
@@ -549,7 +549,7 @@ class testSearches(PloneMeetingTestCase):
     def test_pm_show_copy_groups_search(self):
         """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         self.assertEqual(list(cfg.selectable_copy_groups),
                          [self.developers_reviewers, self.vendors_reviewers])
         self.changeUser('pmCreator1')
@@ -557,7 +557,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(cfg.show_copy_groups_search())
         # not shown if copyGroups not used
-        self._enableField('copyGroups', enable=False)
+        self._enableField('copy_groups', enable=False)
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_copy_groups_search())
         self.changeUser('pmReviewer2')
@@ -569,7 +569,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
@@ -673,7 +673,7 @@ class testSearches(PloneMeetingTestCase):
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         review_states = reviewers[reviewers.keys()[0]]
         if 'prereviewers' in reviewers:
             review_states += ('prevalidated',)

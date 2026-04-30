@@ -354,11 +354,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'Meeting' and attrs.get('date', None) is None:
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
-            if 'proposingGroup' not in attrs.keys():
+            if 'proposing_group' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._get_org_uids_for_user')
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
-                    attrs.update({'proposingGroup': proposingGroupUids[0]})
+                    attrs.update({'proposing_group': proposingGroupUids[0]})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)

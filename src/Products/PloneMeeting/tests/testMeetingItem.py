@@ -220,7 +220,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          [self.developers_uid, self.endUsers_uid])
 
     def test_pm_ItemProposingGroupsVocabularyKeepConfigSorting(self):
-        """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
+        """If 'proposing_group' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
            the vocabulary keeps config order, not sorted alphabetically."""
         cfg = self.meetingConfig
         # activate endUsers group
@@ -232,10 +232,10 @@ class testMeetingItem(PloneMeetingTestCase):
             item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
         self.changeUser('siteadmin')
         # not in itemFieldsToKeepConfigSortingFor for now
-        self.assertFalse('proposingGroup' in cfg.item_fields_to_keep_config_sorting_for)
+        self.assertFalse('proposing_group' in cfg.item_fields_to_keep_config_sorting_for)
         self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
-        cfg.item_fields_to_keep_config_sorting_for = ('proposingGroup', )
+        cfg.item_fields_to_keep_config_sorting_for = ('proposing_group', )
         # invalidate vocabularies caching
         notify(ObjectEditedEvent(cfg))
         self.assertEqual([term.value for term in vocab(item)._terms],
@@ -246,7 +246,7 @@ class testMeetingItem(PloneMeetingTestCase):
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
         self.changeUser('siteadmin')
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
@@ -331,7 +331,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemProposingGroupsWithGroupsInChargeSentToOtherMC(self):
         '''Check MeetingItem.proposingGroupWithGroupInCharge when sent to another MC.'''
         self.changeUser('siteadmin')
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org1_uid = org1.UID()
         cfg = self.meetingConfig
@@ -669,8 +669,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         # enable motivation and budgetInfos in cfg1, not in cfg2
-        cfg.setUsedItemAttributes(('description', 'motivation', 'budgetInfos'))
-        cfg2.setUsedItemAttributes(('description', 'itemIsSigned', 'privacy'))
+        cfg.setUsedItemAttributes(('description', 'motivation', 'budget_infos'))
+        cfg2.setUsedItemAttributes(('description', 'item_is_signed', 'privacy'))
         cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
 
         # create and send
@@ -1250,7 +1250,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.used_item_attributes +
-                                  ('otherMeetingConfigsClonableToEmergency', ))
+                                  ('other_meeting_configs_clonable_to_emergency', ))
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
@@ -1349,7 +1349,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.used_item_attributes +
-                                  ('otherMeetingConfigsClonableToEmergency', ))
+                                  ('other_meeting_configs_clonable_to_emergency', ))
         # sendable when itemcreated
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
@@ -1422,7 +1422,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.used_item_attributes +
-                                  ('otherMeetingConfigsClonableToPrivacy', ))
+                                  ('other_meeting_configs_clonable_to_privacy', ))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until':
@@ -1737,9 +1737,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        self._enableField('otherMeetingConfigsClonableToFieldDecision')
-        self._enableField('otherMeetingConfigsClonableToFieldMotivation')
-        self._enableField('otherMeetingConfigsClonableToFieldTitle')
+        self._enableField('other_meeting_configs_clonable_to_field_decision')
+        self._enableField('other_meeting_configs_clonable_to_field_motivation')
+        self._enableField('other_meeting_configs_clonable_to_field_title')
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1754,14 +1754,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.Title(), 'Field title')
         self.assertEqual(newItem.getMotivation(), '<p>Field motivation</p>')
         self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
-        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
-        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
-        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
+        self.assertTrue(newItem.fieldIsEmpty('other_meeting_configs_clonable_to_field_title'))
+        self.assertTrue(newItem.fieldIsEmpty('other_meeting_configs_clonable_to_field_motivation'))
+        self.assertTrue(newItem.fieldIsEmpty('other_meeting_configs_clonable_to_field_decision'))
         # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
         self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
-                         ['otherMeetingConfigsClonableToFieldTitle',
-                          'otherMeetingConfigsClonableToFieldMotivation',
-                          'otherMeetingConfigsClonableToFieldDecision'])
+                         ['other_meeting_configs_clonable_to_field_title',
+                          'other_meeting_configs_clonable_to_field_motivation',
+                          'other_meeting_configs_clonable_to_field_decision'])
 
         # when other_mc value is empty, it will only erase field value if field is not required
         # disable motivation, it will not be initialized
@@ -2154,7 +2154,7 @@ class testMeetingItem(PloneMeetingTestCase):
         wf_name = self.wfTool.getWorkflowsFor(i4)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
         cfg.setItemCopyGroupsStates((initial_state, ))
-        i5 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        i5 = self.create('MeetingItem', proposing_group=self.vendors_uid)
         # relevant groups are auto added
         self.failIf(i5.copy_groups)
         self.assertEqual(i5.autoCopyGroups, ['auto__{0}'.format(self.developers_reviewers),
@@ -2205,7 +2205,7 @@ class testMeetingItem(PloneMeetingTestCase):
            at item creation time (at_post_create_script) and not after (at_post_edit_script),
            this will allow for example to add a copy group and being able to unselect it after.'''
         # B.2.4 TODO: depends on _updateCopyGroups firing on DX MeetingItem creation.
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         self.changeUser('pmManager')
@@ -2312,7 +2312,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_RestrictedCopyGroups(self):
         """Test MeetingItem.restrictedCopyGroups, a second level
            of copy groups complementary to MeetingItem.copyGroups."""
-        self._enableField(('copyGroups', 'restrictedCopyGroups'))
+        self._enableField(('copy_groups', 'restricted_copy_groups'))
         self.vendors.as_copy_group_on = "python: ['creators']"
         self.developers.as_restricted_copy_group_on = "python: ['creators']"
         cfg = self.meetingConfig
@@ -2373,7 +2373,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.failUnless(READER_USECASES['advices'] in localRoles)
         # add copy groups and update all local_roles (copy and adviser)
         cfg.selectable_copy_groups = (self.developers_advisers, self.vendors_advisers)
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         i1.copy_groups = (self.developers_advisers, self.vendors_advisers)
         i1.update_local_roles()
         # first make sure that we still have 'developers_advisers' in local roles
@@ -2411,7 +2411,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that if a group is set as copyGroups, the item is Viewable.'''
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers, )
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates(('validated', ))
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
@@ -2712,7 +2712,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # but the MeetingItem.budgetInfos field will be editable
         cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         cfg.item_budget_infos_states = ('validated', )
         # budget impact editors gets view on an item thru another role
@@ -2793,7 +2793,7 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.assertFalse(item.show_groups_in_charge())
         cfg = self.meetingConfig
-        self.assertFalse('groupsInCharge' in cfg.used_item_attributes)
+        self.assertFalse('groups_in_charge' in cfg.used_item_attributes)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertFalse(item.groups_in_charge)
@@ -2801,20 +2801,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         _check(item)
         # now enable groupsInCharge
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
         self.changeUser('pmCreator1')
         _check(item, view=True, edit=True)
         self.changeUser('pmManager')
         _check(item, view=True, edit=True)
         # disable field but set a value
         item.groups_in_charge = (self.developers_uid, )
-        self._enableField('groupsInCharge', enable=False)
+        self._enableField('groups_in_charge', enable=False)
         self.changeUser('pmCreator1')
         _check(item, view=True, edit=False)
         self.changeUser('pmManager')
         _check(item, view=True, edit=True)
         # when using proposingGroupWithGroupInCharge nobody may edit
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         self.changeUser('pmCreator1')
         _check(item, view=True, edit=False)
         self.changeUser('pmManager')
@@ -2965,7 +2965,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@display-file'))
         self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@download'))
         self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@display-file'))
-        # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
+        # set 'copy_groups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
         publicItem.copy_groups = (self.vendors_reviewers, )
         publicItem._update_after_edit()
@@ -3268,7 +3268,7 @@ class testMeetingItem(PloneMeetingTestCase):
            if current user is creator for it, or if not, that will switch to
            first proposingGroup of the user."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.vendors_creators, )
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
         self._enable_action('duplication')
@@ -3847,7 +3847,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
-          This is the vocabulary for the field "preferredMeeting".
+          This is the vocabulary for the field "preferred_meeting".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
@@ -3899,12 +3899,12 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemCopyGroupsVocabulary(self):
         '''
-          This is the vocabulary for the field "copyGroups".
+          This is the vocabulary for the field "copy_groups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -3985,15 +3985,15 @@ class testMeetingItem(PloneMeetingTestCase):
         item.associated_groups = ()
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)], [self.vendors_uid, ])
-        # 'associatedGroups' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
+        # 'associated_groups' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         cfg = self.meetingConfig
         cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid, self.endUsers_uid))
         # sorted alphabetically by default
-        self.assertFalse('associatedGroups' in cfg.item_fields_to_keep_config_sorting_for)
+        self.assertFalse('associated_groups' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)],
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
-        cfg.item_fields_to_keep_config_sorting_for = ('associatedGroups', )
+        cfg.item_fields_to_keep_config_sorting_for = ('associated_groups', )
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)],
                          list(cfg.getOrderedAssociatedOrganizations()))
@@ -4014,8 +4014,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         usedItemAttrs = cfg.used_item_attributes
-        if 'groupsInCharge' not in usedItemAttrs:
-            cfg.setUsedItemAttributes(usedItemAttrs + ('groupsInCharge', ))
+        if 'groups_in_charge' not in usedItemAttrs:
+            cfg.setUsedItemAttributes(usedItemAttrs + ('groups_in_charge', ))
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -4039,16 +4039,16 @@ class testMeetingItem(PloneMeetingTestCase):
         item.groups_in_charge = ()
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)], [self.vendors_uid, ])
-        # 'groupsInCharge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
+        # 'groups_in_charge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         self._select_organization(self.developers_uid)
         self._select_organization(self.endUsers_uid)
         cfg.ordered_groups_in_charge = (self.vendors_uid, self.developers_uid, self.endUsers_uid)
         # sorted alphabetically by default
-        self.assertFalse('groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for)
+        self.assertFalse('groups_in_charge' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)],
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
-        cfg.item_fields_to_keep_config_sorting_for = ('groupsInCharge', )
+        cfg.item_fields_to_keep_config_sorting_for = ('groups_in_charge', )
         cleanRamCache()
         self.assertEqual([term.token for term in get_vocab(item, vocab_name)],
                          list(cfg.getOrderedGroupsInCharge()))
@@ -4171,7 +4171,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_OptionalAdvisersVocabulary(self):
         '''
-          This is the vocabulary for the field "optionalAdvisers".
+          This is the vocabulary for the field "optional_advisers".
           It relies on the advisers selected in the MeetingConfig.selectableAdvisers field.
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
@@ -4430,7 +4430,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''
-          This test the 'optionalAdvisers' field validate method.
+          This test the 'optional_advisers' field validate method.
           Make sure we can not select more than one optional advice concerning
           the same group.  In case we use 'delay-aware' advisers, we could select
           a 'delay-aware' adviser and the same group 'normal non-delay-aware' adviser.
@@ -5230,8 +5230,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create item
         self.changeUser('pmCreator1')
-        data = {'copyGroups': (self.vendors_reviewers, ),
-                'optionalAdvisers': (self.vendors_uid, )}
+        data = {'copy_groups': (self.vendors_reviewers, ),
+                'optional_advisers': (self.vendors_uid, )}
         item = self.create('MeetingItem', **data)
         ramcache = queryUtility(IRAMCache)
 
@@ -5830,7 +5830,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setTitle('Original title')
         # optionalAdvisers is in the EXTRA_COPIED_FIELDS_SAME_MC
         item.optional_advisers = (self.developers_uid, )
-        # 'internalNotes' is in the NEUTRAL_FIELDS
+        # 'internal_notes' is in the NEUTRAL_FIELDS
         item.internal_notes = richtextval('<p>Internal notes.</p>')
         # every item fields except ones considered as metadata
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
@@ -5842,21 +5842,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
             'completeness', 'emergency', 'id',
-            'itemAssembly', 'itemAssemblyAbsents', 'itemAssemblyExcused',
-            'itemAssemblyGuests', 'itemInitiator', 'itemIsSigned',
-            'itemKeywords', 'itemNumber', 'itemReference',
-            'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
-            'emergencyMotivation',
-            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
-            'meetingManagersNotes', 'meetingManagersNotesSuite', 'meetingManagersNotesEnd',
-            'marginalNotes', 'observations', 'pollTypeObservations',
-            'preferredMeeting', 'meetingDeadlineDate', 'proposingGroup',
-            'takenOverBy', 'templateUsingGroups',
-            'toDiscuss', 'committeeObservations', 'committeeTranscript',
-            'votesObservations', 'votesResult',
-            'neededFollowUp', 'providedFollowUp', 'groupsInChargeNotes',
-            'otherMeetingConfigsClonableToEmergency',
-            'internalNotes', 'externalIdentifier']
+            'item_assembly', 'item_assembly_absents', 'item_assembly_excused',
+            'item_assembly_guests', 'item_initiator', 'item_is_signed',
+            'item_keywords', 'item_number', 'item_reference',
+            'item_signatures', 'item_tags', 'list_type', 'manually_linked_items',
+            'emergency_motivation',
+            'meeting_transition_inserting_me', 'in_and_out_moves', 'notes',
+            'meeting_managers_notes', 'meeting_managers_notes_suite', 'meeting_managers_notes_end',
+            'marginal_notes', 'observations', 'poll_type_observations',
+            'preferred_meeting', 'meeting_deadline_date', 'proposing_group',
+            'taken_over_by', 'template_using_groups',
+            'to_discuss', 'committee_observations', 'committee_transcript',
+            'votes_observations', 'votes_result',
+            'needed_follow_up', 'provided_follow_up', 'groups_in_charge_notes',
+            'other_meeting_configs_clonable_to_emergency',
+            'internal_notes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
@@ -5884,15 +5884,15 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
            DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
         cfg = self.meetingConfig
-        self._enableField('associatedGroups')
+        self._enableField('associated_groups')
         # configure the itemTemplate
         self.changeUser('siteadmin')
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
-        # check that 'title' and 'associatedGroups' field are kept
+        # check that 'title' and 'associated_groups' field are kept
         # title is in DEFAULT_COPIED_FIELDS and associatedGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
-        self.assertTrue('associatedGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+        self.assertTrue('associated_groups' in EXTRA_COPIED_FIELDS_SAME_MC)
         itemTemplate.associated_groups = (self.developers_uid,)
         itemTemplate.observations = richtextval('<p>obs</p>')
         itemTemplate.in_and_out_moves = richtextval('<p>in-out</p>')
@@ -5910,9 +5910,9 @@ class testMeetingItem(PloneMeetingTestCase):
                          itemFromTemplate.getAssociatedGroups())
         # testing EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
         self.assertTrue('observations' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
-        self.assertTrue('inAndOutMoves' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+        self.assertTrue('in_and_out_moves' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
         self.assertTrue('notes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
-        self.assertTrue('internalNotes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+        self.assertTrue('internal_notes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
 
         self.assertEqual(itemTemplate.observations,
                          itemFromTemplate.observations)
@@ -5929,8 +5929,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # configure the recItem
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        self._enableField('associatedGroups')
-        self._enableField('copyGroups')
+        self._enableField('associated_groups')
+        self._enableField('copy_groups')
         # just keep one recurring item
         recurringItems = cfg.getRecurringItems()
         toDelete = [item.getId() for item in recurringItems[1:]]
@@ -5939,10 +5939,10 @@ class testMeetingItem(PloneMeetingTestCase):
         recItem.setTitle('Rec item title')
         recItem.associated_groups = (self.developers_uid,)
         recItem.meeting_transition_inserting_me = '_init_'
-        # check that 'title' and 'associatedGroups' field are kept
+        # check that 'title' and 'associated_groups' field are kept
         # title is in DEFAULT_COPIED_FIELDS and associatedGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
-        self.assertTrue('associatedGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+        self.assertTrue('associated_groups' in EXTRA_COPIED_FIELDS_SAME_MC)
 
         # create a meeting, this will add recItem
         self.changeUser('pmManager')
@@ -5958,8 +5958,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         self.changeUser('siteadmin')
-        self._enableField('copyGroups')
-        self._enableField('copyGroups', cfg=cfg2)
+        self._enableField('copy_groups')
+        self._enableField('copy_groups', cfg=cfg2)
         cfg.use_advices = True
         cfg2.use_advices = True
         self._removeConfigObjectsFor(cfg)
@@ -5992,8 +5992,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg2 = self.meetingConfig2
         cfg2Id = self.meetingConfig2.getId()
-        self._enableField('copyGroups')
-        self._enableField('copyGroups', cfg=cfg2)
+        self._enableField('copy_groups')
+        self._enableField('copy_groups', cfg=cfg2)
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         cfg2.selectable_copy_groups = (self.vendors_reviewers, )
         self.changeUser('pmManager')
@@ -6009,7 +6009,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Make sure field MeetingItem.otherMeetingConfigsClonableTo is not kept
            if it was selected on original item but configuration changed and new item
            is not more sendable to the same meetingConfigs.
-           An item with wrong value for 'otherMeetingConfigsClonableTo' raises
+           An item with wrong value for 'other_meeting_configs_clonable_to' raises
            Unauthorized when inserted in a meeting and trying to send it to the
            other MC because it can not...'''
         cfg = self.meetingConfig
@@ -6038,7 +6038,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Make sure field MeetingItem.copyGroups value correspond to what is
            currently defined in the MeetingConfig.'''
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -6050,7 +6050,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only relevant copyGroups were kept
         self.assertEqual(newItem.copy_groups, (self.vendors_reviewers, ))
         # if we do not use copyGroups anymore, no copyGroups are kept
-        self._enableField('copyGroups', enable=False)
+        self._enableField('copy_groups', enable=False)
         newItem2 = item.clone()
         self.assertFalse(newItem2.copy_groups)
 
@@ -6070,13 +6070,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getOptionalAdvisers(), (self.vendors_uid, ))
 
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
-        '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
+        '''When cloning an item to the same MeetingConfig, the field 'to_discuss' is managed manually :
            - if MeetingConfig.toDiscussSetOnItemInsert is True, value is not kept
              and default value defined on the MeetingConfig is used;
            - if MeetingConfig.toDiscussSetOnItemInsert is False, value on the
              original item is kept no matter default defined in the MeetingConfig.
            When cloning to another MeetingConfig, the default value defined in the MeetingConfig will be used.'''
-        # test when 'toDiscuss' is initialized by item creator
+        # test when 'to_discuss' is initialized by item creator
         # value defined on the cloned item will be kept
         self.meetingConfig.to_discuss_set_on_item_insert = False
         self.meetingConfig.to_discuss_default = False
@@ -6907,7 +6907,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
 
         # when using proposingGroupWithGroupInCharge
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         self.developers.groups_in_charge = (self.vendors_uid, )
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.endUsers.groups_in_charge = (self.endUsers_uid, )
@@ -6946,8 +6946,8 @@ class testMeetingItem(PloneMeetingTestCase):
         """A user able to edit at least one RichText field must be able to add images."""
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
-        self._enableField("budgetInfos")
-        self._enableField('copyGroups')
+        self._enableField("budget_infos")
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.vendors_creators, )
         cfg.use_advices = True
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
@@ -7213,10 +7213,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2Title = cfg2.Title()
-        # for now make sure 'otherMeetingConfigsClonableToPrivacy' is disabled
+        # for now make sure 'other_meeting_configs_clonable_to_privacy' is disabled
         usedItemAttrs = list(cfg.used_item_attributes)
-        if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttrs:
-            usedItemAttrs.remove('otherMeetingConfigsClonableToPrivacy')
+        if 'other_meeting_configs_clonable_to_privacy' in usedItemAttrs:
+            usedItemAttrs.remove('other_meeting_configs_clonable_to_privacy')
             cfg.setUsedItemAttributes(tuple(usedItemAttrs))
         # create a third meetingConfig with special characters in it's title
         self.changeUser('siteadmin')
@@ -7245,9 +7245,9 @@ class testMeetingItem(PloneMeetingTestCase):
                     cfg3Title, noneTheoricalMeeting), 'utf-8'))
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
 
-        # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
+        # enable 'other_meeting_configs_clonable_to_privacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.used_item_attributes +
-                                  ('otherMeetingConfigsClonableToPrivacy', ))
+                                  ('other_meeting_configs_clonable_to_privacy', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
         self.assertEqual(
@@ -7322,7 +7322,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 ploneGroup.removeMember('pmManager')
         # make copyGroups able to see item in every states
         cfg.setItemCopyGroupsStates(('validated', ))
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         # make power observers able to see validated items
         self._setPowerObserverStates(states=('validated', ))
@@ -7335,10 +7335,10 @@ class testMeetingItem(PloneMeetingTestCase):
             view = item.restrictedTraverse('base_view')
             if view_edit:
                 self.assertTrue("Internal notes" in view())
-                self.assertTrue(item.mayQuickEdit("internalNotes"))
+                self.assertTrue(item.mayQuickEdit("internal_notes"))
             else:
                 self.assertFalse("Internal notes" in view())
-                self.assertFalse(item.mayQuickEdit("internalNotes"))
+                self.assertFalse(item.mayQuickEdit("internal_notes"))
 
         # create an item
         self.changeUser('pmCreator2')
@@ -7348,7 +7348,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if not used, not shown
         _check(item, False)
         # enable field internalNotes
-        self._enableField('internalNotes', reload=True)
+        self._enableField('internal_notes', reload=True)
         # when config changes, need to update_local_roles on item
         item.update_local_roles()
         _check(item, True)
@@ -7394,7 +7394,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.assertTrue(self.hasPermission(View, item))
                 view = item.restrictedTraverse('base_view')
                 self.assertTrue("Internal notes" in view())
-                self.assertTrue(item.mayQuickEdit('internalNotes'))
+                self.assertTrue(item.mayQuickEdit('internal_notes'))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -7415,7 +7415,7 @@ class testMeetingItem(PloneMeetingTestCase):
            of the decision."""
         self.changeUser('siteadmin')
         self._enableField('description')
-        self._enableField('internalNotes')
+        self._enableField('internal_notes')
         # by default set internalNotes editable by proposingGroup creators
         self._activate_config('itemInternalNotesEditableBy',
                               'suffix_proposing_group_creators',
@@ -7427,7 +7427,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setTitle('specific')
         self.assertFalse(self.catalog(SearchableText='specific'))
         # not modified when quick editing internalNotes
-        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        set_field_from_ajax(item, 'internal_notes', self.descriptionText)
         self.assertEqual(item_modified, item.modified())
         # but reindexed
         self.assertTrue(self.catalog(SearchableText='specific'))
@@ -7566,7 +7566,7 @@ class testMeetingItem(PloneMeetingTestCase):
            the takenOverBy functionnality.  With this functionnality, an icon is displayed
            if item is takenOverBy and the icon color change depending on the fact that
            takenOverBy is the current user or not."""
-        self.meetingConfig.setUsedItemAttributes(('takenOverBy', ))
+        self.meetingConfig.setUsedItemAttributes(('taken_over_by', ))
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -7651,11 +7651,11 @@ class testMeetingItem(PloneMeetingTestCase):
            predecessor from another MC is modified.  Indeed an icon displays informations
            about the item predecessor state, meeting, ..."""
         cfg = self.meetingConfig
-        # make sure 'otherMeetingConfigsClonableToPrivacy' is not in the usedItemAttributes
+        # make sure 'other_meeting_configs_clonable_to_privacy' is not in the usedItemAttributes
         # or the will_be_cloned_to_other_mc.png is replaced by will_be_cloned_to_other_mc_public.png
         usedItemAttributes = list(cfg.used_item_attributes)
-        if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes:
-            usedItemAttributes.remove('otherMeetingConfigsClonableToPrivacy')
+        if 'other_meeting_configs_clonable_to_privacy' in usedItemAttributes:
+            usedItemAttributes.remove('other_meeting_configs_clonable_to_privacy')
             cfg.setUsedItemAttributes(usedItemAttributes)
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
@@ -7762,8 +7762,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item4.item_reference, 'Ref. 20170303/1')
 
     def test_pm_ItemReferenceUpdateWhenSpecificItemFieldsModified(self):
-        """When a item is modified, if 'category', 'classifier', 'proposingGroup'
-           or 'otherMeetingConfigsClonableTo' field is changed, we need to update
+        """When a item is modified, if 'category', 'classifier', 'proposing_group'
+           or 'other_meeting_configs_clonable_to' field is changed, we need to update
            every itemReference starting from current item."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
@@ -8338,11 +8338,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self._removeUsersFromEveryGroups(self._users_to_remove_for_mailling_list())
         # make utils.sendMailIfRelevant return details
         self.request['debug_sendMailIfRelevant'] = True
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = cfg.listSelectableCopyGroups().keys()
         cfg.setItemCopyGroupsStates(['validated'])
         cfg.mail_mode = "activated"
-        cfg.setMailItemEvents(("copyGroups", ))
+        cfg.setMailItemEvents(("copy_groups", ))
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem", title="My item")
         # no copy groups
@@ -8627,7 +8627,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         attrs = [term.value for term in get_vocab(
             cfg, 'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary',
-            only_factory=True)(cfg) if term.value != 'proposingGroupWithGroupInCharge']
+            only_factory=True)(cfg) if term.value != 'proposing_group_with_group_in_charge']
         cfg.setUsedItemAttributes(attrs)
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)
@@ -8732,7 +8732,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # when no auto_from can be determinated, the NO_COMMITTEE value is used
         cfg_committees[0]['auto_from'] = []
         cfg.setCommittees(cfg_committees)
-        item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        item = self.create('MeetingItem', proposing_group=self.vendors_uid)
         self.assertEqual(item.committees, [NO_COMMITTEE])
 
     def test_pm_CommitteesSupplements(self):
@@ -8911,8 +8911,8 @@ class testMeetingItem(PloneMeetingTestCase):
            and edit the committeesObservations and committeeTranscript fields."""
         cfg = self.meetingConfig
         self._enableField("committees", related_to="Meeting")
-        self._enableField('committeeObservations')
-        self._enableField('committeeTranscript')
+        self._enableField('committee_observations')
+        self._enableField('committee_transcript')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', committees=['committee_1'])
         # for now vendors do not have access to item
@@ -8928,16 +8928,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # now vendors have access
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(item.mayQuickEdit('committeeObservations'))
-        self.assertTrue(item.mayQuickEdit('committeeTranscript'))
+        self.assertTrue(item.mayQuickEdit('committee_observations'))
+        self.assertTrue(item.mayQuickEdit('committee_transcript'))
         self.assertFalse(item.mayQuickEdit('description'))
         self.assertFalse(item.mayQuickEdit('decision'))
         # when validated, only able to view, not edit
         self.validateItem(item)
         self.assertEqual(item.query_state(), "validated")
         self.assertTrue(self.hasPermission(View, item))
-        self.assertFalse(item.mayQuickEdit('committeeObservations'))
-        self.assertFalse(item.mayQuickEdit('committeeTranscript'))
+        self.assertFalse(item.mayQuickEdit('committee_observations'))
+        self.assertFalse(item.mayQuickEdit('committee_transcript'))
         self.assertFalse(item.mayQuickEdit('description'))
         self.assertFalse(item.mayQuickEdit('decision'))
 
@@ -9145,7 +9145,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(neededfollowup.results()), 0)
         self.assertEqual(len(providedfollowup.results()), 0)
         # providedFollowUp is not editable when label "needed-follow-up" is not set
-        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertFalse(item.mayQuickEdit('provided_follow_up'))
         labelingview = item.restrictedTraverse('@@labeling')
         self.request.form['activate_labels'] = ['needed-follow-up']
         labelingview.update()
@@ -9169,9 +9169,9 @@ class testMeetingItem(PloneMeetingTestCase):
             'provided-follow-up' in
             [label['label_id'] for label in labelingview.available_labels()[1]])
         self.changeUser('pmCreator1')
-        self.assertTrue(fieldIsEmpty('providedFollowUp', item))
+        self.assertTrue(fieldIsEmpty('provided_follow_up', item))
         # but now that label needed-follow-up is set, field is editable
-        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.assertTrue(item.mayQuickEdit('provided_follow_up'))
         item.provided_follow_up = richtextval(self.descriptionText)
         self.changeUser('pmManager')
         self.assertTrue(
@@ -9196,11 +9196,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertEqual(item.query_state(), "accepted")
         self.assertEqual(meeting.query_state(), "closed")
-        self.assertTrue(item.mayQuickEdit('neededFollowUp'))
-        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.assertTrue(item.mayQuickEdit('needed_follow_up'))
+        self.assertTrue(item.mayQuickEdit('provided_follow_up'))
         self.changeUser('pmCreator1')
-        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
-        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.assertFalse(item.mayQuickEdit('needed_follow_up'))
+        self.assertTrue(item.mayQuickEdit('provided_follow_up'))
 
     def test_pm_groups_in_charge_notes(self):
         """Test that MeetingItem.groupsInChargeNotes uses
@@ -9209,37 +9209,37 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.ordered_groups_in_charge = (self.developers_uid, self.vendors_uid)
         cfg.item_groups_in_charge_states = [self._stateMappingFor('itemcreated')]
-        self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
+        self._enableField(['groups_in_charge', 'groups_in_charge_notes'])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
         # by default proposingGroup can view the field but not edit it
-        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertTrue(item.show_field('groups_in_charge_notes'))
         # even if item editable, field can be not editable if condition if False
-        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groups_in_charge_notes'))
         # group in charge can view and edit
         self.changeUser('pmObserver2')
         self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(item.show_field('groupsInChargeNotes'))
-        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertTrue(item.show_field('groups_in_charge_notes'))
+        self.assertTrue(item.mayQuickEdit('groups_in_charge_notes'))
         # with no group in charge
         self.changeUser('pmCreator1')
         item.groups_in_charge = []
-        self.assertTrue(item.show_field('groupsInChargeNotes'))
-        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertTrue(item.show_field('groups_in_charge_notes'))
+        self.assertFalse(item.mayQuickEdit('groups_in_charge_notes'))
         # make proposing group only able to edit
         self.changeUser('pmObserver2')
         self._setupItemFieldsConfig(
-            'groupsInChargeNotes',
+            'groups_in_charge_notes',
             edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
-        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groups_in_charge_notes'))
         self.changeUser('pmCreator1')
-        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertTrue(item.mayQuickEdit('groups_in_charge_notes'))
         # wrong condition, will raise if used
-        self._setupItemFieldsConfig('groupsInChargeNotes', edit='python: wrong')
-        self.assertRaises(NameError, item.mayQuickEdit, 'groupsInChargeNotes')
+        self._setupItemFieldsConfig('groups_in_charge_notes', edit='python: wrong')
+        self.assertRaises(NameError, item.mayQuickEdit, 'groups_in_charge_notes')
         # does not raise if not used
-        self._enableField(['groupsInChargeNotes'], enable=False)
-        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self._enableField(['groups_in_charge_notes'], enable=False)
+        self.assertFalse(item.mayQuickEdit('groups_in_charge_notes'))
 
 
 def test_suite():

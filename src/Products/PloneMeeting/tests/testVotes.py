@@ -910,7 +910,7 @@ class testVotes(PloneMeetingTestCase):
            It manage changes, but also avoid to change from a "secret" mode
            to a "public" mode if some votes are already encoded.
            The validation also work from MeetingItem edit form."""
-        self._enableField('pollType')
+        self._enableField('poll_type')
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
@@ -1184,15 +1184,15 @@ class testVotes(PloneMeetingTestCase):
         if self._check_wfa_available(['no_publication']):
             self._activate_wfas(('no_publication', ), keep_existing=False)
         self._removeConfigObjectsFor(cfg)
-        self._enableField('votesResult')
-        self._enableField('votesResult_after_motivation')
+        self._enableField('votes_result')
+        self._enableField('votes_result_after_motivation')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertFalse(item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.assertFalse(item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(item, 'votes_result'))
         self.changeUser('pmManager')
-        self.assertFalse(item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.assertFalse(item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(item, 'votes_result'))
 
         # get outside meeting
         self.assertEqual(cfg.votes_result_tal_expr, '')
@@ -1212,8 +1212,8 @@ class testVotes(PloneMeetingTestCase):
             self._createMeetingWithVotes()
         # votes are editable as soon as in a meeting (presented)
         self.assertEqual(public_item.query_state(), 'presented')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(public_item, 'votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(public_item, 'votes_result'))
         self.assertEqual(
             public_item.getVotesResult(),
             '<p>Il y a 4 votants.</p><p>Par 2 voix pour, une voix contre '
@@ -1233,8 +1233,8 @@ class testVotes(PloneMeetingTestCase):
         # freeze the meeting and set values
         self.freezeMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'itemfrozen')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(secret_item.mayQuickEdit('votes_result'))
 
         # when a value is set, then it is used
         self.assertFalse(public_item.getVotesResult(real=True))
@@ -1249,14 +1249,14 @@ class testVotes(PloneMeetingTestCase):
         # decide item, still editable until meeting is closed
         self.decideMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'itemfrozen')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(secret_item.mayQuickEdit('votes_result'))
         self.do(public_item, 'accept')
         self.assertEqual(public_item.query_state(), 'accepted')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
         self.closeMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'accepted')
-        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+        self.assertFalse(public_item.mayQuickEdit('votes_result'))
 
         # wrong expression will not break the view, if result is not html
         # a portal_messag is displayed

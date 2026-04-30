@@ -537,7 +537,7 @@ class PloneMeetingTestingHelpers(object):
     def _setUpOrderedContacts(
             self,
             meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
-            item_attrs=('itemInitiator', )):
+            item_attrs=('item_initiator', )):
         """ """
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
@@ -632,7 +632,7 @@ class PloneMeetingTestingHelpers(object):
     def _setupFollowUp(self, cfg):
         """Configure followUp labels."""
         self._enable_ftw_labels(cfg, add_follow_up=True)
-        self._enableField(['neededFollowUp', 'providedFollowUp'])
+        self._enableField(['needed_follow_up', 'provided_follow_up'])
         config = list(cfg.getLabelsConfig())
         # needed-follow-up
         new_config = deepcopy(config[0])
@@ -642,7 +642,7 @@ class PloneMeetingTestingHelpers(object):
         # provided-follow-up
         new_config = deepcopy(config[0])
         new_config['label_id'] = "provided-follow-up"
-        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
+        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('provided_follow_up', item)"
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
         cfg.labels_config = config

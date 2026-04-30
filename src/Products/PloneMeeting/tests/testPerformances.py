@@ -182,8 +182,8 @@ class testPerformances(PloneMeetingTestCase):
 
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
         '''While presenting items, these items are inserted in a given order.
-           In this test, as every items use same 'proposingGroup', same 'privacy'
-           and same 'listType' every items are evaluated each time and
+           In this test, as every items use same 'proposing_group', same 'privacy'
+           and same 'list_type' every items are evaluated each time and
            every new is finally added at the end of the meeting.
            We present 50 by 50 items successively in same meeting'''
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.' % (50, 0))
