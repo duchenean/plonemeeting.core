@@ -891,7 +891,7 @@ def _get_field_value(obj, name):
     dx_name = _at_to_dx(name)
     value = getattr(obj, dx_name, None)
     if isinstance(value, RichTextValue):
-        result = value.output or value.raw or u''
+        result = value.output_relative_to(obj) or value.raw or u''
         return safe_encode(result) if isinstance(result, unicode) else result
     return value
 
@@ -1185,8 +1185,10 @@ def set_field_from_ajax(
 
     notify_modified = True
     if IDexterityContent.providedBy(obj):
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_field_name = _at_to_dx(field_name)
         try:
-            widget = get_dx_widget(obj, field_name=field_name)
+            widget = get_dx_widget(obj, field_name=dx_field_name)
         except (ValueError, KeyError):
             widget = None
         if widget is not None and hasattr(widget, 'may_edit'):
@@ -1199,11 +1201,11 @@ def set_field_from_ajax(
 
         if remember:
             previousData = rememberPreviousData(obj, field_name)
-            setattr(obj, field_name, richtextval(new_value))
+            setattr(obj, dx_field_name, richtextval(new_value))
             if previousData:
                 addDataChange(obj, previousData)
         else:
-            setattr(obj, field_name, richtextval(new_value))
+            setattr(obj, dx_field_name, richtextval(new_value))
     else:
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
@@ -1225,7 +1227,8 @@ def set_field_from_ajax(
 
     if tranform:
         # Apply XHTML transforms when relevant
-        transformAllRichTextFields(obj, onlyField=field_name)
+        transform_field_name = dx_field_name if IDexterityContent.providedBy(obj) else field_name
+        transformAllRichTextFields(obj, onlyField=transform_field_name)
 
     if reindex:
         # only reindex relevant indexes aka SearchableText + field specific index if exists

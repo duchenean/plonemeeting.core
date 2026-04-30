@@ -345,8 +345,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         item = self.create('MeetingItem')
         developers_gic = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
-        item.proposing_group_with_group_in_charge = developers_gic
-        item.other_meeting_configs_clonable_to = (cfg2_id,)
+        item.setProposingGroupWithGroupInCharge(developers_gic)
+        item.setOtherMeetingConfigsClonableTo((cfg2_id,))
         item.cloneToOtherMeetingConfig(cfg2_id)
         new_item = item.get_successor()
         self.assertEqual(new_item.getProposingGroup(), self.developers_uid)
@@ -403,7 +403,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(READER_USECASES['groupsincharge']
                         in item.__ac_local_roles__[self.vendors_observers])
         # groupsInCharge are updated when proposingGroup changed
-        item.proposing_group = self.vendors_uid
+        item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
         self.assertEqual(item.groups_in_charge, [self.developers_uid])
         self.assertTrue(READER_USECASES['groupsincharge']
@@ -2963,9 +2963,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@display-file'))
         # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
-        publicItem.copy_groups = self.vendors_reviewers
+        publicItem.copy_groups = (self.vendors_reviewers, )
         publicItem._update_after_edit()
-        publicHeadingItem.copy_groups = self.vendors_reviewers
+        publicHeadingItem.copy_groups = (self.vendors_reviewers, )
         publicHeadingItem._update_after_edit()
         self.assertTrue(self.hasPermission(View, publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
@@ -6907,7 +6907,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.endUsers.groups_in_charge = (self.endUsers_uid, )
         ven_dev = '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid)
-        vendors_template.proposing_group_with_group_in_charge = ven_dev
+        vendors_template.setProposingGroupWithGroupInCharge(ven_dev)
         # as pmCreator1, no primary organization, creating items will use
         # it's default group (first found)
         self.changeUser('pmCreator1')
@@ -9034,7 +9034,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             uuidToObject(itemFromTemplate.UID(), query={'internal_number': 3}).internal_number, 3)
         # clone to another cfg, not enabled for now
-        itemFromTemplate.other_meeting_configs_clonable_to = (cfg2Id, )
+        itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.failIf(hasattr(itemCfg2, "internal_number"))
         self.deleteAsManager(itemCfg2.UID())

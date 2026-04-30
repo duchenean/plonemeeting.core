@@ -53,6 +53,7 @@ from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ROOT_FOLDER
+from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
@@ -75,6 +76,7 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from zExceptions import Redirect
+from zope.annotation.interfaces import IAnnotations
 from zope.container.contained import ContainerModifiedEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
@@ -1245,6 +1247,12 @@ def onItemWillBeRemoved(item, event):
     predecessor = item.get_predecessor()
     if predecessor:
         predecessor.linked_successor_uids.remove(item.UID())
+        # clear sent-to-other-MC annotation on predecessor
+        ann = IAnnotations(predecessor)
+        item_uid = item.UID()
+        for key in list(ann.keys()):
+            if key.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY) and ann[key] == item_uid:
+                del ann[key]
     successors = item.get_successors()
     for successor in successors:
         successor.linked_predecessor_uid = None

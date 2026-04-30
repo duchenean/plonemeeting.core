@@ -1366,7 +1366,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             tokens = [term.token for term in userProposingGroupTerms
                                       if term.token.startswith(primary_org)]
                             token = tokens[0] if tokens else token
-                        newItem.proposing_group_with_group_in_charge = token
+                        newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
                     vocab = get_vocab(

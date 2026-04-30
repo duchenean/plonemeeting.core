@@ -1212,7 +1212,7 @@ class MeetingItem(Container):
     def Description(self):
         desc = self.description
         if isinstance(desc, RichTextValue):
-            return safe_encode(desc.output or u'')
+            return safe_encode(desc.output_relative_to(self) or u'')
         if isinstance(desc, unicode):
             return desc.encode('utf-8')
         return desc or ''
@@ -1268,7 +1268,7 @@ class MeetingItem(Container):
             return msg
         value = self.motivation
         if isinstance(value, RichTextValue):
-            return safe_encode(value.output or u'')
+            return safe_encode(value.output_relative_to(self) or u'')
         return safe_encode(value or u'')
 
     security.declarePublic('getRawMotivation')
@@ -1294,7 +1294,7 @@ class MeetingItem(Container):
             return msg
         value = self.decision
         if isinstance(value, RichTextValue):
-            return safe_encode(value.output or u'')
+            return safe_encode(value.output_relative_to(self) or u'')
         return safe_encode(value or u'')
 
     security.declarePublic('getRawDecision')
@@ -2383,9 +2383,9 @@ class MeetingItem(Container):
             catalog = api.portal.get_tool('portal_catalog')
             linkedItems = []
             for uid in storedUids:
-                brains = catalog(UID=uid)
+                brains = catalog.unrestrictedSearchResults(UID=uid)
                 if brains:
-                    item = brains[0].getObject()
+                    item = brains[0]._unrestrictedGetObject()
                     if self._appendLinkedItem(
                             item, tool, cfg, only_viewable=only_viewable):
                         linkedItems.append(item)
@@ -3302,7 +3302,7 @@ class MeetingItem(Container):
     def getBudgetInfos(self):
         value = self.budget_infos
         if isinstance(value, RichTextValue):
-            return safe_encode(value.output or u'')
+            return safe_encode(value.output_relative_to(self) or u'')
         return value or ''
 
     def update_groups_in_charge(self, force=False):
