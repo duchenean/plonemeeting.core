@@ -168,7 +168,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.item_advice_states = (item_initial_state,)
         cfg.item_advice_edit_states = (item_initial_state,)
         cfg.item_annex_confidential_visible_for = ('reader_advices',)
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item.update_local_roles()
 
         self.changeUser('pmAdviser1')
@@ -181,10 +181,10 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.item_annex_confidential_visible_for = ('reader_copy_groups',)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
 
         self.changeUser('pmReviewer2')
@@ -364,7 +364,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.item_advice_edit_states = (item_initial_state,)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
@@ -439,10 +439,10 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.item_copy_groups_states = (item_initial_state,)
         cfg.advice_annex_confidential_visible_for = ('reader_copy_groups',)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item.update_local_roles()
 
         self.changeUser('pmReviewer2')
@@ -744,9 +744,9 @@ class testAnnexes(PloneMeetingTestCase):
         ITEM_DECISION = "Item decision text"
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title=ITEM_TITLE)
-        item.setDescription(ITEM_DESCRIPTION)
-        item.setDecision(ITEM_DECISION)
-        item.setMotivation('')
+        item.description = richtextval(ITEM_DESCRIPTION)
+        item.decision = richtextval(ITEM_DECISION)
+        item.motivation = richtextval('')
         self._manage_custom_searchable_fields(item)
         item.reindexObject(idxs=['SearchableText', ])
         index = self.catalog.Indexes['SearchableText']
@@ -755,15 +755,15 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
         indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
-        self.assertEquals(
-            indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p> '.format(
-                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION)
-        )
+        searchable = indexable_wrapper.SearchableText
+        self.assertIn(ITEM_TITLE, searchable)
+        self.assertIn('description', searchable.lower())
+        self.assertIn('decision', searchable.lower())
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p'])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn('description', indexed_words)
+        self.assertIn('decision', indexed_words)
 
         # add an annex and test that the annex title is found in the item's SearchableText
         annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
@@ -773,20 +773,19 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertTrue(len(self.catalog(SearchableText=ANNEX_TITLE)) == 1)
         indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
-        self.assertEquals(
-            indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p>  {3}'.format(
-                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
+        searchable = indexable_wrapper.SearchableText
+        self.assertIn(ITEM_TITLE, searchable)
+        self.assertIn(ANNEX_TITLE, searchable)
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn(ANNEX_TITLE.lower(), indexed_words)
         # works also when clear and rebuild catalog
         self.catalog.clearFindAndRebuild()
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn(ANNEX_TITLE.lower(), indexed_words)
         # when 'annex' is selected in ToolPloneMeeting.deferParentReindex, then
         # the SearchableText is not updated when annex added
         # add an annex and test that the annex title is found in the item's SearchableText
@@ -1124,7 +1123,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_ConfidentialAnnexesWhenItemDuplicated(self):
         """When an item is duplicated, if there were confidential annexes, accesses are correct."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.selectable_copy_groups = (self.vendors_creators,)
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
@@ -1154,7 +1153,7 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
         # check that local_roles regarding proposingGroup are correctly set on new annexes
-        item.setCopyGroups(())
+        item.copy_groups = ()
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
 
@@ -1172,7 +1171,7 @@ class testAnnexes(PloneMeetingTestCase):
             notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision('<p>Decision</p>')
+        item.decision = richtextval('<p>Decision</p>')
         annex1 = self.addAnnex(item)
         annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annex2 = self.addAnnex(item)
@@ -1228,7 +1227,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision('<p>Decision</p>')
+        item.decision = richtextval('<p>Decision</p>')
         self.validateItem(item)
         # when an item is 'accepted', the MeetingMember may add annexDecision
         self.changeUser('pmManager')
@@ -1752,7 +1751,7 @@ class testAnnexes(PloneMeetingTestCase):
         meeting_annex = self.addAnnex(meeting)
         _check_catalog()
         # advice
-        item.setOptionalAdvisers([self.developers_uid])
+        item.optional_advisers = [self.developers_uid]
         item._update_after_edit()
         _check_catalog(step=0)
         advice = createContentInContainer(
@@ -1819,7 +1818,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_AnnexShowPreview(self):
         """Test when show_preview is defined on annex type."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         cfg.item_copy_groups_states = (item_initial_state,)

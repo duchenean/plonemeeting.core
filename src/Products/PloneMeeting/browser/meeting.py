@@ -582,7 +582,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Depending on used inserting methods, display relevant fields."""
         res = []
         for method in self.cfg.inserting_methods_on_add_item:
-            for mapping in self.inserting_methods_fields_mapping[method['insertingMethod']]:
+            for mapping in self.inserting_methods_fields_mapping[method['inserting_method']]:
                 if mapping.startswith('field_'):
                     res.append(mapping[6:])
         return res
@@ -593,8 +593,8 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
            goupsInCharge organizations titles as second element."""
         res = []
         orgs_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
-            if 'organization' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
+            method['inserting_method'] for method in self.cfg.inserting_methods_on_add_item
+            if 'organization' in self.inserting_methods_fields_mapping[method['inserting_method']]]
         if orgs_inserting_methods:
             orgs = get_organizations(only_selected=True)
             res = [(org.Title(), ', '.join([gic.Title() for gic in org.get_groups_in_charge(the_objects=True)] or ''))
@@ -605,8 +605,8 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Display categories if one of the selected inserting methods relies on it."""
         categories = []
         categories_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
-            if 'category' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
+            method['inserting_method'] for method in self.cfg.inserting_methods_on_add_item
+            if 'category' in self.inserting_methods_fields_mapping[method['inserting_method']]]
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
         return categories
@@ -615,8 +615,8 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Display classifiers if one of the selected inserting methods relies on it."""
         classifiers = []
         classifiers_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
-            if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
+            method['inserting_method'] for method in self.cfg.inserting_methods_on_add_item
+            if 'classifier' in self.inserting_methods_fields_mapping[method['inserting_method']]]
         if classifiers_inserting_methods:
             classifiers = self.cfg.getCategories(catType='classifiers')
         return classifiers

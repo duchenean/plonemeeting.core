@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.content import richtextval
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.statusmessages.interfaces import IStatusMessage
@@ -583,23 +584,23 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         for item in meeting.get_items():
-            item.setDecision('<p>Dummy decision</p>')
+            item.decision = richtextval('<p>Dummy decision</p>')
         # freeze the meeting to be able to add late items
         self.freezeMeeting(meeting)
         # create 4 items that will be late
         late1 = self.create('MeetingItem')
-        late1.setPreferredMeeting(meeting.UID())
+        late1.preferred_meeting = meeting.UID()
         late1.reindexObject()
         late2 = self.create('MeetingItem')
-        late2.setPreferredMeeting(meeting.UID())
+        late2.preferred_meeting = meeting.UID()
         late2.setTitle('i2')
         late2.reindexObject()
         late3 = self.create('MeetingItem')
-        late3.setPreferredMeeting(meeting.UID())
+        late3.preferred_meeting = meeting.UID()
         late3.setTitle('i3')
         late3.reindexObject()
         late4 = self.create('MeetingItem')
-        late4.setPreferredMeeting(meeting.UID())
+        late4.preferred_meeting = meeting.UID()
         late4.setTitle('i3')
         late4.reindexObject()
         # present the items
@@ -647,7 +648,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view('down')
         # add decision to items so meeting can be decided
         for item in meeting.get_items():
-            item.setDecision('<p>Dummy decision</p>')
+            item.decision = richtextval('<p>Dummy decision</p>')
             item.reindexObject(idxs=['getDecision', ])
         # items order is changeable until the meeting is in a closed state
         for tr in self._getTransitionsToCloseAMeeting():

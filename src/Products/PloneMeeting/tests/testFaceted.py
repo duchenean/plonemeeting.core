@@ -967,8 +967,8 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.vendors_reviewers, self.developers_reviewers)
         cfg.selectable_restricted_copy_groups = (self.vendors_reviewers, )
-        self._enableField('copyGroups')
-        self._enableField('restrictedCopyGroups')
+        self._enableField('copy_groups')
+        self._enableField('restricted_copy_groups')
         self.changeUser('pmManager')
         self.assertEqual(
             get_vocab_values(cfg, "Products.PloneMeeting.vocabularies.copygroupsvocabulary"),

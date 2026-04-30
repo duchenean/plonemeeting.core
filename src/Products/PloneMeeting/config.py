@@ -227,29 +227,29 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 
 # default fields kept when an item is cloned
-DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
-                         'decision', 'decisionSuite', 'decisionEnd',
-                         'budgetInfos', 'budgetRelated', 'sendToAuthority',
-                         'groupsInCharge', 'proposingGroupWithGroupInCharge',
-                         'copyGroups', 'restrictedCopyGroups']
+DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailed_description', 'motivation',
+                         'decision', 'decision_suite', 'decision_end',
+                         'budget_infos', 'budget_related', 'send_to_authority',
+                         'groups_in_charge', 'proposing_group_with_group_in_charge',
+                         'copy_groups', 'restricted_copy_groups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'committees',
-                               'optionalAdvisers', 'otherMeetingConfigsClonableTo',
-                               'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
-                               'toDiscuss', 'privacy', 'pollType', 'textCheckList',
-                               'otherMeetingConfigsClonableToFieldTitle',
-                               'otherMeetingConfigsClonableToFieldDescription',
-                               'otherMeetingConfigsClonableToFieldDetailedDescription',
-                               'otherMeetingConfigsClonableToFieldMotivation',
-                               'otherMeetingConfigsClonableToFieldDecision',
-                               'otherMeetingConfigsClonableToFieldDecisionSuite',
-                               'otherMeetingConfigsClonableToFieldDecisionEnd',
-                               'isAcceptableOutOfMeeting']
+EXTRA_COPIED_FIELDS_SAME_MC = ['associated_groups', 'category', 'classifier', 'committees',
+                               'optional_advisers', 'other_meeting_configs_clonable_to',
+                               'other_meeting_configs_clonable_to_privacy', 'oral_question',
+                               'to_discuss', 'privacy', 'poll_type', 'text_check_list',
+                               'other_meeting_configs_clonable_to_field_title',
+                               'other_meeting_configs_clonable_to_field_description',
+                               'other_meeting_configs_clonable_to_field_detailed_description',
+                               'other_meeting_configs_clonable_to_field_motivation',
+                               'other_meeting_configs_clonable_to_field_decision',
+                               'other_meeting_configs_clonable_to_field_decision_suite',
+                               'other_meeting_configs_clonable_to_field_decision_end',
+                               'is_acceptable_out_of_meeting']
 
-EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
-                                          'internalNotes', 'committeeObservations',
-                                          'committeeTranscript', 'votesObservations']
+EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'in_and_out_moves', 'notes',
+                                          'internal_notes', 'committee_observations',
+                                          'committee_transcript', 'votes_observations']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)

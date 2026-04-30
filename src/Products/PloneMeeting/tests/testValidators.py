@@ -331,7 +331,7 @@ class testValidators(PloneMeetingTestCase):
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setCopyGroups((dev_samplers_id, ))
+        item.copy_groups = (dev_samplers_id, )
         item.reindexObject()
         # still complaining about config because used in itemWFValidationLevels
         _check(validation_error_msg, checks=['without', 'disabled'])
@@ -340,14 +340,14 @@ class testValidators(PloneMeetingTestCase):
                                  mapping={'item_url': item.absolute_url()})
         _check(validation_error_msg)
         # remove it on item, then everything is correct
-        item.setCopyGroups(())
+        item.copy_groups = ()
         item.reindexObject()
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions_without_samplers)
         self.assertFalse(dev_samplers in api.group.get_groups())
 
         # an _advisers may not be disabled if used
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.optional_advisers = (self.developers_uid, )
         item._update_after_edit(idxs=['indexAdvisers'])
         functions_with_fct_orgs_advisers = deepcopy(functions)
         self.assertEqual(functions_with_fct_orgs_advisers[0]['fct_id'], u'advisers')
@@ -362,7 +362,7 @@ class testValidators(PloneMeetingTestCase):
         functions_with_fct_orgs_prereviewers[3]['fct_orgs'] = [self.vendors_uid]
         self.assertIsNone(validator.validate(functions_with_fct_orgs_prereviewers))
         # remove adviser so it validates
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit(idxs=['indexAdvisers'])
         self.assertIsNone(validator.validate(functions_with_fct_orgs_advisers))
         set_registry_functions(functions_with_fct_orgs_advisers)

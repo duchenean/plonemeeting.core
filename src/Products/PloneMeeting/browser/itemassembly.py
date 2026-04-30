@@ -414,13 +414,13 @@ class ManageItemAssemblyForm(form.Form):
         for itemToUpdate in items_to_update:
             # only update if we changed default value
             if self.item_assembly != item_assembly_def:
-                itemToUpdate.setItemAssembly(self.item_assembly)
+                itemToUpdate.item_assembly = self.item_assembly
             if self.item_excused != item_excused_def:
-                itemToUpdate.setItemAssemblyExcused(self.item_excused)
+                itemToUpdate.item_assembly_excused = self.item_excused
             if self.item_absents != item_absents_def:
-                itemToUpdate.setItemAssemblyAbsents(self.item_absents)
+                itemToUpdate.item_assembly_absents = self.item_absents
             if self.item_guests != item_guests_def:
-                itemToUpdate.setItemAssemblyGuests(self.item_guests)
+                itemToUpdate.item_assembly_guests = self.item_guests
             notifyModifiedAndReindex(itemToUpdate)
 
         # invalidate assembly async load on item

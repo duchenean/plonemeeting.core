@@ -73,7 +73,7 @@ class testUtils(PloneMeetingTestCase):
         # item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         new_value = "<p>My item description.</p>"
         self.assertEqual(item.Description(), "")
@@ -348,12 +348,12 @@ class testUtils(PloneMeetingTestCase):
 
         # link to image using resolveuid
         text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
-        item.setDescription(text)
+        item.description = richtextval(text)
         self.assertEqual(item.objectIds(), ['dot.gif'])
         transformAllRichTextFields(item)
-        self.assertEqual(item.getRawDescription(), text)
+        self.assertEqual(item.description.raw, text)
         transformAllRichTextFields(item, onlyField="description")
-        self.assertEqual(item.getRawDescription(), text)
+        self.assertEqual(item.description.raw, text)
 
         # Meeting DX
         self.changeUser('pmManager')

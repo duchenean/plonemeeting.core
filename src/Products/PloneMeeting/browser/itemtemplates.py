@@ -77,8 +77,8 @@ class ItemTemplateView(BrowserView):
         # if a proposingGroup is defined on itemTemplate and current user is creator
         # for this proposingGroup, we keep it
         keepProposingGroup = False
-        proposingGroup = templateItem.getProposingGroup()
-        if get_plone_group_id(proposingGroup, 'creators') in get_plone_groups_for_user():
+        proposingGroup = templateItem.proposing_group
+        if proposingGroup and get_plone_group_id(proposingGroup, 'creators') in get_plone_groups_for_user():
             keepProposingGroup = True
         newItem = templateItem.clone(newOwnerId=member_id,
                                      cloneEventAction='create_meeting_item_from_template',

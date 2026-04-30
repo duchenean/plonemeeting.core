@@ -278,6 +278,7 @@
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
+  <adapter name="listType" factory=".indexes.listType" />
   <adapter name="to_discuss" factory=".indexes.to_discuss" />
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
@@ -379,7 +380,6 @@
            provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
            factory=".adapters.PMGenerablePODTemplatesAdapter"/>
 
-  <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingCategory.MeetingCategory" />
   <five:deprecatedManageAddDelete class=".MeetingGroup.MeetingGroup" />
@@ -405,7 +405,7 @@
   </class>
   <!-- makes the MeetingItem implements IFinderUploadCapable and IQuickUploadCapable
       so user may upload Images into it thru plonefinder -->
-  <class class="Products.PloneMeeting.MeetingItem.MeetingItem">
+  <class class="Products.PloneMeeting.content.meetingitem.MeetingItem">
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
     <implements interface="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker" />

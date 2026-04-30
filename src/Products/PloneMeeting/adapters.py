@@ -262,7 +262,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # manage takenOverBy
         current_member_id = None
-        takenOverBy = self.context.getTakenOverBy()
+        takenOverBy = self.context.taken_over_by
         if takenOverBy:
             current_member_id = get_current_user_id(self.request)
 
@@ -277,7 +277,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         # indeed we need to know where to send/have been sent if selected/unselected, ...
         ann = IAnnotations(self.context)
         other_mc_to_clone_to = [
-            destMeetingConfigId for destMeetingConfigId in self.context.getOtherMeetingConfigsClonableTo()]
+            destMeetingConfigId for destMeetingConfigId in (self.context.other_meeting_configs_clonable_to or ())]
         destMeetingConfigIds = get_vocab_values(
             self.context, 'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
         other_mc_cloned_to_ann_keys = [
@@ -457,7 +457,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # the msgid and the mapping as a dict
             # if item sent to the other mc is inserted into a meeting,
             # we display the meeting date
-            emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            emergency = clonedToOtherMCId in (self.context.other_meeting_configs_clonable_to_emergency or ())
             clonedToOtherMC = self.tool.get(clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
             msg = translate(
@@ -488,7 +488,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # if not already cloned to another mc, maybe it will be?
         # we could have an item to clone to 2 other MCs, one already sent, not the other...
-        otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
+        otherMeetingConfigsClonableTo = self.context.other_meeting_configs_clonable_to or ()
         for otherMeetingConfigClonableToId in otherMeetingConfigsClonableTo:
             # already cloned?
             if otherMeetingConfigClonableToId in clonedToOtherMCIds:
@@ -497,7 +497,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
             otherMeetingConfigClonableTo = self.tool.get(otherMeetingConfigClonableToId)
-            emergency = otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            emergency = otherMeetingConfigClonableToId in (self.context.other_meeting_configs_clonable_to_emergency or ())
             msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
                 'will_be_sentto_othermeetingconfig'
             iconName = emergency and "will_be_cloned_to_other_mc_emergency" or "will_be_cloned_to_other_mc"
@@ -508,9 +508,9 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
             # manage the otherMeetingConfigsClonableToPrivacy
             suffix = ''
-            if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
+            if 'other_meeting_configs_clonable_to_privacy' in usedItemAttributes and \
                'privacy' in otherMeetingConfigClonableTo.used_item_attributes:
-                if otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToPrivacy():
+                if otherMeetingConfigClonableToId in (self.context.other_meeting_configs_clonable_to_privacy or ()):
                     suffix = "_secret"
                 else:
                     suffix = "_public"
@@ -583,14 +583,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                context=self.request)))
 
         # In some cases, it does not matter if an item is inMeeting or not.
-        if 'oralQuestion' in usedItemAttributes:
-            if self.context.getOralQuestion():
+        if 'oral_question' in usedItemAttributes:
+            if self.context.oral_question:
                 res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
                                                           domain="PloneMeeting",
                                                           context=self.request)))
         if 'emergency' in usedItemAttributes:
             # display an icon if emergency asked/accepted/refused
-            itemEmergency = self.context.getEmergency()
+            itemEmergency = self.context.emergency
             if itemEmergency == 'emergency_asked':
                 res.append(('emergency_asked.png', translate('emergency_asked',
                                                              domain="PloneMeeting",
@@ -603,8 +603,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 res.append(('emergency_refused.png', translate('emergency_refused',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
-        if 'takenOverBy' in usedItemAttributes:
-            takenOverBy = self.context.getTakenOverBy()
+        if 'taken_over_by' in usedItemAttributes:
+            takenOverBy = self.context.taken_over_by
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
                 user_id = get_current_user_id(self.request)
@@ -615,7 +615,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                 mapping={'fullname': get_user_fullname(takenOverBy)},
                                                 context=self.request)))
 
-        if self.context.getIsAcceptableOutOfMeeting():
+        if self.context.is_acceptable_out_of_meeting:
             res.append(('acceptable_out_of_meeting.png',
                         translate('icon_help_isAcceptableOutOfMeeting',
                                   domain="PloneMeeting",
@@ -752,6 +752,47 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
     history_type = 'data_changes'
     highlight_last_comment = False
 
+    _DX_WIDGET_MAP = None
+
+    def _get_dx_widget_map(self):
+        if PMDataChangesHistoryAdapter._DX_WIDGET_MAP is None:
+            from plone.app.textfield import RichText as RichTextField
+            from zope import schema as zschema
+            PMDataChangesHistoryAdapter._DX_WIDGET_MAP = {
+                RichTextField: 'RichWidget',
+                zschema.Bool: 'BooleanWidget',
+                zschema.Text: 'TextAreaWidget',
+                zschema.Choice: 'SelectionWidget',
+                zschema.List: 'MultiSelectionWidget',
+                zschema.Tuple: 'MultiSelectionWidget',
+            }
+        return PMDataChangesHistoryAdapter._DX_WIDGET_MAP
+
+    def _get_widget_name(self, name):
+        from plone.dexterity.interfaces import IDexterityContent
+        if not IDexterityContent.providedBy(self.context):
+            at_field = getattr(self.context, 'getField', lambda n: None)(name)
+            if at_field is not None:
+                return at_field.widget.getName()
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        from Products.PloneMeeting.content.meetingitem import IMeetingItem
+        dx_name = _at_to_dx(name)
+        field_info = IMeetingItem.get(dx_name)
+        if field_info is not None:
+            for field_type, widget_name in self._get_dx_widget_map().items():
+                if isinstance(field_info, field_type):
+                    return widget_name
+            return 'StringWidget'
+        return 'StringWidget'
+
+    def _get_vocabulary_values(self, name):
+        from plone.dexterity.interfaces import IDexterityContent
+        if not IDexterityContent.providedBy(self.context):
+            at_field = getattr(self.context, 'getField', lambda n: None)(name)
+            if at_field is not None:
+                return at_field.Vocabulary(self.context)
+        return None
+
     def get_history_data(self):
         """WF history is mixed with data_changes history."""
         history = super(PMDataChangesHistoryAdapter, self).get_history_data()
@@ -772,13 +813,12 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
             new_event['changes'] = {}
             new_event['type'] = self.history_type
             for name, oldValue in full_datachanges_history[i]['changes'].iteritems():
-                widgetName = self.context.getField(name).widget.getName()
+                widgetName = self._get_widget_name(name)
                 if widgetName == 'RichWidget':
                     if xhtmlContentIsEmpty(oldValue):
                         val = '-'
                     else:
                         newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
-                        # Compute the diff between oldValue and newValue
                         iMsg, dMsg = getHistoryTexts(self.context, new_event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
                         val = comparator.get()
@@ -790,14 +830,15 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     val = oldValue.replace('\r', '').replace('\n', '<br/>')
                     new_event['changes'][name] = val
                 elif widgetName == 'SelectionWidget':
-                    allValues = self.context.getField(name).Vocabulary(self.context)
-                    val = allValues.getValue(oldValue or '')
+                    allValues = self._get_vocabulary_values(name)
+                    val = allValues.getValue(oldValue or '') if hasattr(allValues, 'getValue') else '-'
                     new_event['changes'][name] = val or '-'
                 elif widgetName == 'MultiSelectionWidget':
-                    allValues = self.context.getField(name).Vocabulary(self.context)
-                    val = [allValues.getValue(v) for v in oldValue]
-                    # remove None in val in case we have old values that
-                    # does not exist anymore in allValues
+                    allValues = self._get_vocabulary_values(name)
+                    if hasattr(allValues, 'getValue'):
+                        val = [allValues.getValue(v) for v in oldValue]
+                    else:
+                        val = list(oldValue)
                     val = [v for v in val if v is not None]
                     if not val:
                         val = '-'

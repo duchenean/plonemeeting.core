@@ -232,7 +232,7 @@ class AdviceChangeDelayForm(form.EditForm):
             # append new value
             optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['org'],
                                                        newAdviceData['row_id']))
-            self.context.setOptionalAdvisers(tuple(optionalAdvisers))
+            self.context.optional_advisers = list(optionalAdvisers)
         else:
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True

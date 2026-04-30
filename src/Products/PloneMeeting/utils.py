@@ -58,6 +58,7 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
+from plone.autoform.interfaces import READ_PERMISSIONS_KEY
 from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
@@ -71,6 +72,7 @@ from Products.Archetypes.atapi import DisplayList
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import base_hasattr
@@ -159,6 +161,11 @@ monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
 
 adaptables = {
     'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
+    # MeetingItemTemplate and MeetingItemRecurring are DX subclasses of
+    # MeetingItem (the AT codebase used the same class for all three with a
+    # different portal_type). Reuse the MeetingItem adapter.
+    'MeetingItemTemplate': {'method': 'getItem', 'interface': IMeetingItemCustom},
+    'MeetingItemRecurring': {'method': 'getItem', 'interface': IMeetingItemCustom},
     'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
@@ -341,18 +348,28 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
-    field = obj.getField(name)
-    if useParamValue:
-        value = value
-    else:
-        value = field.get(obj)
-    widgetName = field.widget.getName()
-    if widgetName == 'RichWidget':
-        return xhtmlContentIsEmpty(value)
-    elif widgetName == 'BooleanWidget':
-        return value is None
-    else:
+    field = getattr(obj, 'getField', lambda n: None)(name)
+    if field is not None:
+        if not useParamValue:
+            value = field.get(obj)
+        widgetName = field.widget.getName()
+        if widgetName == 'RichWidget':
+            return xhtmlContentIsEmpty(value)
+        elif widgetName == 'BooleanWidget':
+            return value is None
         return not value
+    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+    dx_name = _at_to_dx(name)
+    if not useParamValue:
+        value = getattr(obj, dx_name, None)
+    if isinstance(value, RichTextValue):
+        raw = value.output if value else u''
+        if isinstance(raw, unicode):
+            raw = raw.encode('utf-8')
+        return xhtmlContentIsEmpty(raw)
+    elif isinstance(value, bool) or value is None:
+        return value is None
+    return not value
 
 
 def get_datagridfield_column_value(value, column):
@@ -864,10 +881,25 @@ def mark_empty_tags(obj, value):
     return value
 
 
+def _get_field_value(obj, name):
+    """Get a field value from an AT or DX object by field name (camelCase or snake_case)."""
+    if not IDexterityContent.providedBy(obj):
+        field = getattr(obj, 'getField', lambda n: None)(name)
+        if field is not None:
+            return field.get(obj)
+    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+    dx_name = _at_to_dx(name)
+    value = getattr(obj, dx_name, None)
+    if isinstance(value, RichTextValue):
+        result = value.output_relative_to(obj) or value.raw or u''
+        return safe_encode(result) if isinstance(result, unicode) else result
+    return value
+
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
-    lastVersion = obj.getField(name).getAccessor(obj)()
+    lastVersion = _get_field_value(obj, name)
     # highlight blank lines at the end of the text if current user may edit the obj
     lastVersion = mark_empty_tags(obj, lastVersion)
     if not changes:
@@ -914,10 +946,10 @@ def rememberPreviousData(obj, name=None):
     historized = cfg.historized_item_attributes
     if name:
         if name in historized:
-            res[name] = obj.getField(name).get(obj)
+            res[name] = _get_field_value(obj, name)
     else:
         for name in historized:
-            res[name] = obj.getField(name).get(obj)
+            res[name] = _get_field_value(obj, name)
     return res
 
 
@@ -931,11 +963,10 @@ def addDataChange(obj, previousData=None):
         return
     # Remove from p_previousData values that were not changed or that were empty
     for name in previousData.keys():
-        field = obj.getField(name)
         oldValue = previousData[name]
         if isinstance(oldValue, basestring):
             oldValue = oldValue.strip()
-        newValue = field.get(obj)
+        newValue = _get_field_value(obj, name)
         if isinstance(newValue, basestring):
             newValue = newValue.strip()
         if oldValue == newValue:
@@ -985,7 +1016,7 @@ def findNewValue(obj, name, history, stopIndex):
             continue
         # We have found it!
         return history[i]['changes'][name]
-    return obj.getField(name).get(obj)
+    return _get_field_value(obj, name)
 
 
 def getHistoryTexts(obj, event):
@@ -1154,10 +1185,29 @@ def set_field_from_ajax(
 
     notify_modified = True
     if IDexterityContent.providedBy(obj):
-        widget = get_dx_widget(obj, field_name=field_name)
-        if not widget.may_edit():
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_field_name = _at_to_dx(field_name)
+        try:
+            widget = get_dx_widget(obj, field_name=dx_field_name)
+        except (ValueError, KeyError):
+            widget = None
+        if widget is not None and hasattr(widget, 'may_edit'):
+            if not widget.may_edit():
+                raise Unauthorized
+        elif not obj.mayQuickEdit(field_name):
             raise Unauthorized
-        setattr(obj, field_name, richtextval(new_value))
+
+        adapted = obj.adapted()
+        if hasattr(adapted, '_bypass_quick_edit_notify_modified_for'):
+            notify_modified = not adapted._bypass_quick_edit_notify_modified_for(field_name)
+
+        if remember:
+            previousData = rememberPreviousData(obj, field_name)
+            setattr(obj, dx_field_name, richtextval(new_value))
+            if previousData:
+                addDataChange(obj, previousData)
+        else:
+            setattr(obj, dx_field_name, richtextval(new_value))
     else:
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
@@ -1179,7 +1229,8 @@ def set_field_from_ajax(
 
     if tranform:
         # Apply XHTML transforms when relevant
-        transformAllRichTextFields(obj, onlyField=field_name)
+        transform_field_name = dx_field_name if IDexterityContent.providedBy(obj) else field_name
+        transformAllRichTextFields(obj, onlyField=transform_field_name)
 
     if reindex:
         # only reindex relevant indexes aka SearchableText + field specific index if exists
@@ -1255,14 +1306,22 @@ def transformAllRichTextFields(obj, onlyField=None):
     fieldsToTransform = cfg.xhtml_transform_fields
     transformTypes = cfg.xhtml_transform_types
     fields = {}
+    def _get_raw(obj, attr_name):
+        val = getattr(obj, attr_name, None)
+        if val is None:
+            return None
+        if isinstance(val, RichTextValue):
+            return val.raw
+        return val
+
     if IDexterityContent.providedBy(obj):
         if onlyField:
             field = get_dx_field(obj, onlyField)
-            fields[field.__name__] = getattr(obj, field.__name__).raw
+            fields[field.__name__] = _get_raw(obj, field.__name__)
         else:
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-            fields = {field_name: getattr(obj, field_name, None) is not None and getattr(obj, field_name).raw
+            fields = {field_name: _get_raw(obj, field_name)
                       for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
@@ -1280,7 +1339,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         if not field_raw_value:
             continue
         # Apply mandatory transforms
-        fieldContent = storeImagesLocally(obj, field_raw_value)
+        fieldContent = storeImagesLocally(obj, field_raw_value, force_resolve_uid=True)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
@@ -1348,9 +1407,19 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     raise_on_error=True)
                 # transform a field
                 if '.' in transform['field_name']:
-                    field = obj.getField(transform['field_name'].split('.')[1])
-                    field.set(obj, res, mimetype='text/html')
-                    idxs.append(field.accessor)
+                    if res is None:
+                        res = u''
+                    if not isinstance(res, basestring):
+                        raise TypeError(
+                            "Value is not File or String (%s - %s)" %
+                            (type(res), type(res)))
+                    field_name = transform['field_name'].split('.')[1]
+                    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+                    dx_name = _at_to_dx(field_name)
+                    from plone.app.textfield.value import RichTextValue
+                    setattr(obj, dx_name, RichTextValue(
+                        res, 'text/html', 'text/x-html-safe'))
+                    idxs.append(field_name)
             except Exception as e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
@@ -1434,9 +1503,23 @@ def computeCertifiedSignatures(signatures):
                 date_to = datetime(int(year), int(month), int(day), 23, 59) or None
         else:
             date_from = signature['date_from']
-            date_from = date_from and datetime(date_from.year, date_from.month, date_from.day, 0, 0) or None
+            if date_from:
+                if isinstance(date_from, str):
+                    year, month, day = date_from.split('/')
+                    date_from = datetime(int(year), int(month), int(day), 0, 0)
+                else:
+                    date_from = datetime(date_from.year, date_from.month, date_from.day, 0, 0)
+            else:
+                date_from = None
             date_to = signature['date_to']
-            date_to = date_to and datetime(date_to.year, date_to.month, date_to.day, 23, 59) or None
+            if date_to:
+                if isinstance(date_to, str):
+                    year, month, day = date_to.split('/')
+                    date_to = datetime(int(year), int(month), int(day), 23, 59)
+                else:
+                    date_to = datetime(date_to.year, date_to.month, date_to.day, 23, 59)
+            else:
+                date_to = None
         # if dates are defined and not current, continue
         if (date_from and date_to) and not _in_between(date_from, date_to, now):
             continue
@@ -1862,10 +1945,16 @@ def _addManagedPermissions(obj):
         if IDexterityContent.providedBy(obj):
             # dexterity
             schema = get_dx_schema(obj)
-            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            write_permissions = mergedTaggedValueDict(schema, WRITE_PERMISSIONS_KEY)
             for field_id, write_permission in write_permissions.items():
                 # only consider enabled fields
-                if isinstance(schema.get(field_id), RichText) and \
+                field = schema.get(field_id)
+                if field is None:
+                    for iface in schema.__iro__:
+                        field = iface.get(field_id)
+                        if field is not None:
+                            break
+                if isinstance(field, RichText) and \
                         obj.attribute_is_used(field_id):
                     write_perms.append(write_permission)
         else:
@@ -2149,6 +2238,8 @@ def validate_item_assembly_value(value):
 
 def main_item_data(item):
     """Build a dict with main infos data."""
+    # B.2.x TODO: walks the AT schema. After MeetingItem FTI swap (B.2.8),
+    # rewrite using DX schema introspection (see get_dx_data).
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(item)
     # compute data, save 'title' and every active RichText fields
@@ -2190,9 +2281,17 @@ def checkMayQuickEdit(obj,
 
 def may_view_field(obj, field_name):
     """Check if current user has permission and condition to see the given p_field_name."""
-    field = obj.getField(field_name)
-    return _checkPermission(field.read_permission, obj) and \
-        _evaluateExpression(obj, field.widget.condition)
+    from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
+    snake_name = _camel_to_snake(field_name)
+    schema = get_dx_schema(obj)
+    read_perms = mergedTaggedValueDict(schema, READ_PERMISSIONS_KEY)
+    read_perm = read_perms.get(snake_name, View)
+    condition = ''
+    if hasattr(obj, '_field_conditions'):
+        condition = obj._field_conditions.get(field_name, '') or \
+            obj._field_conditions.get(snake_name, '')
+    return _checkPermission(read_perm, obj) and \
+        _evaluateExpression(obj, condition)
 
 
 def get_states_before_cachekey(method, obj, review_state):

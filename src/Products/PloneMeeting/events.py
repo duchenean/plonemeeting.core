@@ -53,6 +53,7 @@ from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ROOT_FOLDER
+from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
@@ -75,6 +76,7 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from zExceptions import Redirect
+from zope.annotation.interfaces import IAnnotations
 from zope.container.contained import ContainerModifiedEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
@@ -156,7 +158,7 @@ def onItemTransition(item, event):
 
     # check if we need to send the item to another meetingConfig
     if item.query_state() in cfg.item_auto_sent_to_other_mc_states:
-        otherMCs = item.getOtherMeetingConfigsClonableTo()
+        otherMCs = item.other_meeting_configs_clonable_to
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
             # if the item is accepted, corrected then accepted again
@@ -843,6 +845,9 @@ def item_added_or_initialized(item):
     item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
+    item.autoCopyGroups = PersistentList()
+    item.itemHistory = PersistentList()
+    item._at_creation_flag = True
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
@@ -878,7 +883,7 @@ def onItemModified(item, event):
         meeting = item.getMeeting()
         if meeting:
             # update item references if necessary
-            meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
+            meeting.update_item_references(start_number=item.item_number, check_needed=True)
             # invalidate Meeting.get_item_insert_order caching
             meeting._invalidate_insert_order_cache_for(item)
 
@@ -1187,7 +1192,7 @@ def onItemEditCancelled(item, event):
     '''When cancelling an edit, if item is not in portal_factory but have
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
-    if item._at_creation_flag and not item.isTemporary():
+    if item.checkCreationFlag() and not item.isTemporary():
         # decrement internal_number if it was the last added item
         decrement_if_last_nb(item.portal_type)
         parent = item.getParentNode()
@@ -1242,6 +1247,12 @@ def onItemWillBeRemoved(item, event):
     predecessor = item.get_predecessor()
     if predecessor:
         predecessor.linked_successor_uids.remove(item.UID())
+        # clear sent-to-other-MC annotation on predecessor
+        ann = IAnnotations(predecessor)
+        item_uid = item.UID()
+        for key in list(ann.keys()):
+            if key.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY) and ann[key] == item_uid:
+                del ann[key]
     successors = item.get_successors()
     for successor in successors:
         successor.linked_predecessor_uid = None
@@ -1402,7 +1413,7 @@ def onMeetingRemoved(meeting, event):
     items_to_reindex = []
     for brain in brains:
         item = brain._unrestrictedGetObject()
-        item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
+        item.preferred_meeting = ITEM_NO_PREFERRED_MEETING_VALUE
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(

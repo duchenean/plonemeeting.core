@@ -1148,8 +1148,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('pm_pasteItem_copyDecisionAnnexes', copyDecisionAnnexes)
         self.REQUEST.set('pm_pasteItem_keptAnnexIds', keptAnnexIds)
         self.REQUEST.set('pm_pasteItem_keptDecisionAnnexIds', keptDecisionAnnexIds)
-        # Perform the paste
-        pasteResult = destFolder.manage_pasteObjects(copiedData)
+        # Perform the paste.
+        # Temporarily bypass the legacy OFS meta_type check that fails for DX
+        # content with a custom meta_type (not registered via AT registerType).
+        # Replace with the DX-native FTI.isConstructionAllowed check.
+        _orig_verify = destFolder.__class__._verifyObjectPaste
+
+        def _dx_verifyObjectPaste(folder_self, obj, validate_src=1):
+            from plone.dexterity.interfaces import IDexterityContent
+            if IDexterityContent.providedBy(obj):
+                from Products.CMFCore.interfaces import ITypeInformation
+                from zope.component import queryUtility
+                pt = getattr(aq_base(obj), 'portal_type', None)
+                if pt:
+                    fti = queryUtility(ITypeInformation, name=pt)
+                    if fti is not None:
+                        if not fti.isConstructionAllowed(folder_self):
+                            raise Unauthorized
+                        return
+            _orig_verify(folder_self, obj, validate_src)
+        destFolder.__class__._verifyObjectPaste = _dx_verifyObjectPaste
+        try:
+            pasteResult = destFolder.manage_pasteObjects(copiedData)
+        finally:
+            destFolder.__class__._verifyObjectPaste = _orig_verify
         # Restore the previous local roles for this user
         destFolder.manage_delLocalRoles([loggedUserId])
         if userLocalRoles:
@@ -1207,8 +1229,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 del annotations[FTW_LABELS_ANNOTATION_KEY]
 
             # Set fields not in the copyFields list to their default value
-            # 'id' and  'proposingGroup' will be kept in anyway
-            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+            # 'id' and 'proposing_group' will be kept in anyway
+            fieldsToKeep = ['id', 'proposing_group'] + copyFields
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(theObject=True)
@@ -1223,10 +1245,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
-            for field in newItem.Schema().filterFields(isMetadata=False):
-                if field.getName() not in fieldsToKeep:
-                    # Set the field to its default value
-                    field.getMutator(newItem)(field.getDefault(newItem))
+            from Products.PloneMeeting.content.meetingitem import IMeetingItem
+            fieldsToKeepSet = set(fieldsToKeep)
+            fieldsToKeepSet.add('id')
+            for field_name, field in IMeetingItem.namesAndDescriptions():
+                if field_name in fieldsToKeepSet:
+                    continue
+                setattr(newItem, field_name, field.default)
+            if 'preferred_meeting_path' not in fieldsToKeep:
+                newItem.preferred_meeting_path = None
             newItem._at_creation_flag = False
 
             if newPortalType:
@@ -1240,13 +1267,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             # we found a mapping defined for the new category, apply it
                             # get the category so it fails if it does not exist (that should not be possible...)
                             newCat = getattr(destCfg.categories, destCat.split('.')[1])
-                            newItem.setCategory(newCat.getId())
+                            newItem.category = newCat.getId()
                             break
 
             # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
+            if 'to_discuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
                 toDiscussDefault = destCfg.to_discuss_default
-                newItem.setToDiscuss(toDiscussDefault)
+                newItem.to_discuss = toDiscussDefault
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1326,8 +1353,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
-                    field = newItem.getField('proposingGroupWithGroupInCharge')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    vocab = get_vocab(
+                        newItem,
+                        u'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary',
+                        only_factory=True)
                     userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
                     if userProposingGroupTerms:
                         token = userProposingGroupTerms[0].token
@@ -1338,8 +1367,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
-                    field = newItem.getField('proposingGroup')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
+                    vocab = get_vocab(
+                        newItem,
+                        u'Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary',
+                        include_stored=False)
                     if vocab._terms:
                         token = vocab._terms[0].token
                         if primary_org:
@@ -1347,7 +1378,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                 token = vocab.getTermByToken(primary_org).token
                             except LookupError:
                                 pass
-                        newItem.setProposingGroup(token)
+                        newItem.proposing_group = token
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
