@@ -7339,7 +7339,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem', decision=self.decisionText)
-        item.copy_groups = (self.developers_reviewers)
+        item.copy_groups = [self.developers_reviewers]
         item._update_after_edit()
         # if not used, not shown
         _check(item, False)

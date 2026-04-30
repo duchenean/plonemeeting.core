@@ -385,6 +385,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     setattr(obj, dx_name, richtextval(value))
                 else:
                     setattr(obj, dx_name, value)
+            # Remove dangling camelCase attrs set by DexterityContent.__init__
+            # so processForm's camelCase-to-snake_case remap doesn't bypass
+            # the write-permission check above.
+            for at_name in attrs:
+                if at_name == 'id':
+                    continue
+                dx_name = _at_to_dx(at_name)
+                if dx_name != at_name and at_name in obj.__dict__:
+                    del obj.__dict__[at_name]
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.used_item_attributes and \

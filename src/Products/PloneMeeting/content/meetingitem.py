@@ -959,15 +959,125 @@ class MeetingItemSchemaPolicy(DexteritySchemaPolicy):
 
 
 # ---------------------------------------------------------------------------
+# AT field stub for template compatibility
+# ---------------------------------------------------------------------------
+
+class _ATFieldWidgetStub(object):
+    """Minimal AT widget stub so macros.pt viewContentField can render."""
+
+    def __init__(self, field_name, is_rich):
+        self._field_name = field_name
+        self._is_rich = is_rich
+        self.visible = True
+        self.modes = ('view',)
+
+    def getName(self):
+        return 'RichWidget' if self._is_rich else 'StringWidget'
+
+    def Label(self, context):
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_name = _at_to_dx(self._field_name)
+        schema_field = IMeetingItem.get(dx_name)
+        if schema_field is not None:
+            return schema_field.title
+        return self._field_name
+
+    def isVisible(self, context, mode='view'):
+        return 'visible'
+
+    def testCondition(self, folder, portal, context):
+        condition = MeetingItem._field_conditions.get(self._field_name)
+        if condition:
+            return _evaluateExpression(
+                context, expression=condition,
+                roles_bypassing_expression=[],
+                extra_expr_ctx={'here': context, 'item': context})
+        return True
+
+
+class _ATFieldStub(object):
+    """Minimal AT field stub returned by DX MeetingItem.getField()."""
+
+    optional = False
+    mode = 'rw'
+
+    def __init__(self, field_name, is_rich=True):
+        self._field_name = field_name
+        self._is_rich = is_rich
+        self.widget = _ATFieldWidgetStub(field_name, is_rich)
+        from plone.autoform.interfaces import READ_PERMISSIONS_KEY
+        from plone.supermodel.utils import mergedTaggedValueDict
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_name = _at_to_dx(field_name)
+        read_perms = mergedTaggedValueDict(IMeetingItem, READ_PERMISSIONS_KEY)
+        self.read_permission = read_perms.get(dx_name, 'View')
+
+    def getName(self):
+        return self._field_name
+
+    def getType(self):
+        return 'Products.Archetypes.Field.TextField'
+
+    def checkPermission(self, mode, obj):
+        return True
+
+    def get(self, obj, **kwargs):
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_name = _at_to_dx(self._field_name)
+        value = getattr(obj, dx_name, None)
+        if hasattr(value, 'output'):
+            raw = value.output if value else u''
+        elif self._is_rich and isinstance(value, unicode):
+            raw = value
+        else:
+            return value
+        if isinstance(raw, unicode):
+            raw = raw.encode('utf-8')
+        return raw
+
+    def getRaw(self, obj, **kwargs):
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_name = _at_to_dx(self._field_name)
+        value = getattr(obj, dx_name, None)
+        if hasattr(value, 'raw'):
+            return value.raw if value else u''
+        return value
+
+    def getAccessor(self, obj):
+        def accessor():
+            return self.get(obj)
+        return accessor
+
+    def getEditAccessor(self, obj):
+        return self.getAccessor(obj)
+
+
+_RICH_TEXT_FIELDS = frozenset((
+    'description', 'detailedDescription', 'emergencyMotivation', 'motivation',
+    'decision', 'decisionSuite', 'decisionEnd', 'groupsInChargeNotes',
+    'inAndOutMoves', 'notes', 'committeeObservations', 'committeeTranscript',
+    'votesObservations', 'meetingManagersNotes', 'meetingManagersNotesSuite',
+    'meetingManagersNotesEnd', 'pollTypeObservations', 'observations',
+    'marginalNotes', 'internalNotes', 'neededFollowUp', 'providedFollowUp',
+    'votesResult', 'budgetInfos', 'textCheckList',
+    'otherMeetingConfigsClonableToFieldTitle',
+    'otherMeetingConfigsClonableToFieldDescription',
+    'otherMeetingConfigsClonableToFieldDetailedDescription',
+    'otherMeetingConfigsClonableToFieldMotivation',
+    'otherMeetingConfigsClonableToFieldDecision',
+    'otherMeetingConfigsClonableToFieldDecisionSuite',
+    'otherMeetingConfigsClonableToFieldDecisionEnd',
+))
+
+
+# ---------------------------------------------------------------------------
 # Content class skeleton
 # ---------------------------------------------------------------------------
 
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
 
-    No AT compatibility shims (``getField``, ``processForm``, ``validate``,
-    ``__init__`` kwargs translator) — every caller is being refactored to
-    direct DX-style attribute access in B.2.2-B.2.7.
+    Business methods are ported in subsequent sub-phases. Until B.2.8,
 
     Business methods are ported in subsequent sub-phases. Until B.2.8,
     the AT module ``Products/PloneMeeting/MeetingItem.py`` still exists
@@ -1083,6 +1193,66 @@ class MeetingItem(Container):
         'other_meeting_configs_clonable_to_field_decision_suite',
         'other_meeting_configs_clonable_to_field_decision_end',
     )
+
+    _widget_pt = None
+
+    security.declareProtected('View', 'getField')
+
+    def getField(self, name, **kwargs):
+        """AT-compat: return a stub field object for template rendering."""
+        is_rich = name in _RICH_TEXT_FIELDS
+        return _ATFieldStub(name, is_rich)
+
+    security.declareProtected('View', 'Vocabulary')
+
+    def Vocabulary(self, key):
+        """AT-compat: return (vocabulary, enforceVocabulary) tuple."""
+        from Products.Archetypes.utils import DisplayList
+        field = self.getField(key)
+        vocab_name = getattr(field, 'vocabulary_factory', None)
+        if vocab_name:
+            vocab = get_vocab(self, vocab_name)
+            dl = DisplayList()
+            for term in vocab:
+                dl.add(term.value, term.title or term.token)
+            return dl, False
+        return DisplayList(), False
+
+    security.declareProtected('View', 'widget')
+
+    def widget(self, field_name, mode='view', field=None, **kwargs):
+        """AT-compat: return an empty METAL macro for use-macro directives."""
+        from Products.PageTemplates.ZopePageTemplate import ZopePageTemplate
+        if MeetingItem._widget_pt is None:
+            MeetingItem._widget_pt = ZopePageTemplate(
+                'dx_widget_compat',
+                '<span metal:define-macro="view"></span>\n'
+                '<span metal:define-macro="edit"></span>\n')
+        return MeetingItem._widget_pt.macros.get(mode, MeetingItem._widget_pt.macros['view'])
+
+    _GET_ATTR_SENTINEL = object()
+
+    def __getattr__(self, name):
+        # AT-compat: translate getFieldName() accessors to snake_case attributes
+        # Skip names handled by explicit methods (getField, getFieldVersion)
+        if name.startswith('get') and len(name) > 3 and name[3].isupper() \
+                and name not in ('getField', 'getFieldVersion'):
+            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+            dx_name = _at_to_dx(field_name)
+            value = getattr(aq_base(self), dx_name, self._GET_ATTR_SENTINEL)
+            if value is self._GET_ATTR_SENTINEL:
+                # Try schema defaults
+                try:
+                    value = super(MeetingItem, self).__getattr__(dx_name)
+                except AttributeError:
+                    pass
+            if value is not self._GET_ATTR_SENTINEL:
+                if not callable(value):
+                    return lambda: value
+                return value
+        return super(MeetingItem, self).__getattr__(name)
 
     def SearchableText(self):
         data = []
@@ -2117,6 +2287,11 @@ class MeetingItem(Container):
             if advice_portal_type not in res:
                 res.append(advice_portal_type)
         return res
+
+    security.declarePublic('getItemIsSigned')
+
+    def getItemIsSigned(self):
+        return self.item_is_signed
 
     security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
@@ -5176,10 +5351,13 @@ class MeetingItem(Container):
     def displayCopyGroups(self, restricted=False):
         '''Display copy groups on the item view, especially the link showing users of a group.'''
         portal_url = api.portal.get().absolute_url()
-        field_name = 'restrictedCopyGroups' if restricted else 'copyGroups'
+        vocab_name = (
+            u'Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary'
+            if restricted else
+            u'Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary')
         copyGroupsVocab = get_vocab(
             self,
-            self.getField(field_name).vocabulary_factory,  # B.2.x TODO: AT widget/getField API
+            vocab_name,
             **{'include_auto': True, })
         res = []
         allCopyGroups = self.getAllRestrictedCopyGroups() if restricted else self.getAllCopyGroups()

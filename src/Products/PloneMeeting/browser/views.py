@@ -233,6 +233,24 @@ class ItemNumberView(BrowserView):
         return _is_integer(number)
 
 
+class MeetingItemDefaultView(BrowserView):
+    """Default @@view / @@base_view for DX MeetingItem.
+
+    Delegates to the meetingitem_view skin template so that existing
+    TAL rendering (copy groups, advices, votes, etc.) is preserved.
+    """
+
+    def __call__(self):
+        return self.context.restrictedTraverse('meetingitem_view')()
+
+
+class MeetingItemEditView(BrowserView):
+    """@@base_edit for DX MeetingItem — delegates to the DX @@edit form."""
+
+    def __call__(self):
+        return self.context.restrictedTraverse('@@edit')()
+
+
 class ItemIsSignedView(BrowserView):
     """
       This manage the view displaying itemIsSigned widget
