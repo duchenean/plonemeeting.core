@@ -364,14 +364,23 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             self.setCurrentMeeting(obj)
         elif objectType == 'MeetingItem':
             from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            from Products.PloneMeeting.utils import get_dx_schema
+            from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+            from plone.supermodel.utils import mergedTaggedValueDict
             _DX_RICH_FIELDS = {
                 'motivation', 'decision', 'decision_suite', 'decision_end',
                 'votes_result', 'description',
             }
+            schema = get_dx_schema(obj)
+            write_perms = mergedTaggedValueDict(schema, WRITE_PERMISSIONS_KEY)
+            sm = getSecurityManager()
             for at_name, value in attrs.items():
                 if at_name == 'id':
                     continue
                 dx_name = _at_to_dx(at_name)
+                perm = write_perms.get(dx_name)
+                if perm and not sm.checkPermission(perm, obj):
+                    continue
                 if dx_name in _DX_RICH_FIELDS and isinstance(value, (str, unicode)):
                     setattr(obj, dx_name, richtextval(value))
                 else:
