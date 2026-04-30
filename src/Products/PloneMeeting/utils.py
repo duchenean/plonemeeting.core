@@ -883,14 +883,16 @@ def mark_empty_tags(obj, value):
 
 def _get_field_value(obj, name):
     """Get a field value from an AT or DX object by field name (camelCase or snake_case)."""
-    field = getattr(obj, 'getField', lambda n: None)(name)
-    if field is not None:
-        return field.get(obj)
+    if not IDexterityContent.providedBy(obj):
+        field = getattr(obj, 'getField', lambda n: None)(name)
+        if field is not None:
+            return field.get(obj)
     from Products.PloneMeeting.content.meetingconfig import _at_to_dx
     dx_name = _at_to_dx(name)
     value = getattr(obj, dx_name, None)
     if isinstance(value, RichTextValue):
-        return value.output if value else u''
+        result = value.output or value.raw or u''
+        return safe_encode(result) if isinstance(result, unicode) else result
     return value
 
 
@@ -1014,7 +1016,7 @@ def findNewValue(obj, name, history, stopIndex):
             continue
         # We have found it!
         return history[i]['changes'][name]
-    return obj.getField(name).get(obj)
+    return _get_field_value(obj, name)
 
 
 def getHistoryTexts(obj, event):

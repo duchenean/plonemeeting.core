@@ -769,24 +769,28 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
         return PMDataChangesHistoryAdapter._DX_WIDGET_MAP
 
     def _get_widget_name(self, name):
-        at_field = getattr(self.context, 'getField', lambda n: None)(name)
-        if at_field is not None:
-            return at_field.widget.getName()
+        from plone.dexterity.interfaces import IDexterityContent
+        if not IDexterityContent.providedBy(self.context):
+            at_field = getattr(self.context, 'getField', lambda n: None)(name)
+            if at_field is not None:
+                return at_field.widget.getName()
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
-        from plone.dexterity.utils import iterSchemata
+        from Products.PloneMeeting.content.meetingitem import IMeetingItem
         dx_name = _at_to_dx(name)
-        for iface in iterSchemata(self.context):
-            if dx_name in iface:
-                for field_type, widget_name in self._get_dx_widget_map().items():
-                    if isinstance(iface[dx_name], field_type):
-                        return widget_name
-                return 'StringWidget'
+        field_info = IMeetingItem.get(dx_name)
+        if field_info is not None:
+            for field_type, widget_name in self._get_dx_widget_map().items():
+                if isinstance(field_info, field_type):
+                    return widget_name
+            return 'StringWidget'
         return 'StringWidget'
 
     def _get_vocabulary_values(self, name):
-        at_field = getattr(self.context, 'getField', lambda n: None)(name)
-        if at_field is not None:
-            return at_field.Vocabulary(self.context)
+        from plone.dexterity.interfaces import IDexterityContent
+        if not IDexterityContent.providedBy(self.context):
+            at_field = getattr(self.context, 'getField', lambda n: None)(name)
+            if at_field is not None:
+                return at_field.Vocabulary(self.context)
         return None
 
     def get_history_data(self):

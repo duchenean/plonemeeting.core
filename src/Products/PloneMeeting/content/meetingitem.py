@@ -6985,11 +6985,14 @@ class MeetingItem(Container):
         for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
             dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
             dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
-            dest_field_info = IMeetingItem.get(dest_field_name)
-            dest_is_required = dest_field_info is not None and dest_field_info.required
+            # title is special-cased: only overwrite when source is non-empty
+            if dest_field_name == 'title':
+                if not fieldIsEmpty(other_mc_field_name, self):
+                    src_dx_name = _at_to_dx(other_mc_field_name)
+                    newItem.setTitle(getattr(self, src_dx_name, '') or '')
+                continue
             dest_is_optional = dest_field_name in dest_optional_fields
-            if (fieldIsEmpty(other_mc_field_name, self) and dest_is_required) or \
-               (dest_is_optional and not newItem.attribute_is_used(dest_field_name)):
+            if dest_is_optional and not newItem.attribute_is_used(dest_field_name):
                 continue
             src_dx_name = _at_to_dx(other_mc_field_name)
             dest_dx_name = _at_to_dx(dest_field_name)

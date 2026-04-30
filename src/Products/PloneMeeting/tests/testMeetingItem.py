@@ -1471,7 +1471,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('category', cfg=cfg2)
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
-        self.assertEqual(newItem.getCategory(), '')
+        self.assertIsNone(newItem.getCategory())
         # now define a mapping of category, set it to first cat mapping
         originalItem = data['originalItem']
         originalItemCat = getattr(self.meetingConfig.categories, originalItem.getCategory())
@@ -1780,7 +1780,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getMotivation(), '')
         # was emptied
         self.assertEqual(newItem.getDecision(), '')
-        self.assertEqual(newItem.decision.mimetype, 'text/html')
+        self.assertEqual(newItem.decision.mimeType, 'text/html')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -7796,7 +7796,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.item_reference, '20170303/DEVIL/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
-        item.other_meeting_configs_clonable_to = (cfg2Id,)
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item._update_after_edit()
         self.assertEqual(item.item_reference,
                          '20170303/DEVIL/research/classifier1/{0}/Title1/1'.format(cfg2Id))
