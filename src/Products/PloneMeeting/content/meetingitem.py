@@ -73,6 +73,7 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.autoform import directives as form
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
@@ -1004,6 +1005,11 @@ class MeetingItem(Container):
         for iface in providedBy(self).flattened():
             for name, field in zope_getFieldsInOrder(iface):
                 if base_hasattr(self, name):
+                    # DX behaviors (e.g. IBasic) may have seeded ''
+                    # for fields that our schema declares as RichText.
+                    if isinstance(field, RichText) and \
+                       getattr(self, name, None) == '':
+                        setattr(self, name, None)
                     continue
                 default = getattr(field, 'default', None)
                 if default is None:
@@ -1118,17 +1124,25 @@ class MeetingItem(Container):
         '''Override 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
-        # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or self.motivation
+        if msg:
+            return msg
+        value = self.motivation
+        if isinstance(value, RichTextValue):
+            return safe_encode(value.output or u'')
+        return safe_encode(value or u'')
 
     security.declarePublic('getRawMotivation')
 
     def getRawMotivation(self, **kwargs):
         '''See self.getMotivation docstring.'''
-        # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or self.motivation
+        if msg:
+            return msg
+        value = self.motivation
+        if isinstance(value, RichTextValue):
+            return safe_encode(value.raw or u'')
+        return safe_encode(value or u'')
 
     security.declarePublic('getDecision')
 
@@ -1136,17 +1150,25 @@ class MeetingItem(Container):
         '''Override 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
-        # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or self.decision
+        if msg:
+            return msg
+        value = self.decision
+        if isinstance(value, RichTextValue):
+            return safe_encode(value.output or u'')
+        return safe_encode(value or u'')
 
     security.declarePublic('getRawDecision')
 
     def getRawDecision(self, **kwargs):
         '''See self.getDecision docstring.'''
-        # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or self.decision
+        if msg:
+            return msg
+        value = self.decision
+        if isinstance(value, RichTextValue):
+            return safe_encode(value.raw or u'')
+        return safe_encode(value or u'')
 
     def _get_votes_result_cachekey(method, self, check_is_html=True):
         '''cachekey method for self._get_votes_result.'''
@@ -1188,18 +1210,22 @@ class MeetingItem(Container):
         '''Override 'votesResult' field accessor.
            If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
         res = self.votes_result
+        if isinstance(res, RichTextValue):
+            res = res.output or u''
         if not real and not res:
             res = self._get_votes_result(**kwargs)
-        return res
+        return safe_encode(res or u'')
 
     security.declarePublic('getRawVotesResult')
 
     def getRawVotesResult(self, real=False, **kwargs):
         '''See getVotesResult docstring.'''
         res = self.votes_result
+        if isinstance(res, RichTextValue):
+            res = res.raw or u''
         if not real and not res:
             res = self._get_votes_result(**kwargs)
-        return res
+        return safe_encode(res or u'')
 
     security.declarePrivate('validate_category')
 
@@ -1679,7 +1705,7 @@ class MeetingItem(Container):
         meeting = item.getMeeting()
         if meeting and \
            meeting.query_state() in Meeting.MEETINGCLOSEDSTATES and \
-           item.getItemIsSigned():
+           item.item_is_signed:
             return False
         return True
 
@@ -5932,6 +5958,8 @@ class MeetingItem(Container):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self, **kwargs):
+        if self.to_discuss is None:
+            self.to_discuss = self.getDefaultToDiscuss()
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()

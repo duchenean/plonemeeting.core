@@ -1148,8 +1148,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('pm_pasteItem_copyDecisionAnnexes', copyDecisionAnnexes)
         self.REQUEST.set('pm_pasteItem_keptAnnexIds', keptAnnexIds)
         self.REQUEST.set('pm_pasteItem_keptDecisionAnnexIds', keptDecisionAnnexIds)
-        # Perform the paste
-        pasteResult = destFolder.manage_pasteObjects(copiedData)
+        # Perform the paste.
+        # Temporarily bypass the legacy OFS meta_type check that fails for DX
+        # content with a custom meta_type (not registered via AT registerType).
+        # Replace with the DX-native FTI.isConstructionAllowed check.
+        _orig_verify = destFolder.__class__._verifyObjectPaste
+
+        def _dx_verifyObjectPaste(folder_self, obj, validate_src=1):
+            from plone.dexterity.interfaces import IDexterityContent
+            if IDexterityContent.providedBy(obj):
+                from Products.CMFCore.interfaces import ITypeInformation
+                from zope.component import queryUtility
+                pt = getattr(aq_base(obj), 'portal_type', None)
+                if pt:
+                    fti = queryUtility(ITypeInformation, name=pt)
+                    if fti is not None:
+                        if not fti.isConstructionAllowed(folder_self):
+                            raise Unauthorized
+                        return
+            _orig_verify(folder_self, obj, validate_src)
+        destFolder.__class__._verifyObjectPaste = _dx_verifyObjectPaste
+        try:
+            pasteResult = destFolder.manage_pasteObjects(copiedData)
+        finally:
+            destFolder.__class__._verifyObjectPaste = _orig_verify
         # Restore the previous local roles for this user
         destFolder.manage_delLocalRoles([loggedUserId])
         if userLocalRoles:

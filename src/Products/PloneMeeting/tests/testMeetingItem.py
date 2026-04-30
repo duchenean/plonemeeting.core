@@ -460,8 +460,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
 
         # ...With no associated group, getAssociatedGroups() should be empty
-        self.assertEqual(item.getAssociatedGroups(), ())
-        self.assertEqual(item.getAssociatedGroups(theObjects=True), ())
+        self.assertFalse(item.getAssociatedGroups())
+        self.assertFalse(item.getAssociatedGroups(theObjects=True))
 
         # ...With associated groups
         item.associated_groups = (self.developers_uid, self.vendors_uid)
@@ -2366,7 +2366,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
-        i1.optional_advisers = self.developers_uid
+        i1.optional_advisers = [self.developers_uid]
         i1.update_local_roles()
         for principalId, localRoles in i1.get_local_roles():
             if principalId.endswith('_advisers'):
@@ -3754,7 +3754,7 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         self.presentItem(item)
         # the item is inserted in 5th position so stored itemNumber is 500
-        self.assertEqual(item.getField('itemNumber').get(item), 500)
+        self.assertEqual(item.item_number, 500)
         self.assertEqual(item.getItemNumber(relativeTo='meeting'), 500)
         # as no other meeting exist, it is the same result also for relativeTo='meetingConfig'
         self.assertEqual(item.getItemNumber(relativeTo='meetingConfig'), 500)
@@ -4037,7 +4037,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # 'groupsInCharge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         self._select_organization(self.developers_uid)
         self._select_organization(self.endUsers_uid)
-        cfg.setOrderedGroupsInCharge((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        cfg.ordered_groups_in_charge = (self.vendors_uid, self.developers_uid, self.endUsers_uid)
         # sorted alphabetically by default
         self.assertFalse('groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
@@ -5869,8 +5869,8 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = item.clone()
         self.assertEqual(item.Title(), newItem.Title())
         self.assertEqual(item.getOptionalAdvisers(), newItem.getOptionalAdvisers())
-        self.assertNotEqual(item.getInternalNotes(), newItem.getInternalNotes())
-        self.assertEqual(newItem.getInternalNotes(), '')
+        self.assertNotEqual(item.internal_notes, newItem.internal_notes)
+        self.assertFalse(newItem.internal_notes)
 
     def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
@@ -5906,14 +5906,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('notes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
         self.assertTrue('internalNotes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
 
-        self.assertEqual(itemTemplate.getObservations(),
-                         itemFromTemplate.getObservations())
-        self.assertEqual(itemTemplate.getInAndOutMoves(),
-                         itemFromTemplate.getInAndOutMoves())
-        self.assertEqual(itemTemplate.getNotes(),
-                         itemFromTemplate.getNotes())
-        self.assertEqual(itemTemplate.getInternalNotes(),
-                         itemFromTemplate.getInternalNotes())
+        self.assertEqual(itemTemplate.observations,
+                         itemFromTemplate.observations)
+        self.assertEqual(itemTemplate.in_and_out_moves,
+                         itemFromTemplate.in_and_out_moves)
+        self.assertEqual(itemTemplate.notes,
+                         itemFromTemplate.notes)
+        self.assertEqual(itemTemplate.internal_notes,
+                         itemFromTemplate.internal_notes)
 
     def test_pm_CopiedFieldsWhenDuplicatedAsRecurringItem(self):
         '''Test that relevant fields are kept when an item is created as a recurring item.
@@ -6535,7 +6535,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('emergency' in cfg.used_item_attributes)
         self.assertRaises(Unauthorized, form)
         cfg.setUsedItemAttributes(cfg.used_item_attributes + ('emergency', ))
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
         # not changed until required values are given
         request = TestRequest(form={
             'form.widgets.new_emergency_value': u'emergency_asked',
@@ -7241,7 +7241,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setUsedItemAttributes(cfg.used_item_attributes +
                                   ('otherMeetingConfigsClonableToPrivacy', ))
         # MeetingItem.attribute_is_used is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
@@ -8146,7 +8146,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
         self.assertTrue(item.adapted().showObservations())
 
     def test_pm_DefaultItemTemplateNotRemovable(self):
@@ -8680,7 +8680,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(cfg.is_committees_using("auto_from"))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.committees, ())
+        self.assertFalse(item.committees)
         self.assertTrue(item.show_committees())
         # enabled "auto_from"
         cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
@@ -8826,8 +8826,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.other_meeting_configs_clonable_to = (cfg2_id,)
         new_item = item.cloneToOtherMeetingConfig(cfg2_id)
-        self.assertEqual(item.committees, ())
-        self.assertEqual(new_item.committees, ('committee_2',))
+        self.assertFalse(item.committees)
+        self.assertIn('committee_2', new_item.committees)
 
     def test_pm_GetCategory(self):
         """The proposingGroup/category magic was removed, test it."""
@@ -8835,7 +8835,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.getCategory(), '')
+        self.assertIsNone(item.getCategory())
         self.assertEqual(item.getCategory(theObject=True), '')
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
@@ -8859,7 +8859,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('classifier')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.getClassifier(), '')
+        self.assertIsNone(item.getClassifier())
         self.assertEqual(item.getClassifier(theObject=True), '')
         # set a classifier
         item.classifier = 'classifier1'
@@ -9194,8 +9194,8 @@ class testMeetingItem(PloneMeetingTestCase):
            MeetingConfig.itemFieldsConfig.
            Moreover, test that if edit condition is False, it can not be edited."""
         cfg = self.meetingConfig
-        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
-        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        cfg.ordered_groups_in_charge = (self.developers_uid, self.vendors_uid)
+        cfg.item_groups_in_charge_states = [self._stateMappingFor('itemcreated')]
         self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])

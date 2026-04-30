@@ -1486,9 +1486,23 @@ def computeCertifiedSignatures(signatures):
                 date_to = datetime(int(year), int(month), int(day), 23, 59) or None
         else:
             date_from = signature['date_from']
-            date_from = date_from and datetime(date_from.year, date_from.month, date_from.day, 0, 0) or None
+            if date_from:
+                if isinstance(date_from, str):
+                    year, month, day = date_from.split('/')
+                    date_from = datetime(int(year), int(month), int(day), 0, 0)
+                else:
+                    date_from = datetime(date_from.year, date_from.month, date_from.day, 0, 0)
+            else:
+                date_from = None
             date_to = signature['date_to']
-            date_to = date_to and datetime(date_to.year, date_to.month, date_to.day, 23, 59) or None
+            if date_to:
+                if isinstance(date_to, str):
+                    year, month, day = date_to.split('/')
+                    date_to = datetime(int(year), int(month), int(day), 23, 59)
+                else:
+                    date_to = datetime(date_to.year, date_to.month, date_to.day, 23, 59)
+            else:
+                date_to = None
         # if dates are defined and not current, continue
         if (date_from and date_to) and not _in_between(date_from, date_to, now):
             continue

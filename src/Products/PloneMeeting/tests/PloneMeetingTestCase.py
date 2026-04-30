@@ -820,7 +820,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             notify(ObjectEditedEvent(cfg))
             self.changeUser(currentUser)
         else:
-            cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+            cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
             cleanRamCacheFor('Products.PloneMeeting.content.meeting.attribute_is_used')
 
     def _enable_annex_config(self,
