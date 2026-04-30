@@ -1337,7 +1337,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         if not field_raw_value:
             continue
         # Apply mandatory transforms
-        fieldContent = storeImagesLocally(obj, field_raw_value)
+        fieldContent = storeImagesLocally(obj, field_raw_value, force_resolve_uid=True)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
@@ -1943,10 +1943,16 @@ def _addManagedPermissions(obj):
         if IDexterityContent.providedBy(obj):
             # dexterity
             schema = get_dx_schema(obj)
-            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            write_permissions = mergedTaggedValueDict(schema, WRITE_PERMISSIONS_KEY)
             for field_id, write_permission in write_permissions.items():
                 # only consider enabled fields
-                if isinstance(schema.get(field_id), RichText) and \
+                field = schema.get(field_id)
+                if field is None:
+                    for iface in schema.__iro__:
+                        field = iface.get(field_id)
+                        if field is not None:
+                            break
+                if isinstance(field, RichText) and \
                         obj.attribute_is_used(field_id):
                     write_perms.append(write_permission)
         else:

@@ -3221,7 +3221,16 @@ class MeetingItem(Container):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (name in cfg.used_item_attributes)
+        used = cfg.used_item_attributes
+        if name in used:
+            return True
+        # used_item_attributes stores AT camelCase names, also check
+        # the camelCase version when a DX snake_case name is passed
+        if '_' in name:
+            parts = name.split('_')
+            camel = parts[0] + ''.join(p.capitalize() for p in parts[1:])
+            return camel in used
+        return False
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''
@@ -6178,7 +6187,8 @@ class MeetingItem(Container):
             avoid_reindex=True)
         if full_edit_form:
             # Apply potential transformations to richtext fields
-            transformAllRichTextFields(self)
+            with api.env.adopt_roles(['Manager']):
+                transformAllRichTextFields(self)
             # Add a line in history if historized fields have changed
             addDataChange(self)
             # Make sure we have 'text/html' for every Rich fields
@@ -6545,7 +6555,8 @@ class MeetingItem(Container):
             isCreated=True,
             inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
-        transformAllRichTextFields(self)
+        with api.env.adopt_roles(['Manager']):
+            transformAllRichTextFields(self)
         forceHTMLContentTypeForEmptyRichFields(self)
         indexes += self.update_committees(force=True)
         self.reindexObject(idxs=indexes)
@@ -6562,6 +6573,20 @@ class MeetingItem(Container):
         responsible for post-save reactions. The bookkeeping below remains
         callable from tests / programmatic flows that mirror the AT API.
         '''
+        # Remap AT camelCase attributes to DX snake_case.
+        # invokeFactory / createContent may set kwargs as dangling attrs
+        # when callers use AT-style field names (e.g. proposingGroup).
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        schema = get_dx_schema(self)
+        for attr in list(vars(self)):
+            dx_name = _at_to_dx(attr)
+            if dx_name != attr and dx_name in schema:
+                value = getattr(self, attr)
+                setattr(self, dx_name, value)
+                try:
+                    delattr(self, attr)
+                except AttributeError:
+                    pass
         is_creation = self.checkCreationFlag()
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
@@ -6976,7 +7001,7 @@ class MeetingItem(Container):
         # as it requires the preferredMeeting to be the frozen meeting
         meeting = self._otherMCMeetingToBePresentedIn(destCfg)
         if meeting:
-            newItem.preferred_meeting = meeting.UID()
+            newItem.setPreferredMeeting(meeting.UID())
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
         if destMeetingConfigId in self.other_meeting_configs_clonable_to_privacy and \
            'privacy' in destUsedItemAttributes:
