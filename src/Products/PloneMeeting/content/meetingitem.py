@@ -1146,6 +1146,9 @@ class MeetingItem(Container):
                     default = deepcopy(default)
                 setattr(self, name, default)
 
+    def markCreationFlag(self):
+        self._at_creation_flag = True
+
     def checkCreationFlag(self):
         return getattr(aq_base(self), '_at_creation_flag', False)
 
@@ -3078,7 +3081,7 @@ class MeetingItem(Container):
     def getProposingGroup(self, theObject=False, **kwargs):
         '''This redefined accessor may return the proposing group id or the real
            group if p_theObject is True.'''
-        res = self.proposing_group  # = group id
+        res = self.proposing_group or ''
         if res and theObject:
             res = uuidToObject(res, unrestricted=True)
         return res
@@ -6978,13 +6981,15 @@ class MeetingItem(Container):
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dest_optional_fields = set(destCfg.listUsedItemAttributes())
         for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
             dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
             dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
-            dest_required = dest_field_name == 'title'
-            dest_optional = dest_field_name != 'title'
-            if (fieldIsEmpty(other_mc_field_name, self) and dest_required) or \
-               (dest_optional and not newItem.attribute_is_used(dest_field_name)):
+            dest_field_info = IMeetingItem.get(dest_field_name)
+            dest_is_required = dest_field_info is not None and dest_field_info.required
+            dest_is_optional = dest_field_name in dest_optional_fields
+            if (fieldIsEmpty(other_mc_field_name, self) and dest_is_required) or \
+               (dest_is_optional and not newItem.attribute_is_used(dest_field_name)):
                 continue
             src_dx_name = _at_to_dx(other_mc_field_name)
             dest_dx_name = _at_to_dx(dest_field_name)

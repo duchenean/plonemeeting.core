@@ -1542,7 +1542,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # make sure need_MeetingItem_update_committees is False for now
         self.request.set('need_MeetingItem_update_committees', False)
         cloned = item.clone()
-        self.assertEqual(cloned.getCommittees(), (cfg_committees[1]['row_id'], ))
+        self.assertEqual(cloned.committees, [cfg_committees[1]['row_id']])
 
     def test_pm_SendItemToOtherMCManually(self):
         '''An item may be sent automatically or manually to another MC
@@ -3962,12 +3962,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.developers_uid, self.vendors_uid])
         # now select the 'developers' as associatedGroup for the item
         item.associated_groups = (self.developers_uid, )
         # still the complete vocabulary
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.developers_uid, self.vendors_uid])
         # disable developers organization
         self.changeUser('admin')
@@ -3975,34 +3975,34 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
         # but added at the end of the vocabulary
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.vendors_uid, self.developers_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.associated_groups = ()
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token), [self.vendors_uid, ])
         # 'associatedGroups' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         cfg = self.meetingConfig
         cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid, self.endUsers_uid))
         # sorted alphabetically by default
         self.assertFalse('associatedGroups' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
         cfg.item_fields_to_keep_config_sorting_for = ('associatedGroups', )
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          list(cfg.getOrderedAssociatedOrganizations()))
         # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
         # so when selected organizations displayed, sorted alphabetically
         cfg.setOrderedAssociatedOrganizations(())
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.vendors_uid])
         self._select_organization(self.developers_uid)
         self._select_organization(self.endUsers_uid)
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary').by_token),
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
 
     def test_pm_ItemOrderedGroupsInChargeVocabulary(self):
@@ -4015,12 +4015,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token),
                          [self.developers_uid, self.vendors_uid])
         # now select the 'developers' as groupInCharge for the item
         item.groups_in_charge = (self.developers_uid, )
         # still the complete vocabulary
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token),
                          [self.developers_uid, self.vendors_uid])
         # disable developers organization
         self.changeUser('admin')
@@ -4028,12 +4028,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
         # but added at the end of the vocabulary
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token),
                          [self.vendors_uid, self.developers_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.groups_in_charge = ()
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(), [self.vendors_uid, ])
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token), [self.vendors_uid, ])
         # 'groupsInCharge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
         self._select_organization(self.developers_uid)
         self._select_organization(self.endUsers_uid)
@@ -4041,11 +4041,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # sorted alphabetically by default
         self.assertFalse('groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for)
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token),
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
         cfg.item_fields_to_keep_config_sorting_for = ('groupsInCharge', )
         cleanRamCache()
-        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+        self.assertEqual(list(get_vocab(item, u'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary').by_token),
                          list(cfg.getOrderedGroupsInCharge()))
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):
@@ -4150,14 +4150,14 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('classifier' in cfg.item_fields_to_keep_config_sorting_for)
-        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+        self.assertEqual([term.title for term in get_vocab(item, u'Products.PloneMeeting.vocabularies.classifiersvocabulary')],
                          [u'--- Make a choice ---',
                           u'Classifier 0',
                           u'Classifier 1',
                           u'Classifier 2',
                           u'Classifier 3'])
         cfg.item_fields_to_keep_config_sorting_for = ('classifier', )
-        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+        self.assertEqual([term.title for term in get_vocab(item, u'Products.PloneMeeting.vocabularies.classifiersvocabulary')],
                          [u'--- Make a choice ---',
                           u'Classifier 1',
                           u'Classifier 2',
@@ -7784,15 +7784,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.assertEqual(item.item_reference, '20170303/DEVEL/development/-/-/Title1/1')
         # change category
-        item.category = 'research'
+        item.setCategory('research')
         item._update_after_edit()
         self.assertEqual(item.item_reference, '20170303/DEVEL/research/-/-/Title1/1')
         # change classifier
-        item.classifier = 'classifier1'
+        item.setClassifier('classifier1')
         item._update_after_edit()
         self.assertEqual(item.item_reference, '20170303/DEVEL/research/classifier1/-/Title1/1')
         # change proposingGroup
-        item.proposing_group = self.vendors_uid
+        item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
         self.assertEqual(item.item_reference, '20170303/DEVIL/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
