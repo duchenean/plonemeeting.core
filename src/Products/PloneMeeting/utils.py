@@ -58,6 +58,7 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
+from plone.autoform.interfaces import READ_PERMISSIONS_KEY
 from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
@@ -71,6 +72,7 @@ from Products.Archetypes.atapi import DisplayList
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import base_hasattr
@@ -2242,11 +2244,17 @@ def checkMayQuickEdit(obj,
 
 def may_view_field(obj, field_name):
     """Check if current user has permission and condition to see the given p_field_name."""
-    # B.2.x TODO: AT field/widget introspection. After MeetingItem FTI swap,
-    # use schema/permission tagged values via plone.autoform.
-    field = obj.getField(field_name)
-    return _checkPermission(field.read_permission, obj) and \
-        _evaluateExpression(obj, field.widget.condition)
+    from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
+    snake_name = _camel_to_snake(field_name)
+    schema = get_dx_schema(obj)
+    read_perms = schema.queryTaggedValue(READ_PERMISSIONS_KEY) or {}
+    read_perm = read_perms.get(snake_name, View)
+    condition = ''
+    if hasattr(obj, '_field_conditions'):
+        condition = obj._field_conditions.get(field_name, '') or \
+            obj._field_conditions.get(snake_name, '')
+    return _checkPermission(read_perm, obj) and \
+        _evaluateExpression(obj, condition)
 
 
 def get_states_before_cachekey(method, obj, review_state):

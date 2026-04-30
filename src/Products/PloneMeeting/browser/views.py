@@ -28,6 +28,7 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
@@ -307,8 +308,7 @@ class ItemToDiscussView(BrowserView):
 
     def mayEdit(self):
         """ """
-        toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
-        return _checkPermission(toDiscuss_write_perm, self.context) and \
+        return _checkPermission(ModifyPortalContent, self.context) and \
             self.context.showToDiscuss()
 
     def reviewerMayAskDiscussion(self):
@@ -2597,11 +2597,23 @@ class DisplayCollapsibleRichTextField(BrowserView):
             return ""
 
         self.field_name = field_name
-        field = self.context.getField(field_name)
+        snake_name = _camel_to_snake(field_name)
         if raw:
-            self.field_content = field.getEditAccessor(self.context)()
+            accessor_name = 'getRaw' + field_name[0].upper() + field_name[1:]
+            accessor = getattr(self.context, accessor_name, None)
+            if accessor is not None:
+                self.field_content = accessor()
+            else:
+                value = getattr(self.context, snake_name, None)
+                self.field_content = value.raw if hasattr(value, 'raw') else (value or u'')
         else:
-            self.field_content = field.getAccessor(self.context)()
+            accessor_name = 'get' + field_name[0].upper() + field_name[1:]
+            accessor = getattr(self.context, accessor_name, None)
+            if accessor is not None:
+                self.field_content = accessor()
+            else:
+                value = getattr(self.context, snake_name, None)
+                self.field_content = value.output if hasattr(value, 'output') else (value or u'')
         return self.index()
 
 
