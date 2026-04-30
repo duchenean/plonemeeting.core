@@ -208,15 +208,13 @@ class ItemCategoriesVocabulary(CategoriesVocabulary):
         sort = field_name not in (cfg.item_fields_to_keep_config_sorting_for or ())
         vocab = super(ItemCategoriesVocabulary, self).__call__(
             context, cat_type=cat_type, sort=sort)
-        terms = list(vocab._terms)
-        terms.insert(
-            0,
-            SimpleTerm(
-                '_none_', '_none_',
-                translate('make_a_choice',
-                          domain='PloneMeeting',
-                          context=context.REQUEST)))
-        return SimpleVocabulary(terms)
+        if getattr(context, 'portal_type', '').startswith('MeetingItem'):
+            none_title = translate('make_a_choice',
+                                   domain='PloneMeeting',
+                                   context=context.REQUEST)
+            terms = [SimpleTerm('_none_', '_none_', none_title)] + list(vocab)
+            return SimpleVocabulary(terms)
+        return vocab
 
     # do ram.cache have a different key name
     __call__ = ItemCategoriesVocabulary__call__

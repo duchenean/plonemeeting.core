@@ -22,8 +22,8 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
-from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.MeetingItem import REC_ITEM_ERROR
+from Products.PloneMeeting.content.meetingitem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import REC_ITEM_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect

@@ -380,14 +380,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 dx_name = _at_to_dx(at_name)
                 perm = write_perms.get(dx_name)
                 if perm and not sm.checkPermission(perm, obj):
+                    # MeetingItem.__setattr__ auto-remaps camelCase kwargs
+                    # from __init__ to snake_case; delete both forms.
+                    if dx_name in obj.__dict__:
+                        del obj.__dict__[dx_name]
                     continue
                 if dx_name in _DX_RICH_FIELDS and isinstance(value, (str, unicode)):
                     setattr(obj, dx_name, richtextval(value))
                 else:
                     setattr(obj, dx_name, value)
             # Remove dangling camelCase attrs set by DexterityContent.__init__
-            # so processForm's camelCase-to-snake_case remap doesn't bypass
-            # the write-permission check above.
+            # (only needed when __setattr__ did NOT remap them).
             for at_name in attrs:
                 if at_name == 'id':
                     continue

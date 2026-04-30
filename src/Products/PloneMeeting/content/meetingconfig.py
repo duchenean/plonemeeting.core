@@ -174,6 +174,7 @@ import re
 
 logger = logging.getLogger('PloneMeeting')
 
+_SENTINEL = object()
 
 # ---------------------------------------------------------------------------
 # AT camelCase → DX snake_case field name mapping (used for dynamic lookups)
@@ -2600,6 +2601,49 @@ class MeetingConfig(Container):
         """
         return None
 
+    def __getattr__(self, name):
+        if name.startswith('set') and len(name) > 3 and name[3].isupper():
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+            dx_name = _at_to_dx(field_name)
+            if dx_name != field_name and dx_name in IMeetingConfig:
+                def _setter(value, **kwargs):
+                    setattr(self, field_name, value)
+                return _setter
+        elif name.startswith('get') and len(name) > 3 and name[3].isupper():
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+            dx_name = _at_to_dx(field_name)
+            if dx_name != field_name:
+                value = getattr(aq_base(self), dx_name, _SENTINEL)
+                if value is not _SENTINEL:
+                    return lambda **kw: value
+        if name and not name.startswith('_') and name[0].islower() \
+                and any(c.isupper() for c in name):
+            dx_name = _at_to_dx(name)
+            if dx_name != name:
+                value = getattr(aq_base(self), dx_name, _SENTINEL)
+                if value is not _SENTINEL:
+                    return value
+        return super(MeetingConfig, self).__getattr__(name)
+
+    def __setattr__(self, name, value):
+        if name and not name.startswith('_') and name[0].islower() \
+                and any(c.isupper() for c in name):
+            dx_name = _at_to_dx(name)
+            if dx_name != name and dx_name in IMeetingConfig:
+                    if isinstance(value, (set, frozenset)):
+                        value = list(value)
+                    elif isinstance(value, tuple):
+                        value = list(value)
+                    if dx_name in _DATAGRID_COL_KEY_MAP and isinstance(value, list):
+                        col_map = _DATAGRID_COL_KEY_MAP[dx_name]
+                        value = [{col_map.get(k, k): v for k, v in row.items()}
+                                 for row in value]
+                    super(MeetingConfig, self).__setattr__(dx_name, value)
+                    return
+        super(MeetingConfig, self).__setattr__(name, value)
+
     def validate(self, REQUEST=None, errors=None, data=None):
         """AT compatibility shim: call per-field validators for fields present in data."""
         if data is None:
@@ -3318,6 +3362,9 @@ class MeetingConfig(Container):
         self.custom_advisers = [dict(v) for v in value]
         self.modification_date = DateTime()
 
+    def getCustomAdvisers(self):
+        return self.custom_advisers or []
+
 
     security.declareProtected(WriteRiskyConfig, 'setPowerObservers')
     def setPowerObservers(self, value, **kwargs):
@@ -3431,6 +3478,13 @@ class MeetingConfig(Container):
         self.using_groups = value
 
 
+    def getInsertingMethodsOnAddItem(self):
+        """Return inserting_methods_on_add_item with AT camelCase keys."""
+        reverse_map = {v: k for k, v in
+                       _DATAGRID_COL_KEY_MAP.get('inserting_methods_on_add_item', {}).items()}
+        return [{reverse_map.get(k, k): v for k, v in row.items()}
+                for row in (self.inserting_methods_on_add_item or [])]
+
     security.declareProtected(WriteRiskyConfig, 'setInsertingMethodsOnAddItem')
     def setInsertingMethodsOnAddItem(self, value, **kwargs):
         col_map = _DATAGRID_COL_KEY_MAP.get('inserting_methods_on_add_item', {})
@@ -3444,6 +3498,22 @@ class MeetingConfig(Container):
     security.declareProtected(WriteRiskyConfig, 'setItemAdviceStates')
     def setItemAdviceStates(self, value, **kwargs):
         self.item_advice_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceEditStates')
+    def setItemAdviceEditStates(self, value, **kwargs):
+        self.item_advice_edit_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceViewStates')
+    def setItemAdviceViewStates(self, value, **kwargs):
+        self.item_advice_view_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setUseAdvices')
+    def setUseAdvices(self, value, **kwargs):
+        self.use_advices = value
+
+    security.declareProtected(WriteRiskyConfig, 'setSelectableAdvisers')
+    def setSelectableAdvisers(self, value, **kwargs):
+        self.selectable_advisers = list(value)
 
     security.declareProtected(WriteRiskyConfig, 'setOnTransitionFieldTransforms')
     def setOnTransitionFieldTransforms(self, value, **kwargs):
@@ -5034,7 +5104,7 @@ class MeetingConfig(Container):
             # pass 'template_row_marker'
             if value.get('orderindex_', None) == 'template_row_marker':
                 continue
-            res.append(value['inserting_method'])
+            res.append(value.get('inserting_method') or value.get('insertingMethod'))
         # now that we have a list in res, we can check
         # first check presence of 'at_the_end'
         if 'at_the_end' in res and len(res) > 1:
@@ -5092,7 +5162,8 @@ class MeetingConfig(Container):
                                  context=self.REQUEST)
             # may not use 'reverse'
             privacy_reverse = [value['reverse'] for value in values
-                               if value['inserting_method'] == 'on_privacy'][0]
+                               if (value.get('inserting_method') or
+                                   value.get('insertingMethod')) == 'on_privacy'][0]
             if privacy_reverse == '1':
                 return translate('inserting_methods_on_privacy_reverse_error',
                                  domain='PloneMeeting',

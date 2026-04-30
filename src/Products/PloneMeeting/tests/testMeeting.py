@@ -38,7 +38,7 @@ from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
-from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -97,8 +97,8 @@ class testMeetingType(PloneMeetingTestCase):
         # insert item following proposingGroup (default)
         cfg = self.meetingConfig
         self.assertEqual(cfg.inserting_methods_on_add_item,
-                         ({'insertingMethod': 'on_proposing_groups',
-                           'reverse': '0'}, ))
+                         [{'inserting_method': 'on_proposing_groups',
+                           'reverse': '0'}])
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getProposingGroup() for item in meeting.get_items(ordered=True)],
@@ -1652,8 +1652,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         self.assertEqual(cfg.inserting_methods_on_add_item,
-                         ({'insertingMethod': 'on_proposing_groups',
-                           'reverse': '0'}, ))
+                         [{'inserting_method': 'on_proposing_groups',
+                           'reverse': '0'}])
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)

@@ -28,6 +28,7 @@ full punch list.
 """
 
 from AccessControl import ClassSecurityInfo
+from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
@@ -720,11 +721,11 @@ class IMeetingItem(IMeetingItemMarker):
 
     # AT condition: (here.attribute_is_used('pollType') or here.isVotesEnabled())
     #   and here.adapted().mayChangePollType()
-    # AT default_method: getDefaultPollType (B.2.x: wire as defaultFactory).
     poll_type = schema.Choice(
         title=_(u'PloneMeeting_label_pollType', default=u'Polltype'),
         vocabulary=u'Products.PloneMeeting.vocabularies.polltypesvocabulary',
         required=False,
+        default=u'freehand',
     )
 
     # AT condition: python: here.attribute_is_used('pollTypeObservations')
@@ -964,12 +965,19 @@ class MeetingItemSchemaPolicy(DexteritySchemaPolicy):
 
 class _ATFieldWidgetStub(object):
     """Minimal AT widget stub so macros.pt viewContentField can render."""
+    __allow_access_to_unprotected_subobjects__ = True
 
     def __init__(self, field_name, is_rich):
         self._field_name = field_name
         self._is_rich = is_rich
         self.visible = True
         self.modes = ('view',)
+        self.label_msgid = 'PloneMeeting_label_{0}'.format(field_name)
+        self.label_macro = None
+        self.populate = True
+        self.postback = True
+        self.render_own_label = False
+        self.macro = 'here/widgets/string/macros'
 
     def getName(self):
         return 'RichWidget' if self._is_rich else 'StringWidget'
@@ -981,6 +989,9 @@ class _ATFieldWidgetStub(object):
         if schema_field is not None:
             return schema_field.title
         return self._field_name
+
+    def Description(self, context):
+        return u''
 
     def isVisible(self, context, mode='view'):
         return 'visible'
@@ -997,20 +1008,27 @@ class _ATFieldWidgetStub(object):
 
 class _ATFieldStub(object):
     """Minimal AT field stub returned by DX MeetingItem.getField()."""
+    __allow_access_to_unprotected_subobjects__ = True
 
-    optional = False
     mode = 'rw'
+    required = False
+    workflowable = False
 
     def __init__(self, field_name, is_rich=True):
+        self.optional = field_name not in _NON_OPTIONAL_FIELDS
         self._field_name = field_name
         self._is_rich = is_rich
         self.widget = _ATFieldWidgetStub(field_name, is_rich)
         from plone.autoform.interfaces import READ_PERMISSIONS_KEY
+        from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
         from plone.supermodel.utils import mergedTaggedValueDict
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         dx_name = _at_to_dx(field_name)
         read_perms = mergedTaggedValueDict(IMeetingItem, READ_PERMISSIONS_KEY)
         self.read_permission = read_perms.get(dx_name, 'View')
+        write_perms = mergedTaggedValueDict(IMeetingItem, WRITE_PERMISSIONS_KEY)
+        self.write_permission = write_perms.get(dx_name, 'Modify portal content')
+        self.accessor = 'get' + field_name[0].upper() + field_name[1:]
 
     def getName(self):
         return self._field_name
@@ -1051,6 +1069,38 @@ class _ATFieldStub(object):
     def getEditAccessor(self, obj):
         return self.getAccessor(obj)
 
+    def writeable(self, obj, debug=False):
+        sm = getSecurityManager()
+        return bool(sm.checkPermission(self.write_permission, obj))
+
+    def validate(self, value, instance, errors=None, **kwargs):
+        return None
+
+    def Vocabulary(self, content_instance=None):
+        from Products.Archetypes.utils import DisplayList
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        dx_name = _at_to_dx(self._field_name)
+        schema_field = IMeetingItem.get(dx_name)
+        if schema_field is not None:
+            vocab_name = getattr(schema_field, 'vocabularyName', None) or \
+                getattr(schema_field, 'vocabulary', None)
+            if not vocab_name and hasattr(schema_field, 'value_type'):
+                vocab_name = getattr(schema_field.value_type, 'vocabularyName', None) or \
+                    getattr(schema_field.value_type, 'vocabulary', None)
+            if vocab_name:
+                factory = queryUtility(IVocabularyFactory, name=vocab_name)
+                if factory is not None:
+                    vocab = factory(content_instance)
+                    dl = DisplayList()
+                    for term in vocab:
+                        dl.add(term.value, term.title or term.token)
+                    return dl
+        return DisplayList()
+
+
+_NON_OPTIONAL_FIELDS = frozenset((
+    'title', 'decision', 'proposingGroup', 'listType',
+))
 
 _RICH_TEXT_FIELDS = frozenset((
     'description', 'detailedDescription', 'emergencyMotivation', 'motivation',
@@ -1069,6 +1119,101 @@ _RICH_TEXT_FIELDS = frozenset((
     'otherMeetingConfigsClonableToFieldDecisionEnd',
 ))
 
+_ALL_AT_FIELD_NAMES = (
+    'itemNumber',
+    'itemReference',
+    'description',
+    'detailedDescription',
+    'budgetRelated',
+    'budgetInfos',
+    'proposingGroup',
+    'proposingGroupWithGroupInCharge',
+    'groupsInCharge',
+    'associatedGroups',
+    'category',
+    'classifier',
+    'committees',
+    'listType',
+    'emergency',
+    'preferredMeeting',
+    'itemTags',
+    'itemKeywords',
+    'optionalAdvisers',
+    'emergencyMotivation',
+    'motivation',
+    'decision',
+    'decisionSuite',
+    'decisionEnd',
+    'votesResult',
+    'toDiscuss',
+    'groupsInChargeNotes',
+    'inAndOutMoves',
+    'notes',
+    'meetingManagersNotes',
+    'meetingManagersNotesSuite',
+    'meetingManagersNotesEnd',
+    'internalNotes',
+    'marginalNotes',
+    'observations',
+    'copyGroups',
+    'pollType',
+    'pollTypeObservations',
+    'committeeObservations',
+    'committeeTranscript',
+    'votesObservations',
+    'manuallyLinkedItems',
+    'otherMeetingConfigsClonableTo',
+    'otherMeetingConfigsClonableToEmergency',
+    'otherMeetingConfigsClonableToPrivacy',
+    'otherMeetingConfigsClonableToFieldTitle',
+    'otherMeetingConfigsClonableToFieldDescription',
+    'otherMeetingConfigsClonableToFieldDetailedDescription',
+    'otherMeetingConfigsClonableToFieldMotivation',
+    'otherMeetingConfigsClonableToFieldDecision',
+    'otherMeetingConfigsClonableToFieldDecisionSuite',
+    'otherMeetingConfigsClonableToFieldDecisionEnd',
+    'isAcceptableOutOfMeeting',
+    'privacy',
+    'completeness',
+    'itemIsSigned',
+    'textCheckList',
+    'neededFollowUp',
+    'providedFollowUp',
+    'votesAreSecret',
+    'title',
+)
+
+
+class _ATSchemaStub(object):
+    """Minimal AT Schema proxy for DX MeetingItem."""
+    __allow_access_to_unprotected_subobjects__ = True
+
+    def __init__(self, context):
+        self._context = context
+
+    def getField(self, name):
+        return _ATFieldStub(name, name in _RICH_TEXT_FIELDS)
+
+    def keys(self):
+        return list(_ALL_AT_FIELD_NAMES)
+
+    def fields(self):
+        return [self.getField(n) for n in _ALL_AT_FIELD_NAMES]
+
+    def filterFields(self, isMetadata=None, default_content_type=None, **kw):
+        fields = []
+        field_name_filter = kw.get('__name__')
+        for name in _ALL_AT_FIELD_NAMES:
+            if default_content_type == 'text/html' and name not in _RICH_TEXT_FIELDS:
+                continue
+            if field_name_filter and name != field_name_filter:
+                continue
+            fields.append(self.getField(name))
+        return fields
+
+    def editableFields(self, schema):
+        return self.fields()
+
 
 # ---------------------------------------------------------------------------
 # Content class skeleton
@@ -1076,8 +1221,6 @@ _RICH_TEXT_FIELDS = frozenset((
 
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
-
-    Business methods are ported in subsequent sub-phases. Until B.2.8,
 
     Business methods are ported in subsequent sub-phases. Until B.2.8,
     the AT module ``Products/PloneMeeting/MeetingItem.py`` still exists
@@ -1195,6 +1338,7 @@ class MeetingItem(Container):
     )
 
     _widget_pt = None
+    _widget_view_pt = None
 
     security.declareProtected('View', 'getField')
 
@@ -1203,26 +1347,46 @@ class MeetingItem(Container):
         is_rich = name in _RICH_TEXT_FIELDS
         return _ATFieldStub(name, is_rich)
 
+    def Schema(self):
+        """AT-compat: return a schema stub for callers that iterate fields."""
+        return _ATSchemaStub(self)
+
     security.declareProtected('View', 'Vocabulary')
 
     def Vocabulary(self, key):
         """AT-compat: return (vocabulary, enforceVocabulary) tuple."""
-        from Products.Archetypes.utils import DisplayList
         field = self.getField(key)
-        vocab_name = getattr(field, 'vocabulary_factory', None)
-        if vocab_name:
-            vocab = get_vocab(self, vocab_name)
-            dl = DisplayList()
-            for term in vocab:
-                dl.add(term.value, term.title or term.token)
-            return dl, False
+        if field is not None:
+            return field.Vocabulary(self), False
+        from Products.Archetypes.utils import DisplayList
         return DisplayList(), False
 
     security.declareProtected('View', 'widget')
 
     def widget(self, field_name, mode='view', field=None, **kwargs):
-        """AT-compat: return an empty METAL macro for use-macro directives."""
+        """AT-compat: render the field value for use-macro directives.
+
+        The AT widget() returned a METAL macro that rendered the field's
+        content.  For DX we build a template that reads
+        ``here/_dx_widget_value`` (set just before the call) and emits
+        the value as raw HTML.
+        """
         from Products.PageTemplates.ZopePageTemplate import ZopePageTemplate
+        if mode == 'view':
+            at_field = self.getField(field_name)
+            if at_field is not None:
+                value = at_field.get(self)
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8')
+            else:
+                value = u''
+            self.dxWidgetValue = value or u''
+            if MeetingItem._widget_view_pt is None:
+                MeetingItem._widget_view_pt = ZopePageTemplate(
+                    'dx_widget_view',
+                    '<span metal:define-macro="view"'
+                    ' tal:content="structure here/dxWidgetValue"></span>\n')
+            return MeetingItem._widget_view_pt.__of__(self).macros['view']
         if MeetingItem._widget_pt is None:
             MeetingItem._widget_pt = ZopePageTemplate(
                 'dx_widget_compat',
@@ -1233,26 +1397,133 @@ class MeetingItem(Container):
     _GET_ATTR_SENTINEL = object()
 
     def __getattr__(self, name):
-        # AT-compat: translate getFieldName() accessors to snake_case attributes
-        # Skip names handled by explicit methods (getField, getFieldVersion)
-        if name.startswith('get') and len(name) > 3 and name[3].isupper() \
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+        # AT-compat: translate getFieldName() / getRawFieldName() accessors
+        # to snake_case attributes.
+        is_raw = False
+        is_accessor = False
+        if name.startswith('getRaw') and len(name) > 6 and name[6].isupper():
+            is_raw = True
+            is_accessor = True
+            field_name = name[6:]
+            field_name = field_name[0].lower() + field_name[1:]
+        elif name.startswith('get') and len(name) > 3 and name[3].isupper() \
                 and name not in ('getField', 'getFieldVersion'):
-            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            is_accessor = True
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+        elif name.startswith('set') and len(name) > 3 and name[3].isupper():
             field_name = name[3:]
             field_name = field_name[0].lower() + field_name[1:]
             dx_name = _at_to_dx(field_name)
-            value = getattr(aq_base(self), dx_name, self._GET_ATTR_SENTINEL)
-            if value is self._GET_ATTR_SENTINEL:
-                # Try schema defaults
-                try:
-                    value = super(MeetingItem, self).__getattr__(dx_name)
-                except AttributeError:
-                    pass
-            if value is not self._GET_ATTR_SENTINEL:
-                if not callable(value):
-                    return lambda: value
-                return value
+            if dx_name != name:
+                def _setter(value, **kwargs):
+                    if isinstance(value, (set, frozenset)):
+                        value = list(value)
+                    setattr(self, dx_name, value)
+                return _setter
+            return super(MeetingItem, self).__getattr__(name)
+        else:
+            # Direct camelCase attribute access (e.g. item.copyGroups)
+            dx_name = _at_to_dx(name)
+            if dx_name != name:
+                value = getattr(aq_base(self), dx_name, self._GET_ATTR_SENTINEL)
+                if value is not self._GET_ATTR_SENTINEL:
+                    if isinstance(value, list):
+                        return tuple(value)
+                    return value
+            return super(MeetingItem, self).__getattr__(name)
+
+        dx_name = _at_to_dx(field_name)
+        value = getattr(aq_base(self), dx_name, self._GET_ATTR_SENTINEL)
+        if value is self._GET_ATTR_SENTINEL:
+            try:
+                value = super(MeetingItem, self).__getattr__(dx_name)
+            except AttributeError:
+                pass
+        if value is not self._GET_ATTR_SENTINEL:
+            if isinstance(value, RichTextValue):
+                if is_raw:
+                    return lambda **kw: safe_encode(value.raw or u'')
+                def _rich_accessor(**kw):
+                    if kw.get('mimetype') == 'text/plain':
+                        transforms = api.portal.get_tool('portal_transforms')
+                        stream = transforms.convertTo(
+                            'text/plain', safe_encode(value.output or u''),
+                            mimetype='text/html')
+                        return stream.getData().strip() if stream else u''
+                    return safe_encode(value.output or u'')
+                return _rich_accessor
+            if not callable(value):
+                if isinstance(value, list):
+                    value = tuple(value)
+                return lambda: value
+            return value
         return super(MeetingItem, self).__getattr__(name)
+
+    def __setattr__(self, name, value):
+        if name and not name.startswith('_') and name[0].islower() \
+                and any(c.isupper() for c in name):
+            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            dx_name = _at_to_dx(name)
+            if dx_name != name and dx_name in IMeetingItem:
+                if isinstance(value, (set, frozenset)):
+                    value = list(value)
+                super(MeetingItem, self).__setattr__(dx_name, value)
+                return
+        super(MeetingItem, self).__setattr__(name, value)
+        if name == 'preferred_meeting' and value:
+            try:
+                self._update_preferred_meeting(value)
+            except Exception:
+                pass
+        elif name == 'proposing_group_with_group_in_charge' and value \
+                and '__groupincharge__' in (value or ''):
+            try:
+                pg, gic = value.split('__groupincharge__')
+                super(MeetingItem, self).__setattr__('proposing_group', pg)
+                super(MeetingItem, self).__setattr__('groups_in_charge', [gic])
+            except Exception:
+                pass
+
+    def _setObject(self, id, object, roles=None, user=None, set_owner=1,
+                   suppress_events=False):
+        # AT OrderedBaseFolder did not fire ContainerModifiedEvent for
+        # child additions.  DX Container (via OFS.ObjectManager) does,
+        # which triggers plone.dexterity's reindexOnModify and breaks
+        # the deferParentReindex mechanism.
+        # Suppress OFS events, manually fire everything except
+        # ContainerModifiedEvent.
+        if suppress_events:
+            return super(MeetingItem, self)._setObject(
+                id, object, roles=roles, user=user, set_owner=set_owner,
+                suppress_events=True)
+        from OFS.event import ObjectWillBeAddedEvent
+        from zope.event import notify as _notify
+        from zope.lifecycleevent import ObjectAddedEvent
+        ob = object
+        _notify(ObjectWillBeAddedEvent(ob, self, id))
+        result = super(MeetingItem, self)._setObject(
+            id, ob, roles=roles, user=user, set_owner=set_owner,
+            suppress_events=True)
+        ob = self._getOb(id)
+        _notify(ObjectAddedEvent(ob, self, id))
+        return result
+
+    def _delObject(self, id, dp=1, suppress_events=False):
+        ob = self._getOb(id)
+        if not suppress_events:
+            from OFS.event import ObjectWillBeRemovedEvent
+            from zope.event import notify as _notify
+            _notify(ObjectWillBeRemovedEvent(ob, self, id))
+        self._delOb(id)
+        if not suppress_events:
+            from zope.lifecycleevent import ObjectRemovedEvent
+            from zope.event import notify as _notify
+            _notify(ObjectRemovedEvent(ob, self, id))
+
+    def objectValues(self, spec=None):
+        return [self._getOb(id) for id in self.objectIds(spec)]
 
     def SearchableText(self):
         data = []
@@ -1311,10 +1582,16 @@ class MeetingItem(Container):
                 if default is None:
                     default = getattr(field, 'missing_value', None)
                 # Mutable defaults must be deep-copied so instances do not
-                # share state.
-                if isinstance(default, (list, dict, set)):
+                # share state.  AT stored multi-value fields as tuples;
+                # normalise list defaults to tuples for backward compat.
+                if isinstance(default, list):
+                    default = tuple(default)
+                elif isinstance(default, (dict, set)):
                     default = deepcopy(default)
                 setattr(self, name, default)
+        # DX containers don't inherit AT's __ac_permissions__; grant
+        # AddAdvice to Manager so _updateAdvices can further delegate it.
+        self.manage_permission(AddAdvice, ('Manager',), acquire=1)
 
     def markCreationFlag(self):
         self._at_creation_flag = True
@@ -1464,6 +1741,12 @@ class MeetingItem(Container):
             return msg
         value = self.decision
         if isinstance(value, RichTextValue):
+            if kwargs.get('mimetype') == 'text/plain':
+                transforms = api.portal.get_tool('portal_transforms')
+                stream = transforms.convertTo(
+                    'text/plain', safe_encode(value.output or u''),
+                    mimetype='text/html')
+                return stream.getData().strip() if stream else u''
             return safe_encode(value.output_relative_to(self) or u'')
         return safe_encode(value or u'')
 
@@ -2453,6 +2736,36 @@ class MeetingItem(Container):
             self._update_preferred_meeting(value)
             self.preferred_meeting = value
 
+    def setOptionalAdvisers(self, value, **kwargs):
+        if isinstance(value, basestring):
+            value = (value, )
+        self.optional_advisers = list(value)
+
+    def setAssociatedGroups(self, value, **kwargs):
+        if isinstance(value, basestring):
+            value = (value, )
+        self.associated_groups = list(value)
+
+    def setDecision(self, value, **kwargs):
+        from plone.app.textfield.value import RichTextValue
+        if isinstance(value, RichTextValue):
+            self.decision = value
+        else:
+            self.decision = RichTextValue(value, 'text/html', 'text/x-html-safe')
+
+    def setIsAcceptableOutOfMeeting(self, value, **kwargs):
+        self.is_acceptable_out_of_meeting = value
+
+    def setCopyGroups(self, value, **kwargs):
+        if isinstance(value, basestring):
+            value = (value, )
+        self.copy_groups = list(value)
+
+    def setGroupsInCharge(self, value, **kwargs):
+        if isinstance(value, basestring):
+            value = (value, )
+        self.groups_in_charge = list(value)
+
     def _mark_need_update(self, update_item_references=True, update_committees=True, extra_markers=[]):
         '''See docstring in interfaces.py.'''
         if update_item_references:
@@ -3278,6 +3591,11 @@ class MeetingItem(Container):
                         res = portal.unrestrictedTraverse(preferred_meeting_path)
                         if caching and hasattr(self, "REQUEST"):
                             self.REQUEST.set('preferred_meeting__%s' % meeting_uid, res)
+                else:
+                    brain = uuidToCatalogBrain(meeting_uid, unrestricted=True)
+                    if brain:
+                        res = brain.getObject()
+                        self._update_preferred_meeting(meeting_uid)
         return res
 
     security.declarePublic('getGroupsInCharge')
@@ -3346,6 +3664,8 @@ class MeetingItem(Container):
         '''This redefined accessor may return associated group ids or the real
            groups if p_theObjects is True.'''
         res = self.associated_groups
+        if isinstance(res, list):
+            res = tuple(res)
         if res and theObjects:
             return tuple(uuidsToObjects(uuids=res, ordered=True, unrestricted=True))
         return res
@@ -6751,11 +7071,23 @@ class MeetingItem(Container):
         responsible for post-save reactions. The bookkeeping below remains
         callable from tests / programmatic flows that mirror the AT API.
         '''
-        # Remap AT camelCase attributes to DX snake_case.
-        # invokeFactory / createContent may set kwargs as dangling attrs
-        # when callers use AT-style field names (e.g. proposingGroup).
+        # Apply values from the request form (AT-compat).
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         schema = get_dx_schema(self)
+        form_data = {}
+        if hasattr(self, 'REQUEST'):
+            form_data = dict(self.REQUEST.form)
+        if values:
+            form_data.update(values)
+        for key, val in form_data.items():
+            dx_name = _at_to_dx(key)
+            if dx_name in schema:
+                if key in _RICH_TEXT_FIELDS and isinstance(val, (str, unicode)):
+                    val = RichTextValue(val, 'text/html', 'text/x-html-safe')
+                setattr(self, dx_name, val)
+            elif dx_name != key:
+                logger.info("processForm: key=%r dx_name=%r NOT in schema", key, dx_name)
+        # Remap AT camelCase attributes to DX snake_case.
         for attr in list(vars(self)):
             dx_name = _at_to_dx(attr)
             if dx_name != attr and dx_name in schema:
@@ -6781,17 +7113,21 @@ class MeetingItem(Container):
         if self.preferred_meeting and \
            self.preferred_meeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             self._update_preferred_meeting(self.preferred_meeting)
-        if self._at_rename_after_creation and \
-           not self.isDefinedInTool() and \
-           not self.isTemporary():
-            wfTool = api.portal.get_tool('portal_workflow')
-            itemWF = wfTool.getWorkflowsFor(self)[0]
-            if itemWF.initial_state == self.query_state() and \
-               self.getId() != self.generateNewId():
-                with api.env.adopt_roles(['Manager']):
-                    self._at_creation_flag = True
-                    self._renameAfterCreation(check_auto_id=False)
-                    self._at_creation_flag = False
+        if self._at_rename_after_creation and not self.isTemporary():
+            should_rename = False
+            if self.isDefinedInTool():
+                should_rename = is_creation
+            else:
+                wfTool = api.portal.get_tool('portal_workflow')
+                itemWF = wfTool.getWorkflowsFor(self)[0]
+                should_rename = itemWF.initial_state == self.query_state()
+            if should_rename:
+                new_id = self.generateNewId()
+                if new_id and self.getId() != new_id:
+                    with api.env.adopt_roles(['Manager']):
+                        self._at_creation_flag = True
+                        self._renameAfterCreation(check_auto_id=False)
+                        self._at_creation_flag = False
         if not is_creation:
             self.at_post_edit_script(full_edit_form=True, reindex_local_roles=True)
         self.reindexObject()
@@ -7743,7 +8079,8 @@ class MeetingItemTemplate(MeetingItem):
     ``portal_type``. Inheriting the schema avoids duplication.
     """
 
-    meta_type = 'MeetingItemTemplate'
+    # keep meta_type = 'MeetingItem' so objectValues('MeetingItem') still finds them
+    meta_type = 'MeetingItem'
 
 
 class MeetingItemRecurring(MeetingItem):
@@ -7753,4 +8090,4 @@ class MeetingItemRecurring(MeetingItem):
     ``MeetingConfig/recurringitems``.
     """
 
-    meta_type = 'MeetingItemRecurring'
+    meta_type = 'MeetingItem'

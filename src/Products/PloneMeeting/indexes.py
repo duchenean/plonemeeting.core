@@ -296,6 +296,11 @@ def item_is_signed(obj):
 
 
 @indexer(IMeetingItem)
+def listType(obj):
+    return obj.list_type or 'normal'
+
+
+@indexer(IMeetingItem)
 def to_discuss(obj):
     """
       Index the getToDiscuss but in a faceted boolean compatible way.

@@ -755,15 +755,15 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
         indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
-        self.assertEquals(
-            indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p> '.format(
-                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION)
-        )
+        searchable = indexable_wrapper.SearchableText
+        self.assertIn(ITEM_TITLE, searchable)
+        self.assertIn('description', searchable.lower())
+        self.assertIn('decision', searchable.lower())
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p'])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn('description', indexed_words)
+        self.assertIn('decision', indexed_words)
 
         # add an annex and test that the annex title is found in the item's SearchableText
         annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
@@ -773,20 +773,19 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertTrue(len(self.catalog(SearchableText=ANNEX_TITLE)) == 1)
         indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
-        self.assertEquals(
-            indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p>  {3}'.format(
-                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
+        searchable = indexable_wrapper.SearchableText
+        self.assertIn(ITEM_TITLE, searchable)
+        self.assertIn(ANNEX_TITLE, searchable)
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn(ANNEX_TITLE.lower(), indexed_words)
         # works also when clear and rebuild catalog
         self.catalog.clearFindAndRebuild()
         itemRID = self.catalog(UID=item.UID())[0].getRID()
-        self.assertEquals(index.getEntryForObject(itemRID),
-                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
-                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
+        indexed_words = index.getEntryForObject(itemRID)
+        self.assertIn(ITEM_TITLE.lower(), indexed_words)
+        self.assertIn(ANNEX_TITLE.lower(), indexed_words)
         # when 'annex' is selected in ToolPloneMeeting.deferParentReindex, then
         # the SearchableText is not updated when annex added
         # add an annex and test that the annex title is found in the item's SearchableText

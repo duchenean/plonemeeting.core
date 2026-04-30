@@ -1197,7 +1197,9 @@ def set_field_from_ajax(
         elif not obj.mayQuickEdit(field_name):
             raise Unauthorized
 
-        notify_modified = not obj.adapted()._bypass_quick_edit_notify_modified_for(field_name)
+        adapted = obj.adapted()
+        if hasattr(adapted, '_bypass_quick_edit_notify_modified_for'):
+            notify_modified = not adapted._bypass_quick_edit_notify_modified_for(field_name)
 
         if remember:
             previousData = rememberPreviousData(obj, field_name)

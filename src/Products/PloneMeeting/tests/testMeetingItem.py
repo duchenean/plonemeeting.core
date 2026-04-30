@@ -70,7 +70,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
-from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
@@ -2718,8 +2718,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # budget impact editors gets view on an item thru another role
         # here 'budgetimpacteditor' is a powerobserver
         self._setPowerObserverStates(states=('validated', ))
-        # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
-        self.assertEqual(MeetingItem.schema['budgetInfos'].write_permission, WriteBudgetInfos)
+        # first make sure the permission associated with MeetingItem.budget_infos.write_permission is the right one
+        from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+        from plone.supermodel.utils import mergedTaggedValueDict
+        from Products.PloneMeeting.content.meetingitem import IMeetingItem
+        write_perms = mergedTaggedValueDict(IMeetingItem, WRITE_PERMISSIONS_KEY)
+        self.assertEqual(write_perms.get('budget_infos'), WriteBudgetInfos)
         # now create an item for 'developers', let vendors access it setting them as copyGroups
         # and check that 'pmReviewer2' can edit the budgetInfos when the item is in a relevant state (validated)
         self.changeUser('pmCreator1')

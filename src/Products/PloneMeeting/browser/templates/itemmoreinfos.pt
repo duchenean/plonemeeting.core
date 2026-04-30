@@ -7,7 +7,10 @@
     <tal:loop repeat="visibleFieldInfos visibleFields">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];
                           visibleFieldRenderer python: visibleFieldInfos[1];
-                          field python: context.getField(visibleFieldName);"
+                          field python: context.getField(visibleFieldName);
+                          widget python: field.widget if field else None;
+                          fieldName python: field.getName() if field else visibleFieldName;
+                          accessor python: field.getAccessor(context) if field else None;"
               tal:condition="python: field and not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
                              context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False)">
             <tal:displayed define="global displayed python:True">

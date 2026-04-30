@@ -45,7 +45,7 @@ from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
 from Products.PloneMeeting.ftw_labels.utils import get_labels
-from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -345,11 +345,12 @@ class testViews(PloneMeetingTestCase):
         newItem2 = view.createItemFromTemplate(itemTemplateUID)
         # B.2.4 TODO: _at_creation_flag and @@at_lifecycle_view are AT-only.
         # self.assertTrue(newItem._at_creation_flag)
-        newItem2.processForm()
+        # B.2.4: processForm and @@at_lifecycle_view are AT-only, skip
+        # newItem2.processForm()
         # self.assertFalse(newItem2._at_creation_flag)
         self.assertTrue(newItem2.getId() in newItem2.getParentNode().objectIds())
-        # cancel second edition
-        newItem2.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
+        # cancel second edition — AT-only, skip
+        # newItem2.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
         self.assertTrue(newItem2.getId() in newItem2.getParentNode().objectIds())
 
     def test_pm_ItemTemplatesWithSubFolders(self):
@@ -2192,9 +2193,9 @@ class testViews(PloneMeetingTestCase):
         self.request['form.widgets.action_choice'] = 'add'
         self.request['form.widgets.added_values'] = [NO_COMMITTEE]
         form.handleApply(form, None)
-        self.assertEqual(item1.committees, (com1_id, ))
-        self.assertEqual(item2.committees, (com2_id, ))
-        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
+        self.assertEqual(item1.committees, [com1_id])
+        self.assertEqual(item2.committees, [com2_id])
+        self.assertEqual(item3.committees, [NO_COMMITTEE])
         # add com3_id, will be added in addition to com1_id and com2_id
         # but not NO_COMMITTEE that must be alone
         self.assertFalse(com3_editors_group_id in item1.__ac_local_roles__)
@@ -2202,9 +2203,9 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
         self.request['form.widgets.added_values'] = [com3_id]
         form.handleApply(form, None)
-        self.assertEqual(item1.committees, (com1_id, com3_id))
-        self.assertEqual(item2.committees, (com2_id, com3_id))
-        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
+        self.assertEqual(item1.committees, [com1_id, com3_id])
+        self.assertEqual(item2.committees, [com2_id, com3_id])
+        self.assertEqual(item3.committees, [NO_COMMITTEE])
         self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
         self.assertTrue(com3_editors_group_id in item2.__ac_local_roles__)
         self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
@@ -2212,11 +2213,11 @@ class testViews(PloneMeetingTestCase):
         self.request['form.widgets.action_choice'] = 'remove'
         self.request['form.widgets.added_values'] = [NO_COMMITTEE]
         form.handleApply(form, None)
-        self.assertEqual(item3.committees, (NO_COMMITTEE, ))
+        self.assertEqual(item3.committees, [NO_COMMITTEE])
         # remove com1_id
         self.request['form.widgets.removed_values'] = [com1_id]
         form.handleApply(form, None)
-        self.assertEqual(item1.committees, (com3_id, ))
+        self.assertEqual(item1.committees, [com3_id])
         self.assertFalse(com1_editors_group_id in item1.__ac_local_roles__)
         self.assertFalse(com2_editors_group_id in item1.__ac_local_roles__)
         self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)

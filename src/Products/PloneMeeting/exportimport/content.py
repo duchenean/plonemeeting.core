@@ -539,6 +539,7 @@ class ToolInitializer:
         if item.template_using_groups:
             item.template_using_groups = [org_id_to_uid(template_using_group)
                                           for template_using_group in item.template_using_groups]
+        item.reindexObject()
         return item
 
     def addAnnexType(self, cfg, at, source):

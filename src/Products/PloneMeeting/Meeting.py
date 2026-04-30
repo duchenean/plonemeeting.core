@@ -1557,7 +1557,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insertAtTheEnd = False
-        if insertMethods[0]['insertingMethod'] != 'at_the_end':
+        if insertMethods[0].get('inserting_method', insertMethods[0].get('insertingMethod')) != 'at_the_end':
             # We must insert it according to category or proposing group order
             # (at the end of the items belonging to the same category or
             # proposing group). We will insert the p_item just before the first
@@ -1594,7 +1594,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 insertAtTheEnd = True
 
-        if insertMethods[0]['insertingMethod'] == 'at_the_end' or insertAtTheEnd:
+        if insertMethods[0].get('inserting_method', insertMethods[0].get('insertingMethod')) == 'at_the_end' or insertAtTheEnd:
             # insert it as next integer number
             if items:
                 item.item_number = _to_integer(items[-1].item_number) + 100
