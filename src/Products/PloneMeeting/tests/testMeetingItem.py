@@ -8975,7 +8975,8 @@ class testMeetingItem(PloneMeetingTestCase):
             uuidToObject(item.UID(), query={'internal_number': 2}).internal_number, 2)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
         # decremented if edit cancelled
-        item.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
+        from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
+        decrement_if_last_nb(item.portal_type)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
         # can start at an arbitrary number
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 50000, 'expr': u'number'}})

@@ -978,6 +978,7 @@ class MeetingItem(Container):
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
+    __factory_meta_type__ = 'Dexterity Container'
     archetype_name = 'MeetingItem'
     _at_rename_after_creation = True
 
@@ -1201,6 +1202,8 @@ class MeetingItem(Container):
                     tool = api.portal.get_tool('portal_plonemeeting')
                     title = "{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+        if isinstance(title, unicode):
+            title = title.encode('utf-8')
         return title
 
     def Description(self):
