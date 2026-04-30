@@ -3295,8 +3295,10 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
     def __call__(self, context):
         portal_types = api.portal.get_tool('portal_types')
         terms = super(PMDxPortalTypesVocabulary, self).__call__(context)._terms
+        existing_values = {term.value for term in terms}
         item_ftis = [fti for fti in portal_types.values()
                      if fti.id.startswith("MeetingItem") and
+                     fti.id not in existing_values and
                      not (fti.id.startswith("MeetingItemRecurring") or
                           fti.id.startswith("MeetingItemTemplate") or
                           fti.id == "MeetingItem")]

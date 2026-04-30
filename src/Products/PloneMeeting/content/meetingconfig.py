@@ -5377,8 +5377,9 @@ class MeetingConfig(Container):
                     metaTypeName, metaTypeName)
                 realMetaType = 'MeetingItem' if metaTypeName.startswith('MeetingItem') \
                     else metaTypeName
+                baseFTI = getattr(portal_types, realMetaType)
                 portal_types.manage_addTypeInformation(
-                    getattr(portal_types, realMetaType).meta_type,
+                    baseFTI.meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
 
                 # Set the human readable title explicitly
@@ -5386,6 +5387,19 @@ class MeetingConfig(Container):
                 portalType.title = portalTypeName
                 # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
                 portalType.global_allow = True
+
+                # Copy DX FTI properties from the base type.
+                # Use metaTypeName (not realMetaType) so each subtype
+                # (MeetingItemRecurring, MeetingItemTemplate) gets its own klass.
+                dxBaseFTI = getattr(portal_types, metaTypeName)
+                if dxBaseFTI.meta_type == 'Dexterity FTI':
+                    portalType.klass = dxBaseFTI.klass
+                    portalType.schema_policy = dxBaseFTI.schema_policy
+                    portalType.behaviors = dxBaseFTI.behaviors
+                    portalType.schema = dxBaseFTI.schema
+                    portalType.model_source = dxBaseFTI.model_source
+                    portalType.filter_content_types = dxBaseFTI.filter_content_types
+                    portalType.allowed_content_types = dxBaseFTI.allowed_content_types
 
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     # Update the typesUseViewActionInListings property of site_properties

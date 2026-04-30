@@ -144,6 +144,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
+from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -159,6 +160,7 @@ from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
+from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import rememberPreviousData
@@ -179,6 +181,7 @@ from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.interface import implements
 from zope.interface import providedBy
 from zope.schema import getFieldsInOrder as zope_getFieldsInOrder
@@ -974,7 +977,21 @@ class MeetingItem(Container):
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
+    archetype_name = 'MeetingItem'
     _at_rename_after_creation = True
+
+    _field_conditions = {
+        'itemAssembly': "python: here.is_assembly_field_used('itemAssembly')",
+        'itemAssemblyExcused': "python: here.is_assembly_field_used('itemAssemblyExcused')",
+        'itemAssemblyAbsents': "python: here.is_assembly_field_used('itemAssemblyAbsents')",
+        'itemAssemblyGuests': "python: here.is_assembly_field_used('itemAssemblyGuests')",
+        'itemSignatures': "python: here.is_assembly_field_used('itemSignatures')",
+        'internalNotes': "python: here.attribute_is_used('internalNotes')",
+        'observations': "python: here.adapted().showObservations()",
+    }
+
+    def getTagName(self):
+        return self.__class__.archetype_name
 
     def __init__(self, id=None, **kw):
         super(MeetingItem, self).__init__(id, **kw)
@@ -1009,7 +1026,7 @@ class MeetingItem(Container):
         title = self.Title()
         if not title:
             return None
-        return normalize(title)
+        return normalize_id(title)
 
     def _renameAfterCreation(self, check_auto_id=False):
         new_id = self.generateNewId()
@@ -1022,7 +1039,7 @@ class MeetingItem(Container):
                 idx += 1
             new_id = '{0}-{1}'.format(new_id, idx)
         transaction.savepoint(optimistic=True)
-        self.setId(new_id)
+        parent.manage_renameObject(self.getId(), new_id)
         return new_id
 
     security.declarePublic('title_or_id')
@@ -2194,14 +2211,21 @@ class MeetingItem(Container):
     def getManuallyLinkedItems(self, only_viewable=False, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' accessor to be able
            to return only items for that are viewable by current user.'''
-        linkedItems = self.manually_linked_items
-        if linkedItems:
+        storedUids = self.manually_linked_items
+        if storedUids:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            linkedItems = [
-                linkedItem for linkedItem in linkedItems if
-                self._appendLinkedItem(
-                    linkedItem, tool, cfg, only_viewable=only_viewable)]
+            catalog = api.portal.get_tool('uid_catalog')
+            linkedItems = []
+            for uid in storedUids:
+                brains = catalog(UID=uid)
+                if brains:
+                    item = brains[0].getObject()
+                    if self._appendLinkedItem(
+                            item, tool, cfg, only_viewable=only_viewable):
+                        linkedItems.append(item)
+        else:
+            linkedItems = []
         return linkedItems
 
     security.declarePublic('onDiscussChanged')
@@ -2675,7 +2699,7 @@ class MeetingItem(Container):
                             u"{0} ({1})".format(preferredMeetingDate, preferredMeetingState)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
-        return DisplayList(tuple(res))
+        return OrderedDict(res)
 
     security.declarePrivate('listMeetingTransitions')
 
@@ -2684,12 +2708,11 @@ class MeetingItem(Container):
            config as this item.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = DisplayList(
-            tuple((
-                ('_init_',
-                 translate('_init_', domain="plone", context=self.REQUEST)), ))
-        )
-        res += cfg.listMeetingTransitions()
+        res = OrderedDict((
+            ('_init_',
+             translate('_init_', domain="plone", context=self.REQUEST)),
+        ))
+        res.update(cfg.listMeetingTransitions().items())
         return res
 
     security.declarePrivate('listOtherMeetingConfigsClonableTo')
@@ -2709,7 +2732,7 @@ class MeetingItem(Container):
             for meetingConfigId in otherMeetingConfigsClonableTo:
                 if meetingConfigId not in otherMeetingConfigsClonableToInVocab:
                     res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
-        return DisplayList(tuple(res))
+        return OrderedDict(res)
 
     security.declarePrivate('listOtherMeetingConfigsClonableToEmergency')
 
@@ -2731,7 +2754,7 @@ class MeetingItem(Container):
             for meetingConfigId in otherMCsClonableToEmergency:
                 if meetingConfigId not in otherMeetingConfigsClonableToEmergencyInVocab:
                     res.append((meetingConfigId, translated_msg))
-        return DisplayList(tuple(res))
+        return OrderedDict(res)
 
     security.declarePrivate('listOtherMeetingConfigsClonableToPrivacy')
 
@@ -2753,7 +2776,7 @@ class MeetingItem(Container):
             for meetingConfigId in otherMCsClonableToPrivacy:
                 if meetingConfigId not in otherMeetingConfigsClonableToPrivacyInVocab:
                     res.append((meetingConfigId, translated_msg))
-        return DisplayList(tuple(res))
+        return OrderedDict(res)
 
     security.declarePrivate('listItemTags')
 
@@ -2764,14 +2787,14 @@ class MeetingItem(Container):
         cfg = tool.getMeetingConfig(self)
         for tag in cfg.all_item_tags.split('\n'):
             res.append((tag, tag))
-        return DisplayList(tuple(res))
+        return OrderedDict(res)
 
     security.declarePrivate('listEmergencies')
 
     def listEmergencies(self):
         '''Vocabulary for the 'emergency' field.'''
         d = 'PloneMeeting'
-        res = DisplayList((
+        res = OrderedDict((
             ("no_emergency", translate('no_emergency',
                                        domain=d,
                                        context=self.REQUEST)),
@@ -2792,7 +2815,7 @@ class MeetingItem(Container):
     def listCompleteness(self):
         '''Vocabulary for the 'completeness' field.'''
         d = 'PloneMeeting'
-        res = DisplayList((
+        res = OrderedDict((
             ("completeness_not_yet_evaluated", translate('completeness_not_yet_evaluated',
                                                          domain=d,
                                                          context=self.REQUEST)),
@@ -2838,7 +2861,7 @@ class MeetingItem(Container):
     security.declarePrivate('listCategories')
 
     def listCategories(self, classifiers=False):
-        '''Returns a DisplayList containing all available active categories in
+        '''Returns an OrderedDict containing all available active categories in
            the meeting config that corresponds me.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2865,12 +2888,12 @@ class MeetingItem(Container):
         res.insert(0, ('_none_', translate('make_a_choice',
                                            domain='PloneMeeting',
                                            context=self.REQUEST)))
-        return DisplayList(res)
+        return OrderedDict(res)
 
     security.declarePrivate('listClassifiers')
 
     def listClassifiers(self):
-        '''Returns a DisplayList containing all available active classifiers in
+        '''Returns an OrderedDict containing all available active classifiers in
            the meeting config that corresponds me.'''
         return self.listCategories(classifiers=True)
 
@@ -3057,10 +3080,9 @@ class MeetingItem(Container):
            instance. Indeed, p_self may correspond to an adapter instance. Those
            methods can retrieve the MeetingItem instance through a call to
            m_getSelf.'''
-        res = self
-        if self.getTagName() != 'MeetingItem':
-            res = self.context
-        return res
+        if 'context' in self.__dict__:
+            return self.context
+        return self
 
     def _may_update_item_reference(self):
         '''See docstring in interfaces.py.'''
@@ -3149,9 +3171,9 @@ class MeetingItem(Container):
             if cfg.is_committees_using("auto_from"):
                 committees = []
                 for committee in cfg.getCommittees(only_enabled=True):
-                    if "proposing_group__" + self.getProposingGroup() in committee["auto_from"] or \
-                       "category__" + self.getCategory() in committee["auto_from"] or \
-                       "classifier__" + self.getClassifier() in committee["auto_from"]:
+                    if "proposing_group__" + (self.getProposingGroup() or '') in committee["auto_from"] or \
+                       "category__" + (self.getCategory() or '') in committee["auto_from"] or \
+                       "classifier__" + (self.getClassifier() or '') in committee["auto_from"]:
                         committees.append(committee['row_id'])
                 committees = committees or [NO_COMMITTEE]
                 # only set committees if value changed
@@ -3803,23 +3825,22 @@ class MeetingItem(Container):
            If p_bypassWritePermissionCheck is True, we will not check for write_permission.
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
-        field = self.Schema()[fieldName]
-        # some fields are still editable even when meeting closed
+        from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+        schema = get_dx_schema(self)
+        write_perms = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY) or {}
+        write_perm = write_perms.get(fieldName, ModifyPortalContent)
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
         bypassWritePermissionCheck = bypassWritePermissionCheck or \
             self.adapted()._bypass_write_perm_check_for(fieldName)
-        # write_permission is "View" for custom management
-        # if bypassWritePermissionCheck is False, make sure write_permission
-        # is no more "View", set it to "Manage portal"
-        write_perm = field.write_permission
         if not bypassWritePermissionCheck and write_perm == "View":
             write_perm = ManagePortal
+        condition = self._field_conditions.get(fieldName, '')
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=write_perm,
-            expression=self.Schema()[fieldName].widget.condition,
+            expression=condition,
             onlyForManagers=onlyForManagers,
             bypassMeetingClosedCheck=bypassMeetingClosedCheck)
         if not res and raiseOnError:
@@ -4630,7 +4651,7 @@ class MeetingItem(Container):
                 res.append((org_or_hp.UID(), org_or_hp.Title()))
             else:
                 res.append((org_or_hp.UID(), org_or_hp.get_short_title()))
-        return DisplayList(res)
+        return OrderedDict(res)
 
     security.declarePrivate('getAdvices')
 
@@ -6368,6 +6389,20 @@ class MeetingItem(Container):
         self._at_creation_flag = False
         if is_creation:
             self._at_post_create()
+        if self.preferred_meeting and \
+           self.preferred_meeting != ITEM_NO_PREFERRED_MEETING_VALUE:
+            self._update_preferred_meeting(self.preferred_meeting)
+        if self._at_rename_after_creation and \
+           not self.isDefinedInTool() and \
+           not self.isTemporary():
+            wfTool = api.portal.get_tool('portal_workflow')
+            itemWF = wfTool.getWorkflowsFor(self)[0]
+            if itemWF.initial_state == self.query_state() and \
+               self.getId() != self.generateNewId():
+                with api.env.adopt_roles(['Manager']):
+                    self._at_creation_flag = True
+                    self._renameAfterCreation(check_auto_id=False)
+                    self._at_creation_flag = False
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -6950,7 +6985,8 @@ class MeetingItem(Container):
         # If we are here, everything has already been checked before.
         # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
-        if item.meta_type not in ('Plone Site', 'MeetingConfig', 'MeetingItem'):
+        if item.meta_type not in ('Plone Site', 'MeetingConfig', 'MeetingItem',
+                                  'MeetingItemRecurring', 'MeetingItemTemplate'):
             user_id = get_current_user_id(item.REQUEST)
             logger.warn(BEFOREDELETE_ERROR % (user_id, self.id))
             raise BeforeDeleteException(
@@ -6959,7 +6995,9 @@ class MeetingItem(Container):
                           context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
-        if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item.checkCreationFlag():
+        if item.meta_type not in ['Plone Site', 'MeetingConfig',
+                                  'MeetingItemRecurring', 'MeetingItemTemplate'] \
+                and not item.checkCreationFlag():
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
             predecessor = self.get_predecessor()

@@ -1181,10 +1181,25 @@ def set_field_from_ajax(
 
     notify_modified = True
     if IDexterityContent.providedBy(obj):
-        widget = get_dx_widget(obj, field_name=field_name)
-        if not widget.may_edit():
+        try:
+            widget = get_dx_widget(obj, field_name=field_name)
+        except (ValueError, KeyError):
+            widget = None
+        if widget is not None and hasattr(widget, 'may_edit'):
+            if not widget.may_edit():
+                raise Unauthorized
+        elif not obj.mayQuickEdit(field_name):
             raise Unauthorized
-        setattr(obj, field_name, richtextval(new_value))
+
+        notify_modified = not obj.adapted()._bypass_quick_edit_notify_modified_for(field_name)
+
+        if remember:
+            previousData = rememberPreviousData(obj, field_name)
+            setattr(obj, field_name, richtextval(new_value))
+            if previousData:
+                addDataChange(obj, previousData)
+        else:
+            setattr(obj, field_name, richtextval(new_value))
     else:
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
@@ -1282,14 +1297,22 @@ def transformAllRichTextFields(obj, onlyField=None):
     fieldsToTransform = cfg.xhtml_transform_fields
     transformTypes = cfg.xhtml_transform_types
     fields = {}
+    def _get_raw(obj, attr_name):
+        val = getattr(obj, attr_name, None)
+        if val is None:
+            return None
+        if isinstance(val, RichTextValue):
+            return val.raw
+        return val
+
     if IDexterityContent.providedBy(obj):
         if onlyField:
             field = get_dx_field(obj, onlyField)
-            fields[field.__name__] = getattr(obj, field.__name__).raw
+            fields[field.__name__] = _get_raw(obj, field.__name__)
         else:
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-            fields = {field_name: getattr(obj, field_name, None) is not None and getattr(obj, field_name).raw
+            fields = {field_name: _get_raw(obj, field_name)
                       for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
