@@ -505,7 +505,7 @@ class testWorkflows(PloneMeetingTestCase):
         # disable a recurring item
         self.changeUser('siteadmin')
         recItem1 = cfg.getRecurringItems()[0]
-        self.assertEqual(recItem1.getMeetingTransitionInsertingMe(), u'_init_')
+        self.assertEqual(recItem1.meeting_transition_inserting_me, u'_init_')
         self.do(recItem1, 'deactivate')
         # create a new meeting
         self.changeUser('pmManager')

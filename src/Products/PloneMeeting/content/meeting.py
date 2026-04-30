@@ -2370,7 +2370,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for item in cfg.getRecurringItems():
-            if item.getMeetingTransitionInsertingMe() == transition:
+            if item.meeting_transition_inserting_me == transition:
                 rec_items.append(item)
         if rec_items:
             self.add_recurring_items(rec_items)

@@ -6337,16 +6337,13 @@ class MeetingConfig(Container):
     def getRecurringItems(self, onlyActive=True):
         '''Gets the recurring items defined in the configuration.
            If p_onlyActive is True, only returns 'active' items.'''
-        res = []
         itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        all_items = itemsFolder.objectValues(
+            ('MeetingItem', 'MeetingItemRecurring'))
         if not onlyActive:
-            res = itemsFolder.objectValues('MeetingItem')
-        else:
-            res = []
-            for item in itemsFolder.objectValues('MeetingItem'):
-                if item.query_state() == 'active':
-                    res.append(item)
-        return res
+            return list(all_items)
+        return [item for item in all_items
+                if item.query_state() == 'active']
 
     def _itemTemplatesQuery(self, onlyActive=True, filtered=False):
         '''Returns the catalog query to get item templates.'''

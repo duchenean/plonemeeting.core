@@ -2129,7 +2129,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(i1.copy_groups)
         # If we create an item with copyGroups, the copyGroups are there...
         i2 = self.create('MeetingItem', copyGroups=cfg.selectable_copy_groups)
-        self.assertEqual(i2.copy_groups, tuple(cfg.selectable_copy_groups))
+        self.assertEqual(sorted(i2.copy_groups), sorted(cfg.selectable_copy_groups))
         # Now, define on an organization of the config that it will returns a particular suffixed group
         self.changeUser('admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
@@ -3312,7 +3312,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # still not considered as late item as preferredMeeting is not set to meeting.UID()
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # set preferredMeeting so it is considered as late now...
-        lateItem.preferred_meeting = meeting.UID()
+        lateItem.setPreferredMeeting(meeting.UID())
         # if the meeting is not in relevant states, the item is not considered as late...
         self.backToState(meeting, 'created')
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
@@ -3338,7 +3338,7 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=now + timedelta(days=7))
         after_meeting = self.create('Meeting', date=now + timedelta(days=14))
         item = self.create('MeetingItem')
-        item.preferred_meeting = meeting.UID()
+        item.setPreferredMeeting(meeting.UID())
         # meetings not frozen
         self.assertFalse(item.wfConditions().isLateFor(before_meeting))
         self.assertFalse(item.wfConditions().isLateFor(meeting))
@@ -3539,13 +3539,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         lateItem1 = self.create('MeetingItem')
         lateItem1.decision = richtextval('<p>A decision</p>')
-        lateItem1.preferred_meeting = meeting.UID()
+        lateItem1.setPreferredMeeting(meeting.UID())
         lateItem2 = self.create('MeetingItem')
         lateItem2.decision = richtextval('<p>A decision</p>')
-        lateItem2.preferred_meeting = meeting.UID()
+        lateItem2.setPreferredMeeting(meeting.UID())
         lateItem3 = self.create('MeetingItem')
         lateItem3.decision = richtextval('<p>A decision</p>')
-        lateItem3.preferred_meeting = meeting.UID()
+        lateItem3.setPreferredMeeting(meeting.UID())
         for elt in (lateItem1, lateItem2, lateItem3):
             self.presentItem(elt)
             # check that late items use meeting value
@@ -3762,11 +3762,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         lateItem = self.create('MeetingItem')
         lateItem.decision = richtextval('<p>A decision</p>')
-        lateItem.preferred_meeting = meeting.UID()
+        lateItem.setPreferredMeeting(meeting.UID())
         self.presentItem(lateItem)
         # it is presented as late item, it will be just inserted at the end
         self.assertTrue(lateItem.isLate())
-        self.assertEqual(lateItem.getField('itemNumber').get(lateItem), 600)
+        self.assertEqual(lateItem.item_number, 600)
         self.assertEqual(lateItem.getItemNumber(relativeTo='meeting'), 600)
         self.assertEqual(lateItem.getItemNumber(relativeTo='meetingConfig'), 600)
 
@@ -3871,13 +3871,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
         # but if it was the preferredMeeting selected for the item
         # it is present in the vocabulary
-        item.preferred_meeting = m1UID
+        item.setPreferredMeeting(m1UID)
         self.assertEqual(len(item.listMeetingsAcceptingItems()), 4)
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
         self.assertTrue(m1UID in item.listMeetingsAcceptingItems().keys())
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
         # if item.preferredMeeting is in the vocabulary by default, it works too
-        item.preferred_meeting = m2UID
+        item.setPreferredMeeting(m2UID)
         self.assertEqual(len(item.listMeetingsAcceptingItems()), 3)
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
         self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
@@ -5828,6 +5828,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # 'internalNotes' is in the NEUTRAL_FIELDS
         item.internal_notes = richtextval('<p>Internal notes.</p>')
         # every item fields except ones considered as metadata
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         itemFields = [field.getName() for field in item.Schema().filterFields(isMetadata=False)]
         # fields not taken into account are following
         # XXX toDiscuss is a neutral field because it is managed manually depending
@@ -5853,7 +5854,7 @@ class testMeetingItem(PloneMeetingTestCase):
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
-        copiedFields = set(
+        all_field_names = (
             NEUTRAL_FIELDS +
             DEFAULT_COPIED_FIELDS +
             EXTRA_COPIED_FIELDS_SAME_MC +
@@ -5861,6 +5862,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 cloned_to_same_mc=True, cloned_from_item_template=False) +
             item.adapted().getExtraFieldsToCopyWhenCloning(
                 cloned_to_same_mc=False, cloned_from_item_template=False))
+        copiedFields = set(_at_to_dx(name) for name in all_field_names)
         # showinsearch and searchwords must be ignored when using Solr
         item_field_set = set([field_name for field_name in itemFields
                               if field_name not in ('showinsearch', 'searchwords')])
@@ -7533,7 +7535,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2021, 8, 11))
         item = self.create('MeetingItem')
-        item.preferred_meeting = meeting.UID()
+        item.setPreferredMeeting(meeting.UID())
         self.validateItem(item)
         self.assertFalse(item.wfConditions().isLateFor(meeting))
         late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' " \

@@ -982,13 +982,76 @@ class MeetingItem(Container):
     _at_rename_after_creation = True
 
     _field_conditions = {
+        'detailedDescription': "python: here.attribute_is_used('detailedDescription')",
+        'budgetRelated': "python: here.show_budget_infos()",
+        'budgetInfos': "python: here.show_budget_infos()",
+        'proposingGroup': "python: not here.attribute_is_used('proposingGroupWithGroupInCharge')",
+        'proposingGroupWithGroupInCharge': "python: here.attribute_is_used('proposingGroupWithGroupInCharge')",
+        'groupsInCharge': "python: here.show_groups_in_charge()",
+        'associatedGroups': "python: here.attribute_is_used('associatedGroups')",
+        'category': "python: here.attribute_is_used('category')",
+        'classifier': "python: here.attribute_is_used('classifier')",
+        'committees': "python: here.show_committees()",
+        'listType': "python: here.adapted().mayChangeListType()",
+        'emergency': "python: here.showEmergency()",
+        'preferredMeeting': "python: not here.isDefinedInTool()",
+        'meetingDeadlineDate': "python: here.attribute_is_used('meetingDeadlineDate') and not here.isDefinedInTool()",
+        'itemTags': "python: here.attribute_is_used('itemTags')",
+        'itemKeywords': "python: here.attribute_is_used('itemKeywords')",
+        'emergencyMotivation': "python: here.attribute_is_used('emergencyMotivation')",
+        'motivation': "python: here.attribute_is_used('motivation')",
+        'decisionSuite': "python: here.attribute_is_used('decisionSuite')",
+        'decisionEnd': "python: here.attribute_is_used('decisionEnd')",
+        'votesResult': "python: here.attribute_is_used('votesResult')",
+        'oralQuestion': "python: here.showOralQuestion()",
+        'toDiscuss': "python: here.showToDiscuss()",
+        'itemInitiator': "python: here.attribute_is_used('itemInitiator')",
+        'groupsInChargeNotes': "python: here.adapted().show_field('groupsInChargeNotes')",
+        'inAndOutMoves': "python: here.showMeetingManagerReservedField('inAndOutMoves')",
+        'notes': "python: here.showMeetingManagerReservedField('notes')",
+        'meetingManagersNotes': "python: here.showMeetingManagerReservedField('meetingManagersNotes')",
+        'meetingManagersNotesSuite': "python: here.showMeetingManagerReservedField('meetingManagersNotesSuite')",
+        'meetingManagersNotesEnd': "python: here.showMeetingManagerReservedField('meetingManagersNotesEnd')",
+        'internalNotes': "python: here.attribute_is_used('internalNotes')",
+        'neededFollowUp': "python: here.adapted().show_field('neededFollowUp')",
+        'providedFollowUp': "python: here.adapted().show_field('providedFollowUp')",
+        'marginalNotes': "python: here.attribute_is_used('marginalNotes')",
+        'observations': "python: here.adapted().showObservations()",
+        'templateUsingGroups': "python: here.isDefinedInTool(item_type='itemtemplate')",
+        'meetingTransitionInsertingMe': "python: here.isDefinedInTool(item_type='recurring')",
         'itemAssembly': "python: here.is_assembly_field_used('itemAssembly')",
         'itemAssemblyExcused': "python: here.is_assembly_field_used('itemAssemblyExcused')",
         'itemAssemblyAbsents': "python: here.is_assembly_field_used('itemAssemblyAbsents')",
         'itemAssemblyGuests': "python: here.is_assembly_field_used('itemAssemblyGuests')",
         'itemSignatures': "python: here.is_assembly_field_used('itemSignatures')",
-        'internalNotes': "python: here.attribute_is_used('internalNotes')",
-        'observations': "python: here.adapted().showObservations()",
+        'copyGroups': "python: here.attribute_is_used('copyGroups')",
+        'restrictedCopyGroups': "python: here.attribute_is_used('restrictedCopyGroups')",
+        'pollType': "python: (here.attribute_is_used('pollType') or "
+                    "here.isVotesEnabled()) and here.adapted().mayChangePollType()",
+        'pollTypeObservations': "python: here.attribute_is_used('pollTypeObservations')",
+        'committeeObservations': "python: here.attribute_is_used('committeeObservations')",
+        'committeeTranscript': "python: here.attribute_is_used('committeeTranscript')",
+        'votesObservations': "python: here.adapted().show_votesObservations()",
+        'manuallyLinkedItems': "python: here.attribute_is_used('manuallyLinkedItems') and "
+                               "not here.isDefinedInTool()",
+        'otherMeetingConfigsClonableTo': "python: here.showClonableToOtherMCs()",
+        'otherMeetingConfigsClonableToEmergency': "python: here.attribute_is_used('otherMeetingConfigsClonableToEmergency')",
+        'otherMeetingConfigsClonableToPrivacy': "python: here.attribute_is_used('otherMeetingConfigsClonableToPrivacy')",
+        'otherMeetingConfigsClonableToFieldTitle': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldTitle')",
+        'otherMeetingConfigsClonableToFieldDescription': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDescription')",
+        'otherMeetingConfigsClonableToFieldDetailedDescription': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDetailedDescription')",
+        'otherMeetingConfigsClonableToFieldMotivation': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivation')",
+        'otherMeetingConfigsClonableToFieldDecision': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecision')",
+        'otherMeetingConfigsClonableToFieldDecisionSuite': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionSuite')",
+        'otherMeetingConfigsClonableToFieldDecisionEnd': "python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionEnd')",
+        'isAcceptableOutOfMeeting': "python: here.showIsAcceptableOutOfMeeting()",
+        'sendToAuthority': "python: here.attribute_is_used('sendToAuthority')",
+        'privacy': "python: here.attribute_is_used('privacy')",
+        'completeness': "python: here.attribute_is_used('completeness') and "
+                        "(here.adapted().mayEvaluateCompleteness() or here.adapted().mayAskCompletenessEvalAgain())",
+        'itemIsSigned': "python: here.showItemIsSigned()",
+        'takenOverBy': "python: here.attribute_is_used('takenOverBy')",
+        'textCheckList': "python: here.showMeetingManagerReservedField('textCheckList')",
     }
 
     def getTagName(self):
@@ -3852,16 +3915,19 @@ class MeetingItem(Container):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+        from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
+        snake_name = _camel_to_snake(fieldName)
         schema = get_dx_schema(self)
         write_perms = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY) or {}
-        write_perm = write_perms.get(fieldName, ModifyPortalContent)
+        write_perm = write_perms.get(snake_name, ModifyPortalContent)
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
         bypassWritePermissionCheck = bypassWritePermissionCheck or \
             self.adapted()._bypass_write_perm_check_for(fieldName)
         if not bypassWritePermissionCheck and write_perm == "View":
             write_perm = ManagePortal
-        condition = self._field_conditions.get(fieldName, '')
+        condition = self._field_conditions.get(fieldName, '') or \
+            self._field_conditions.get(snake_name, '')
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
@@ -6662,9 +6728,13 @@ class MeetingItem(Container):
                         newItem.couldInheritAdvice(org_uid)]
 
         # set arbitrary attrs before reindexing
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         for attr_id, attr_value in item_attrs.items():
-            field = newItem.getField(attr_id)  # B.2.x TODO: AT widget/getField API
-            field.getMutator(newItem)(attr_value)
+            setter = 'set' + attr_id[0].upper() + attr_id[1:]
+            if hasattr(newItem, setter):
+                getattr(newItem, setter)(attr_value)
+            else:
+                setattr(newItem, _at_to_dx(attr_id), attr_value)
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
