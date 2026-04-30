@@ -1400,9 +1400,13 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     raise_on_error=True)
                 # transform a field
                 if '.' in transform['field_name']:
-                    field = obj.getField(transform['field_name'].split('.')[1])
-                    field.set(obj, res, mimetype='text/html')
-                    idxs.append(field.accessor)
+                    field_name = transform['field_name'].split('.')[1]
+                    from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+                    dx_name = _at_to_dx(field_name)
+                    from plone.app.textfield.value import RichTextValue
+                    setattr(obj, dx_name, RichTextValue(
+                        res, 'text/html', 'text/x-html-safe'))
+                    idxs.append(field_name)
             except Exception as e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
