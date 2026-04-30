@@ -3465,6 +3465,10 @@ class MeetingConfig(Container):
     def setItemsVisibleFields(self, value, **kwargs):
         self.items_visible_fields = list(value)
 
+    security.declareProtected(WriteRiskyConfig, 'setItemFieldsConfig')
+    def setItemFieldsConfig(self, value, **kwargs):
+        self.item_fields_config = list(value)
+
     security.declareProtected(WriteRiskyConfig, 'setOnMeetingTransitionItemActionToExecute')
     def setOnMeetingTransitionItemActionToExecute(self, value, **kwargs):
         self.on_meeting_transition_item_action_to_execute = [
@@ -5302,7 +5306,8 @@ class MeetingConfig(Container):
             expression=tal_expr,
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
-            empty_expr_is_true=empty_expr_is_true)
+            empty_expr_is_true=empty_expr_is_true,
+            raise_on_error=True)
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''

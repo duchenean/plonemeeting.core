@@ -1945,9 +1945,11 @@ class Meeting(Container):
         self._invalidate_insert_order_cache_for(item)
 
         # make sure item assembly/signatures related fields are emptied
-        for field in item.Schema().filterFields(isMetadata=False):
-            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
-                field.set(item, '')
+        item.item_assembly = u''
+        item.item_assembly_excused = u''
+        item.item_assembly_absents = u''
+        item.item_assembly_guests = u''
+        item.item_signatures = u''
 
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),

@@ -3406,8 +3406,8 @@ class MeetingItem(Container):
             if meeting.attribute_is_used(attr_names_mapping[field_name]):
                 res = True
             else:
-                # maybe it was used before?
-                accessor = self.getField(field_name).getAccessor(self)  # B.2.x TODO: AT widget/getField API
+                accessor_name = 'get' + field_name[0].upper() + field_name[1:]
+                accessor = getattr(self, accessor_name)
                 if accessor(real=True) or accessor(real=False):
                     res = True
         return res
@@ -4004,10 +4004,11 @@ class MeetingItem(Container):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+        from plone.supermodel.utils import mergedTaggedValueDict
         from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
         snake_name = _camel_to_snake(fieldName)
         schema = get_dx_schema(self)
-        write_perms = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY) or {}
+        write_perms = mergedTaggedValueDict(schema, WRITE_PERMISSIONS_KEY)
         write_perm = write_perms.get(snake_name, ModifyPortalContent)
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)

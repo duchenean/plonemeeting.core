@@ -152,15 +152,15 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class CategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, cat_type='categories'):
+    def __call___cachekey(method, self, context, cat_type='categories', sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, repr(cfg), cat_type
+        return date, repr(cfg), cat_type, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, cat_type='categories'):
+    def __call__(self, context, cat_type='categories', sort=True):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -176,7 +176,10 @@ class CategoriesVocabulary(object):
                            safe_unicode(category.Title())
                            )
             )
-        res = humansorted(res_active, key=attrgetter('title'))
+        if sort:
+            res = humansorted(res_active, key=attrgetter('title'))
+        else:
+            res = res_active
 
         res_not_active = []
         for category in notActiveCategories:
@@ -199,8 +202,21 @@ class ItemCategoriesVocabulary(CategoriesVocabulary):
 
     def ItemCategoriesVocabulary__call__(self, context, cat_type='categories'):
         """ """
-        return super(ItemCategoriesVocabulary, self).__call__(
-            context, cat_type=cat_type)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        field_name = 'classifier' if cat_type == 'classifiers' else 'category'
+        sort = field_name not in (cfg.item_fields_to_keep_config_sorting_for or ())
+        vocab = super(ItemCategoriesVocabulary, self).__call__(
+            context, cat_type=cat_type, sort=sort)
+        terms = list(vocab._terms)
+        terms.insert(
+            0,
+            SimpleTerm(
+                '_none_', '_none_',
+                translate('make_a_choice',
+                          domain='PloneMeeting',
+                          context=context.REQUEST)))
+        return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name
     __call__ = ItemCategoriesVocabulary__call__

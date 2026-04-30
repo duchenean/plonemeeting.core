@@ -2276,7 +2276,7 @@ def may_view_field(obj, field_name):
     from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
     snake_name = _camel_to_snake(field_name)
     schema = get_dx_schema(obj)
-    read_perms = schema.queryTaggedValue(READ_PERMISSIONS_KEY) or {}
+    read_perms = mergedTaggedValueDict(schema, READ_PERMISSIONS_KEY)
     read_perm = read_perms.get(snake_name, View)
     condition = ''
     if hasattr(obj, '_field_conditions'):
