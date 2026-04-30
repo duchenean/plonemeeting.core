@@ -1400,6 +1400,12 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     raise_on_error=True)
                 # transform a field
                 if '.' in transform['field_name']:
+                    if res is None:
+                        res = u''
+                    if not isinstance(res, basestring):
+                        raise TypeError(
+                            "Value is not File or String (%s - %s)" %
+                            (type(res), type(res)))
                     field_name = transform['field_name'].split('.')[1]
                     from Products.PloneMeeting.content.meetingconfig import _at_to_dx
                     dx_name = _at_to_dx(field_name)

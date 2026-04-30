@@ -559,7 +559,7 @@ class testMeetingItem(PloneMeetingTestCase):
         annotations = IAnnotations(item)
         annotationKey = item._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         newUID = annotations[annotationKey]
-        newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
+        newItem = self.catalog(UID=newUID)[0].getObject()
         # the newItem is linked to the original
         self.assertEqual(newItem.get_predecessor(the_object=False), item.UID())
         # the newItem has a new portal_type
@@ -4768,7 +4768,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item6, 'accept')
         self.assertFalse(IStatusMessage(self.request).show())
         self.assertEqual(item6.getDecision(), '')
-        self.assertEqual(item6.decision.mimetype, 'text/html')
+        self.assertEqual(item6.decision.mimeType, 'text/html')
         self.assertEqual(item6.query_state(), 'accepted')
         # when using EXECUTE_EXPR_VALUE
         cfg.setOnTransitionFieldTransforms(

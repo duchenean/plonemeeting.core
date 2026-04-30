@@ -1256,6 +1256,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         continue
                     default = field.default
                     setattr(newItem, field_name, default)
+            if 'preferredMeeting' not in fieldsToKeep:
+                newItem.preferred_meeting_path = None
             newItem._at_creation_flag = False
 
             if newPortalType:

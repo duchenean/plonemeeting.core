@@ -1054,6 +1054,68 @@ class MeetingItem(Container):
         'textCheckList': "python: here.showMeetingManagerReservedField('textCheckList')",
     }
 
+    _searchable_fields = (
+        'item_reference',
+        'description',
+        'detailed_description',
+        'budget_infos',
+        'item_tags',
+        'item_keywords',
+        'motivation',
+        'decision',
+        'decision_suite',
+        'decision_end',
+        'votes_result',
+        'groups_in_charge_notes',
+        'internal_notes',
+        'marginal_notes',
+        'observations',
+        'poll_type_observations',
+        'committee_observations',
+        'committee_transcript',
+        'votes_observations',
+        'other_meeting_configs_clonable_to_field_title',
+        'other_meeting_configs_clonable_to_field_description',
+        'other_meeting_configs_clonable_to_field_detailed_description',
+        'other_meeting_configs_clonable_to_field_motivation',
+        'other_meeting_configs_clonable_to_field_decision',
+        'other_meeting_configs_clonable_to_field_decision_suite',
+        'other_meeting_configs_clonable_to_field_decision_end',
+    )
+
+    def SearchableText(self):
+        data = []
+        title = self.Title()
+        if title:
+            if isinstance(title, unicode):
+                title = title.encode('utf-8')
+            data.append(title)
+        transforms = api.portal.get_tool('portal_transforms')
+        for attr_name in self._searchable_fields:
+            value = getattr(self, attr_name, None)
+            if not value:
+                continue
+            if isinstance(value, RichTextValue):
+                raw = value.raw or u''
+                if raw:
+                    stream = transforms.convertTo(
+                        'text/plain', safe_encode(raw),
+                        mimetype='text/html')
+                    text = stream.getData() if stream else ''
+                    if text:
+                        data.append(text)
+            elif isinstance(value, (list, tuple)):
+                for v in value:
+                    if v:
+                        if isinstance(v, unicode):
+                            v = v.encode('utf-8')
+                        data.append(v)
+            else:
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
+                data.append(str(value))
+        return ' '.join(data)
+
     def getTagName(self):
         return self.__class__.archetype_name
 
@@ -1140,6 +1202,14 @@ class MeetingItem(Container):
                     title = "{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
         return title
+
+    def Description(self):
+        desc = self.description
+        if isinstance(desc, RichTextValue):
+            return safe_encode(desc.output or u'')
+        if isinstance(desc, unicode):
+            return desc.encode('utf-8')
+        return desc or ''
 
     security.declarePublic('getPrettyLink')
 
@@ -2304,7 +2374,7 @@ class MeetingItem(Container):
         if storedUids:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            catalog = api.portal.get_tool('uid_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             linkedItems = []
             for uid in storedUids:
                 brains = catalog(UID=uid)
@@ -6497,6 +6567,7 @@ class MeetingItem(Container):
                     self._at_creation_flag = True
                     self._renameAfterCreation(check_auto_id=False)
                     self._at_creation_flag = False
+        self.reindexObject()
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -6766,11 +6837,20 @@ class MeetingItem(Container):
         fplog('clone_item', extras=extras)
         return newItem
 
+    _other_mc_clonable_field_names = (
+        'otherMeetingConfigsClonableToFieldTitle',
+        'otherMeetingConfigsClonableToFieldDescription',
+        'otherMeetingConfigsClonableToFieldDetailedDescription',
+        'otherMeetingConfigsClonableToFieldMotivation',
+        'otherMeetingConfigsClonableToFieldDecision',
+        'otherMeetingConfigsClonableToFieldDecisionSuite',
+        'otherMeetingConfigsClonableToFieldDecisionEnd',
+    )
+
     def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
         """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
-        return [field_name for field_name in self.Schema().keys()
+        return [field_name for field_name in self._other_mc_clonable_field_names
                 if field_name in cfg.used_item_attributes and
-                field_name.startswith('otherMeetingConfigsClonableToField') and
                 field_name not in ignored_field_names]
 
     security.declarePublic('doCloneToOtherMeetingConfig')
@@ -6879,20 +6959,21 @@ class MeetingItem(Container):
             newItem.privacy = 'secret'
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
+        from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
             dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
             dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
-            dest_field = newItem.getField(dest_field_name)  # B.2.x TODO: AT widget/getField API
-            # check that we will not empty a required field (case for "title" especially)
-            # and also that if field optional, it is used in destination config
-            if (fieldIsEmpty(other_mc_field_name, self) and
-                self.getField(dest_field_name).required) or \
-               (getattr(dest_field, 'optional', False) and
-                    not newItem.attribute_is_used(dest_field_name)):
+            dest_required = dest_field_name == 'title'
+            dest_optional = dest_field_name != 'title'
+            if (fieldIsEmpty(other_mc_field_name, self) and dest_required) or \
+               (dest_optional and not newItem.attribute_is_used(dest_field_name)):
                 continue
-            other_mc_field = self.getField(other_mc_field_name)  # B.2.x TODO: AT widget/getField API
-            other_mc_field_value = other_mc_field.get(self)
-            dest_field.set(newItem, other_mc_field_value, mimetype='text/html')
+            src_dx_name = _at_to_dx(other_mc_field_name)
+            dest_dx_name = _at_to_dx(dest_field_name)
+            value = getattr(self, src_dx_name, None)
+            if isinstance(value, RichTextValue):
+                value = RichTextValue(value.raw, 'text/html', 'text/x-html-safe')
+            setattr(newItem, dest_dx_name, value)
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
