@@ -450,7 +450,7 @@ longer see those fields on the view. They should migrate to a DX behavior or a
 `schema_policy_meetingconfig`.
 
 ⚠️ Downstream add-ons that override `meetingconfig_view` via skin layers
-(`Products.MeetingCommunes`, `Products.MeetingCollege`, etc.) must switch their
+(`plonemeeting.communes`, `Products.MeetingCollege`, etc.) must switch their
 override to a `<browser:page name="view">` ZCML registration targeting
 `Products.PloneMeeting.interfaces.IMeetingConfig`.
 

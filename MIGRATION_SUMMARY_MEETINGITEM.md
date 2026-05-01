@@ -269,7 +269,7 @@ accessor — inspect each file. Will be elaborated phase by phase.
 for the old camelCase names.
 
 ⚠️ Sub-packages (`plonemeeting.restapi`, profile packages
-`Products.MeetingCommunes` and friends, `imio.zamqp.pm`,
+`plonemeeting.communes` and friends, `imio.zamqp.pm`,
 `imio.dms.mail`) may also have accessor calls — audit those separately.
 
 ## Event wiring

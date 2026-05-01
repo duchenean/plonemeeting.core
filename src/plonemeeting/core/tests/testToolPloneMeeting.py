@@ -1369,7 +1369,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_AdvisersConfig(self):
         """Test the ToolPloneMeeting.advisersConfig.
            Here test the base behavior, a more complex behavior is tested in
-           Products.MeetingCommunes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
+           plonemeeting.communes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
         cfg = self.meetingConfig
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
