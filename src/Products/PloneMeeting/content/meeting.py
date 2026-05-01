@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
@@ -92,6 +94,7 @@ from zope.schema.vocabulary import SimpleVocabulary
 
 import itertools
 import logging
+import six
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -809,7 +812,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             msg = translate(
                 'can_not_remove_or_add_attendee_item_attendees_reordered',
                 mapping={'item_url': uuidToObject(
-                    item_attendees_order.keys()[0]).absolute_url()},
+                    list(item_attendees_order.keys())[0]).absolute_url()},
                 domain='PloneMeeting',
                 context=request)
             # avoid multiple call to this invariant
@@ -1376,7 +1379,7 @@ class Meeting(Container):
                 res[uid_or_obj] = {
                     'signature_number': signature_number,
                     'position_type': uuidToObject(
-                        isinstance(uid_or_obj, basestring) and
+                        isinstance(uid_or_obj, six.string_types) and
                         uid_or_obj or uid_or_obj.UID()).position_type}
 
         if by_signature_number:
@@ -1501,7 +1504,7 @@ class Meeting(Container):
                 if v['hp_uid'] == signatory_uid}
         hp = uuidToObject(signatory_uid, unrestricted=True)
         if data:
-            signature_number, position_type = data.items()[0]
+            signature_number, position_type = list(data.items())[0]
         else:
             # if not, then get it from meeting signatories
             signature_number = self.get_signatories()[signatory_uid]

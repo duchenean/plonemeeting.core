@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function
+
 from zope.i18n import translate
 from zope.publisher.browser import BrowserView
 

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
 from appy.gen import No

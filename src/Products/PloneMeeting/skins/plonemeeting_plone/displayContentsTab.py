@@ -11,6 +11,8 @@
 # XXX change by PloneMeeting, we do not show contents tab if current object layout
 # is 'folder_contents', it is the case for the MeetingConfig 'itemtemplates' folder
 # and for every folders added under it
+from __future__ import absolute_import, print_function
+
 if context.getLayout() == 'folder_contents':
     return False
 

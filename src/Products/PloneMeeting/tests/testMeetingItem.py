@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
@@ -98,6 +100,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.ramcache.interfaces.ram import IRAMCache
 
 import transaction
+import six
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -180,7 +183,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         vocab = get_vocab(
             item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
-        self.assertEqual(vocab(item).by_value.keys(), [self.vendors_uid, ])
+        self.assertEqual(list(vocab(item).by_value.keys()), [self.vendors_uid, ])
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
@@ -199,7 +202,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         vocab = get_vocab(
             item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
-        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid])
+        self.assertEqual(list(vocab(item).by_value.keys()), [self.developers_uid])
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
         self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.vendors_uid])
@@ -2069,7 +2072,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
-        item.workflow_history[item.workflow_history.keys()[0]] = {}
+        item.workflow_history[list(item.workflow_history.keys())[0]] = {}
         self.assertEqual(previous_review_state(item)(), _marker)
         item.workflow_history = PersistentMapping()
         self.assertEqual(previous_review_state(item)(), _marker)
@@ -6537,7 +6540,7 @@ class testMeetingItem(PloneMeetingTestCase):
         form = item.restrictedTraverse('@@item_emergency_change_form').form_instance
 
         # ask emergency
-        self.assertEqual(itemEmergencyView.listSelectableEmergencies().keys(), ['emergency_asked'])
+        self.assertEqual(list(itemEmergencyView.listSelectableEmergencies().keys()), ['emergency_asked'])
         # current user may not quickEdit 'emergency' as it is not in cfg.usedItemAttributes
         self.assertFalse('emergency' in cfg.used_item_attributes)
         self.assertRaises(Unauthorized, form)
@@ -6564,7 +6567,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.emergency_changes_history[0]['comments'], 'My comment')
 
         # when asked, asker can do nothing else but back to 'no_emergency'
-        self.assertEqual(itemEmergencyView.listSelectableEmergencies().keys(), ['no_emergency'])
+        self.assertEqual(list(itemEmergencyView.listSelectableEmergencies().keys()), ['no_emergency'])
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
         self.validateItem(item)
         # no more editable, can do nothing
@@ -6774,21 +6777,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getId(), 'new-title')
         # as well as categorized_elements on item
         self.assertEqual(
-            item.categorized_elements.values()[0]['download_url'],
+            list(item.categorized_elements.values())[0]['download_url'],
             u'{0}/@@download'.format(
                 self.portal.portal_url.getRelativeContentURL(annex)))
         # file is correctly downloadable with given download_url
         download_view = self.portal.unrestrictedTraverse(
-            str(item.categorized_elements.values()[0]['download_url']))
+            str(list(item.categorized_elements.values())[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
         # and categorized_elements on advice
         self.assertEqual(
-            advice.categorized_elements.values()[0]['download_url'],
+            list(advice.categorized_elements.values())[0]['download_url'],
             u'{0}/@@download'.format(
                 self.portal.portal_url.getRelativeContentURL(advice_annex)))
         # file is correctly downloadable with given download_url
         download_view = self.portal.unrestrictedTraverse(
-            str(advice.categorized_elements.values()[0]['download_url']))
+            str(list(advice.categorized_elements.values())[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
 
     def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
@@ -7230,7 +7233,7 @@ class testMeetingItem(PloneMeetingTestCase):
             "title='Theorical date into which item should be presented'></img>&nbsp;<span>None</span>"
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode('{0} ({1}), {2} ({3})'.format(
+            six.text_type('{0} ({1}), {2} ({3})'.format(
                     cfg2Title, noneTheoricalMeeting,
                     cfg3Title, noneTheoricalMeeting),
                     'utf-8'))
@@ -7239,7 +7242,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.other_meeting_configs_clonable_to_emergency = (cfg3Id, )
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} ({1}), {2} (<span class='item_clone_to_emergency'>Emergency</span> - {3})".format(
+            six.text_type("{0} ({1}), {2} (<span class='item_clone_to_emergency'>Emergency</span> - {3})".format(
                     cfg2Title, noneTheoricalMeeting,
                     cfg3Title, noneTheoricalMeeting), 'utf-8'))
         cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig.getMeetingsAcceptingItems')
@@ -7251,7 +7254,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
+            six.text_type("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
                     "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
                     "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
@@ -7260,7 +7263,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.other_meeting_configs_clonable_to_privacy = (cfg2Id, )
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+            six.text_type("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
                     "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
                     "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
@@ -7269,7 +7272,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.other_meeting_configs_clonable_to_privacy = (cfg2Id, cfg3Id)
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+            six.text_type("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
                     "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
                     "<span class='item_privacy_secret'>Closed door</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
@@ -7289,7 +7292,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(frozenMeeting)
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - "
+            six.text_type("{0} (<span class='item_privacy_public'>Public meeting</span> - "
                     "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
                     "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(
                         cfg2Title,
@@ -7300,7 +7303,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.other_meeting_configs_clonable_to_emergency = (cfg2Id, )
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_clone_to_emergency'>Emergency</span> - "
+            six.text_type("{0} (<span class='item_clone_to_emergency'>Emergency</span> - "
                     "<span class='item_privacy_public'>Public meeting</span> - "
                     "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
                     "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(

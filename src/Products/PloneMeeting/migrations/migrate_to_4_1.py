@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from ast import literal_eval
 from collections import OrderedDict
 from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
@@ -44,6 +46,7 @@ from zope.intid.interfaces import IIntIds
 
 import mimetypes
 import os
+import six
 
 
 class Migrate_To_4_1(Migrator):
@@ -413,7 +416,7 @@ class Migrate_To_4_1(Migrator):
                 hp_data = {
                     'id': mu.getId() + '_hp1',
                     'position': RelationValue(intids.getId(own_org)),
-                    'label': unicode(mu.getDuty(), 'utf-8'),
+                    'label': six.text_type(mu.getDuty(), 'utf-8'),
                     'usages': [usage for usage in mu.getUsages() if usage in ['assemblyMember', 'asker']],
                     'signature_number': 'signer' in mu.getUsages() and '1' or None}
                 # person may already exist as MeetingUsers were created on a per MeetingConfig basis
@@ -991,7 +994,7 @@ class Migrate_To_4_1(Migrator):
                         updateCollectionCriterion(collection, 'review_state', list(criterion['v']))
                     # make sure 'getDate' value is an unicode, not an integer
                     if criterion['i'] == 'getDate' and isinstance(criterion['v'], int):
-                        updateCollectionCriterion(collection, 'getDate', unicode(criterion['v']))
+                        updateCollectionCriterion(collection, 'getDate', six.text_type(criterion['v']))
         logger.info('Done.')
 
     def _removeUsersGlobalRoles(self):

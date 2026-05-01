@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.iconifiedcategory.utils import _modified as iconified_modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime

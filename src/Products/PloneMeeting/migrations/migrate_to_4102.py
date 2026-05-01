@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from ftw.labels.interfaces import ILabelJar
 from persistent.mapping import PersistentMapping
 from plone.app.textfield.value import RichTextValue

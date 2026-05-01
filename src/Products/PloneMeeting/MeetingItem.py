@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
@@ -172,6 +174,7 @@ from zope.schema.interfaces import IVocabularyFactory
 import html
 import itertools
 import logging
+import six
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -1108,7 +1111,7 @@ class MeetingItemWorkflowActions(object):
                 and self.context.getMeeting().query_state() == 'decided':
             with api.env.adopt_roles(roles=['Manager']):
                 wTool = api.portal.get_tool('portal_workflow')
-                from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
+                from .config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
                 wf_comment = _('wf_transition_triggered_by_application')
                 if 'no_publication' not in self.cfg.wf_adaptations:
                     wTool.doActionFor(self.context, 'itempublish', comment=wf_comment)
@@ -3411,7 +3414,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            for LinesField, we need to adapt it so it may be compared.
            This is completly taken from Products.Archetypes.Field.LinesField.set."""
 
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             value = value.split('\n')
         value = [v for v in value if v and v.strip()]
         return tuple(value)
@@ -5330,7 +5333,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return
         plone_group_ids = []
         plone_user_ids = []
-        for org_uid, adviceInfo in self.adviceIndex.iteritems():
+        for org_uid, adviceInfo in self.adviceIndex.items():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
             if not self.adapted()._sendAdviceToGiveToGroup(org_uid):
@@ -5972,7 +5975,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         is_confidential_power_observer = isPowerObserverForCfg(
             cfg, cfg.advice_confidential_for)
-        for groupId, adviceInfo in self.adviceIndex.iteritems():
+        for groupId, adviceInfo in self.adviceIndex.items():
             if not include_not_asked and adviceInfo['not_asked']:
                 continue
             # make sure we do not modify original data
@@ -6294,7 +6297,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            p_adviceIdsToBypass is a dict containing the advice to give as
            key and the fact that advice is optional as value, so :
            {'adviser_group_id': True}.'''
-        for advice in self.adviceIndex.itervalues():
+        for advice in self.adviceIndex.values():
             if advice['id'] in adviceIdsToBypass and \
                adviceIdsToBypass[advice['id']] == advice['optional']:
                 continue
@@ -6536,7 +6539,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
-            for org_uid, adviceInfo in self.adviceIndex.iteritems():
+            for org_uid, adviceInfo in self.adviceIndex.items():
                 advice_obj = self.getAdviceObj(adviceInfo['id'])
                 # Send a mail to the group that can give the advice.
                 if advice_obj and 'adviceInvalidated' in cfg.mail_item_events:
@@ -6566,7 +6569,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # 'delay_for_automatic_adviser_changed_manually'
         saved_stored_data = {}
         adapted = self.adapted()
-        for org_uid, adviceInfo in self.adviceIndex.iteritems():
+        for org_uid, adviceInfo in self.adviceIndex.items():
             saved_stored_data[org_uid] = {}
             reinit_delay = self._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
@@ -6697,7 +6700,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['userids'] = adviceInfo['userids']
 
         # now update self.adviceIndex with given advices
-        for org_uid, adviceInfo in self.getGivenAdvices().iteritems():
+        for org_uid, adviceInfo in self.getGivenAdvices().items():
             # first check that groupId is in self.adviceIndex, there could be 2 cases :
             # - in case an advice was asked automatically and condition that was True at the time
             #   is not True anymore (item/getBudgetRelated for example) but the advice was given in between
@@ -6764,7 +6767,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Then, add local roles regarding asked advices
         wfTool = api.portal.get_tool('portal_workflow')
-        for org_uid in self.adviceIndex.iterkeys():
+        for org_uid in self.adviceIndex.keys():
             org = get_organization(org_uid)
             itemAdviceStates = org.get_item_advice_states(cfg)
             itemAdviceEditStates = org.get_item_advice_edit_states(cfg)
@@ -7125,7 +7128,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         translate('Advice asked automatically because',
                                                   domain="PloneMeeting",
                                                   context=self.REQUEST),
-                                        unicode(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8') or '-')
+                                        six.text_type(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8') or '-')
         # if it is a delay-aware advice, display the number of days to give the advice
         # like that, when the limit decrease (3 days left), we still have the info
         # about original number of days to give advice

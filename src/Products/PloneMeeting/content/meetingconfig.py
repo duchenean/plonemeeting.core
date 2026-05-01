@@ -3,6 +3,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
@@ -167,6 +169,7 @@ import itertools
 import logging
 import os
 import re
+import six
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -4580,7 +4583,7 @@ class MeetingConfig(Container):
             # or value contains item state, like 'suffix_profile_prereviewers'
             values = getattr(self, dx_attr) or []
             # guard against string value (AT LinesField coerced strings to tuples; DX stores as-is)
-            if isinstance(values, basestring):
+            if isinstance(values, six.string_types):
                 values = [values]
             if "/" in attr:
                 col_name = attr.split("/")[1]
@@ -5909,7 +5912,7 @@ class MeetingConfig(Container):
           Create necessary subfolders for the MeetingConfig.
         '''
         default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
-        for folderId, folderInfo in self.subFoldersInfo.iteritems():
+        for folderId, folderInfo in self.subFoldersInfo.items():
             folderTitle = folderInfo[0][0]
             folderType = folderInfo[0][1]
             # if a folder already exists, we continue
@@ -6656,7 +6659,7 @@ class MeetingConfig(Container):
                          numberOfBrains,
                          '/'.join(item.getPhysicalPath())))
             i = i + 1
-            for advice in item.adviceIndex.itervalues():
+            for advice in item.adviceIndex.values():
                 advice['isConfidential'] = adviceConfidentialityDefault
         logger.info('Done.')
         api.portal.show_message('Done.', request=self.REQUEST)

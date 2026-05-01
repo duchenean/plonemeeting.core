@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.core.content.organization import IOrganization
 from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
@@ -473,7 +475,7 @@ def indexAdvisers(obj):
         return _marker
 
     res = []
-    for org_uid, advice_infos in obj.adviceIndex.iteritems():
+    for org_uid, advice_infos in obj.adviceIndex.items():
         adviceHolder = obj
         # use original advice data if advice is inherited
         if obj.adviceIsInherited(org_uid):

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from DateTime import DateTime
@@ -674,7 +676,7 @@ class testSearches(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self._enableField('copy_groups')
-        review_states = reviewers[reviewers.keys()[0]]
+        review_states = reviewers[list(reviewers.keys())[0]]
         if 'prereviewers' in reviewers:
             review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
@@ -758,11 +760,11 @@ class testSearches(PloneMeetingTestCase):
         reviewers = cfg.reviewersFor()
         self._removeUsersFromEveryGroups(['pmReviewer1'])
         self._addPrincipalToGroup('pmReviewer1',
-                                  "{0}_{1}".format(self.developers_uid, reviewers.keys()[0]))
+                                  "{0}_{1}".format(self.developers_uid, list(reviewers.keys())[0]))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         query = adapter.query
         query['reviewProcessInfo']['query'].sort()
-        states = reviewers.values()[0]
+        states = list(reviewers.values())[0]
         self.assertEqual({'portal_type': {'query': itemTypeName},
                           'reviewProcessInfo': {
                           'query': sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)

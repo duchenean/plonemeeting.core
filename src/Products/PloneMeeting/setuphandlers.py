@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collections import OrderedDict
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_column_modifier
@@ -40,6 +42,7 @@ from zope.i18n import translate
 
 import logging
 import os
+import six
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -472,7 +475,7 @@ def activate_solr_and_reindex_if_available(site):
 #                                    domain='PloneMeeting',
 #                                    context=site.REQUEST).encode('utf-8')
 #
-#         menu_styles = unicode(
+#         menu_styles = six.text_type(
 #             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
 #             "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
 #             "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"

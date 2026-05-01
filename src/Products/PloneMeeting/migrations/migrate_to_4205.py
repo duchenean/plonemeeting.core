@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from DateTime import DateTime
 from imio.history.utils import add_event_to_history
 from persistent.list import PersistentList

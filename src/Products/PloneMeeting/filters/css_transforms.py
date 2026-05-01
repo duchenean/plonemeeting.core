@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from imio.helpers.xhtml import removeCssClasses
 from imio.helpers.xhtml import replace_content
 from plone import api

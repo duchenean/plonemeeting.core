@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.ws import send_json_request

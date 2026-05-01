@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from copy import deepcopy
 from plone.app.controlpanel.mail import MailControlPanelAdapter
 from Products.PloneMeeting.migrations import logger

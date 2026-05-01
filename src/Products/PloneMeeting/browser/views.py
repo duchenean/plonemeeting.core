@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -1300,7 +1302,7 @@ class BaseDGHV(object):
                             single_pos_attendee_ender
                         every_contacts.extend(contact_infos)
                         sub_res.append(grouped_contacts_value)
-                    if end_type_character and global_contact_infos.keys()[-1] == org:
+                    if end_type_character and list(global_contact_infos.keys())[-1] == org:
                         # If there is an end_type_character defined and we are at the last contact
                         # for a given attendee_type, swap the last char with end_type_character
                         sub_res[-1] = sub_res[-1][:-1] + end_type_character
@@ -1624,7 +1626,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             advisers_data = []
             # only keep relevant adviser data and keep order also
             for adviser in advisers:
-                for org_uid, advice in item.adviceIndex.iteritems():
+                for org_uid, advice in item.adviceIndex.items():
                     if adviser in _to_coded_adviser_index(item, org_uid, advice):
                         # we must keep this adviser
                         advisers_data.append(item.getAdviceDataFor(item, org_uid))
@@ -2403,7 +2405,7 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
         res = []
         current_url = self.request['URL']
-        for config_info in grouped_configs.values()[0]:
+        for config_info in list(grouped_configs.values())[0]:
             cfg_id = config_info['id']
             cfg = getattr(tool, cfg_id)
             css_class = ""

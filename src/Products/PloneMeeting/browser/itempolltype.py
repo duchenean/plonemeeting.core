@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
@@ -100,7 +102,7 @@ class ChangeItemPollTypeView(BrowserView):
         self.context._update_after_edit(idxs=['pollType'])
         try:
             notify(ItemPollTypeChangedEvent(self.context, old_pollType))
-        except PloneMeetingError, msg:
+        except PloneMeetingError as msg:
             # back to original state
             self.context.poll_type = old_pollType
             self.context._update_after_edit(idxs=['pollType'])

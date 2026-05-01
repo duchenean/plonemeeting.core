@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization

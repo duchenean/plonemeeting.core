@@ -20,6 +20,8 @@
 # 02110-1301, USA.
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from plone import api
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN

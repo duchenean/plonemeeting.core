@@ -3,6 +3,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
@@ -60,6 +62,7 @@ import os.path
 import Products.PloneMeeting
 import transaction
 import unittest
+import six
 
 
 # Force application logging level to DEBUG so we can use logger in tests
@@ -359,7 +362,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 if len(proposingGroupUids):
                     attrs.update({'proposing_group': proposingGroupUids[0]})
         result = folder.invokeFactory(contentType, **attrs)
-        obj = result if not isinstance(result, basestring) else getattr(folder, result)
+        obj = result if not isinstance(result, six.string_types) else getattr(folder, result)
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
         elif objectType == 'MeetingItem':
@@ -662,8 +665,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           corresponding to every '_reviewers' group he is in.
         """
         reviewers = self.meetingConfig.reviewersFor()
-        groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
-        groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
+        groups = [group for group in member.getGroups() if group.endswith('_%s' % list(reviewers.keys())[0])]
+        groups = [group.replace(list(reviewers.keys())[0], list(reviewers.keys())[-1]) for group in groups]
         for group in groups:
             self._addPrincipalToGroup(member.getId(), group)
 
@@ -729,7 +732,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
         """Activate given p_wfas, we clean wfas, apply,
            then set given p_wfas and apply again."""
-        if isinstance(wfas, basestring):
+        if isinstance(wfas, six.string_types):
             wfas = [wfas]
         currentUser = self.member.getId()
         self.changeUser('siteadmin')
@@ -747,7 +750,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def _deactivate_wfas(self, wfas, cfg=None):
         """Deactivate given p_wfas."""
-        if isinstance(wfas, basestring):
+        if isinstance(wfas, six.string_types):
             wfas = [wfas]
         currentUser = self.member.getId()
         self.changeUser('siteadmin')

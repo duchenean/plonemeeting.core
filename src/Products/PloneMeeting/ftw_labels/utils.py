@@ -3,6 +3,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from ftw.labels.interfaces import ILabeling

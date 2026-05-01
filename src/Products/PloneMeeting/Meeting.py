@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
 from appy.gen import No
@@ -84,7 +86,7 @@ from zope.i18n import translate
 from zope.interface import implements
 
 import copy
-import interfaces
+from . import interfaces
 import itertools
 import logging
 import os
@@ -1188,7 +1190,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         hp = catalog(UID=signatory_uid)[0].getObject()
         if data:
-            signature_number, position_type = data.items()[0]
+            signature_number, position_type = list(data.items())[0]
         else:
             # if not, then get it from meeting signatories
             signature_number = self.getSignatories()[signatory_uid]

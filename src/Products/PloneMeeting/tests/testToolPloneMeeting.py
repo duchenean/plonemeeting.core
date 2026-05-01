@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -218,7 +220,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             [annex.UID() for annex in get_categorized_elements(clonedItem, result_type='objects')],
             newAnnexesUids)
-        self.assertEqual(clonedItem.categorized_elements.keys(), newAnnexesUids)
+        self.assertEqual(list(clonedItem.categorized_elements.keys()), newAnnexesUids)
         self.assertEqual(len(clonedItem.categorized_elements), 1)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too if it contains things. item1 is viewable

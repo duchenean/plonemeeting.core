@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from appy.gen import No
 from natsort import humansorted
 from plone import api

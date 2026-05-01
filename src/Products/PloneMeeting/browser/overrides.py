@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
@@ -77,6 +79,7 @@ from zope.i18n import translate
 
 import html
 import sys
+import six
 
 
 class PMFolderContentsView(FolderContentsView):
@@ -1619,12 +1622,12 @@ class PMUtils(BrowserView):
             # Get the value with key v from the vocabulary,
             # falling back to the original input value.
             vocab_value = vocab.getValue(v, original)
-            if not isinstance(vocab_value, basestring):
+            if not isinstance(vocab_value, six.string_types):
                 # May be an integer.
                 vocab_value = str(vocab_value)
             elif not isinstance(vocab_value, unicode):
                 # avoid UnicodeDecodeError if value contains special chars
-                vocab_value = unicode(vocab_value, 'utf-8')
+                vocab_value = six.text_type(vocab_value, 'utf-8')
             # translate explicitly
             vocab_value = _(vocab_value)
             nvalues.append(vocab_value)

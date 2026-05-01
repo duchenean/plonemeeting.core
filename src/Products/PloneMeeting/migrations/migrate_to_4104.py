@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from persistent.mapping import PersistentMapping
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger

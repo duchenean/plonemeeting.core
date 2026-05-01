@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from imio.helpers.security import check_zope_admin
@@ -157,7 +159,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
                 org_infos[typ][utyp] = idnormalizer.normalize(utyp)
             orgs[id]['typ'] = org_infos[typ][utyp]
         else:  # we take the first value
-            orgs[id]['typ'] = org_infos[typ].values()[0]
+            orgs[id]['typ'] = list(org_infos[typ].values())[0]
 
     # updating contacts options
     for typ in ['types', 'levels']:
@@ -268,9 +270,9 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             zipc = safe_unicode(is_zip(data[10], i, 'PERS', data[18]))
             gender = data[3]
             birthday = data[5] or None
-        except AssertionError, ex:
+        except AssertionError as ex:
             errors.append("!! PERS: problem line %d: %s" % (i, safe_encode(ex.message)))
-        except Exception, ex:
+        except Exception as ex:
             errors.append("!! PERS: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(ex.message)))
         if not id or id in persons:
             errors.append("!! PERS: problem line %d, invalid id: %s" % (i, id))
@@ -385,9 +387,9 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             fax = safe_unicode(check_phone(digit(data[15]), i, 'PERS', data[19]))
             upa = data[7] and int(data[7]) or ''
             zipc = safe_unicode(is_zip(data[11], i, 'HP', data[19]))
-        except AssertionError, ex:
+        except AssertionError as ex:
             errors.append("!! HP: problem line %d: %s" % (i, safe_encode(ex.message)))
-        except Exception, ex:
+        except Exception as ex:
             errors.append("!! HP: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(ex.message)))
         if not id or id in hps:
             errors.append("!! HP: problem line %d, invalid id: %s" % (i, id))

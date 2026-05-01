@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from ftw.labels.interfaces import ILabelSupport
 from ftw.labels.labeling import ILabeling
 from persistent.mapping import PersistentMapping

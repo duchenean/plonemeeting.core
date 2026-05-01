@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
 from ftw.labels.interfaces import ILabelJar

@@ -9,6 +9,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
@@ -35,7 +37,8 @@ from Products.PloneMeeting.utils import listifySignatures
 from zope.i18n import translate
 from zope.interface import implements
 
-import interfaces
+from . import interfaces
+import six
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -229,7 +232,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             for key, value in cfgItemStates:
                 # build a strong id
                 res.append(("%s__state__%s" % (cfgId, key),
-                            "%s - %s" % (unicode(cfg.Title(include_config_group=True), 'utf-8'), value)))
+                            "%s - %s" % (six.text_type(cfg.Title(include_config_group=True), 'utf-8'), value)))
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listKeepAccessToItemWhenAdviceIsGiven')

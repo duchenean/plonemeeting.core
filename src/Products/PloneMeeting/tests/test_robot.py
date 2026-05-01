@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from __future__ import absolute_import, print_function
+
 from plone.testing import layered
 from Products.PloneMeeting.testing import PM_TESTING_ROBOT
 

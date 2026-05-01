@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from DateTime import DateTime
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator

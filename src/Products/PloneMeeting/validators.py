@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
@@ -144,7 +146,7 @@ class WorkflowInterfacesValidator:
         theInterface = None
         try:
             theInterface = getInterface(value)
-        except Exception, e:
+        except Exception as e:
             return str(e)
         # Check that this interface is self.baseWorkflowInterface or
         # a subclass of it.

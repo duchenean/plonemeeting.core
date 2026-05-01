@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from plone import api
 from Products.PloneMeeting.interfaces import IToolPloneMeeting

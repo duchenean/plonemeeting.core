@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.core.content.person import IPerson
 from collective.contact.core.content.person import Person
 from plone.autoform import directives as form

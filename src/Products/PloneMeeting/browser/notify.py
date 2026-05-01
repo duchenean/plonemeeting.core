@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function
+
 from plone.dexterity.events import EditBegunEvent
 from plone.dexterity.events import EditCancelledEvent
 from Products.Five import BrowserView

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.iconifiedcategory.content.category import CategorySchemaPolicy
 from collective.iconifiedcategory.content.subcategory import SubcategorySchemaPolicy
 from imio.helpers.content import uuidToObject

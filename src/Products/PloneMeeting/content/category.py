@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import uuidsToObjects

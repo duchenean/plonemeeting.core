@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.behavior.talcondition.utils import _evaluateExpression
 from ftw.labels.interfaces import ILabelJar
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from imio.helpers.content import safe_delattr
 from imio.helpers.setup import load_type_from_package
 from Products.CMFPlone.utils import base_hasattr

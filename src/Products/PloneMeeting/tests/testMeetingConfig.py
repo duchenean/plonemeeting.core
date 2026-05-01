@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
@@ -1178,7 +1180,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # try to add a topic name 'searchmyitems' that already exist...
         self.assertTrue(hasattr(cfg.searches.searches_items, 'searchmyitems'))
-        searchInfo = cfg._searchesInfo().items()[0]
+        searchInfo = list(cfg._searchesInfo().items())[0]
         self.assertEqual(searchInfo[0], 'searchmyitems')
         self.meetingConfig.createSearches(OrderedDict((searchInfo, )))
         # we can evrn call it again with full searchesInfo

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.core.content.directory import IDirectory
 from imio.helpers.content import uuidToObject
 from plone import api

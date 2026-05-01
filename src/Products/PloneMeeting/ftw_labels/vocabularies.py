@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+from __future__ import absolute_import, print_function
+
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile

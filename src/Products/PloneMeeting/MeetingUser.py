@@ -9,6 +9,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from plone import api
 from Products.Archetypes.atapi import AttributeStorage
@@ -31,7 +33,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from zope.i18n import translate
 from zope.interface import implements
 
-import interfaces
+from . import interfaces
 
 
 schema = Schema((
@@ -473,7 +475,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
             # characteristics, in the form of a FakeMeetingUser instance.
             return None
         # Is this user a replacement for another user ?
-        for baseUser, replUser in meeting.userReplacements.iteritems():
+        for baseUser, replUser in meeting.userReplacements.items():
             if self.getId() != replUser:
                 continue
             # Yes it is. Find the replaced person.

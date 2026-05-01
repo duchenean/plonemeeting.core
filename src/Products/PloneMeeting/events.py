@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb

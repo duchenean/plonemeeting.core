@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from collective.eeafaceted.batchactions.browser.views import BaseARUOBatchActionForm

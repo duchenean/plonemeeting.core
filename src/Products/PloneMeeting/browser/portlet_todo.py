@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.behavior.talcondition.behavior import ITALCondition
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.eeafaceted.collectionwidget.utils import _get_criterion

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organizations
 from datetime import datetime
@@ -15,6 +17,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
+import six
 
 
 class testFaceted(PloneMeetingTestCase):
@@ -90,7 +93,7 @@ class testFaceted(PloneMeetingTestCase):
         creatorPMFolder.searches_items()
         self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
         # redirect app user to next meeting
-        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+        self.assertEqual(list(cfg.listRedirectToNextMeeting().keys()),
                          ['app_users',
                           'meeting_managers',
                           'powerobserver__powerobservers',
@@ -116,7 +119,7 @@ class testFaceted(PloneMeetingTestCase):
         cfgId = cfg.getId()
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=('closed', ))
-        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+        self.assertEqual(list(cfg.listRedirectToNextMeeting().keys()),
                          ['app_users',
                           'meeting_managers',
                           'powerobserver__powerobservers',
@@ -422,7 +425,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertListEqual(
             sorted([term.title for term in vocab1(pmFolder)]), proposing_groups_terms_titles)
         self.assertListEqual(sorted([term.title for term in vocab2(pmFolder)]),
-                             sorted([unicode(org.acronym) for org in self.all_org]))
+                             sorted([six.text_type(org.acronym) for org in self.all_org]))
         self.assertListEqual(
             sorted([term.title for term in vocab3(pmFolder)]), proposing_groups_terms_titles)
 
@@ -434,7 +437,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertListEqual(
             sorted([term.title for term in vocab1(pmFolder)]), proposing_groups_terms_titles)
         self.assertListEqual(
-            sorted([term.title for term in vocab2(pmFolder)]), sorted([unicode(org.acronym) for org in self.all_org]))
+            sorted([term.title for term in vocab2(pmFolder)]), sorted([six.text_type(org.acronym) for org in self.all_org]))
         self.assertListEqual(
             sorted([term.title for term in vocab3(pmFolder)]), proposing_groups_terms_titles)
 

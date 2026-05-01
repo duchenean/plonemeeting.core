@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from plone import api
 from z3c.form.browser.checkbox import CheckBoxWidget
 from z3c.form.interfaces import ICheckBoxWidget

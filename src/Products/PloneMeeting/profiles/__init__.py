@@ -3,6 +3,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from plone.api.validation import at_least_one_of
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
@@ -38,14 +40,14 @@ class Descriptor(object):
         res = {}
         # make sure self.__dict__ is not modified
         data = copy.deepcopy(self.__dict__)
-        for k, v in data.iteritems():
+        for k, v in data.items():
             if k in self.excludedFields:
                 continue
             if k in kw:
                 v = kw[k]
             res[k] = v
         # Add elements from kw that do not correspond to a field on self
-        for k, v in kw.iteritems():
+        for k, v in kw.items():
             if k not in data:
                 res[k] = v
         return res

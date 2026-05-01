@@ -4,6 +4,8 @@
 #
 
 
+from __future__ import absolute_import, print_function
+
 from collective.behavior.talcondition.behavior import TALCondition
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 

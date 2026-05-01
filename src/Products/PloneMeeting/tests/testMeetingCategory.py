@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from imio.helpers.content import get_vocab
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL

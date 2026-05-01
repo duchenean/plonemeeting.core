@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from Products.PloneMeeting.utils import display_as_html
 from z3c.form.browser.textarea import TextAreaWidget
 from z3c.form.interfaces import DISPLAY_MODE

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from Products.Five import BrowserView
 from Products.PloneMeeting.interfaces import IRedirect
 from zope.component.hooks import getSite

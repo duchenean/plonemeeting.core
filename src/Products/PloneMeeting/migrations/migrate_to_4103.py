@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from plone import api
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations.migrate_to_4102 import Migrate_To_4102

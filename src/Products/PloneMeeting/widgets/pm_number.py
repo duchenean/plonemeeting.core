@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from z3c.form.browser.text import TextWidget
 from z3c.form.interfaces import IFieldWidget
 from z3c.form.interfaces import ITextWidget

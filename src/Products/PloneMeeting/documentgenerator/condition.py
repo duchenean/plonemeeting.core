@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.documentgenerator.content.condition import ConfigurablePODTemplateCondition
 from collective.eeafaceted.dashboard.content.pod_template import DashboardPODTemplateCondition
 from plone import api

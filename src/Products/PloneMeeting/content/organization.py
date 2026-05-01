@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -24,6 +26,7 @@ from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import validator
 from zope import schema
 from zope.interface import Interface
+import six
 
 
 class ICertifiedSignaturesRowSchema(Interface):
@@ -229,7 +232,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             cfg_states = cfg.item_advice_states
-            if isinstance(cfg_states, basestring):
+            if isinstance(cfg_states, six.string_types):
                 cfg_states = [cfg_states] if cfg_states else []
             res = tmpres or list(cfg_states or [])
         return res
@@ -246,7 +249,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             cfg_states = cfg.item_advice_edit_states
-            if isinstance(cfg_states, basestring):
+            if isinstance(cfg_states, six.string_types):
                 cfg_states = [cfg_states] if cfg_states else []
             res = tmpres or list(cfg_states or [])
         return res
@@ -263,7 +266,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             cfg_states = cfg.item_advice_view_states
-            if isinstance(cfg_states, basestring):
+            if isinstance(cfg_states, six.string_types):
                 cfg_states = [cfg_states] if cfg_states else []
             res = tmpres or list(cfg_states or [])
         return res

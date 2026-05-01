@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import richtextval

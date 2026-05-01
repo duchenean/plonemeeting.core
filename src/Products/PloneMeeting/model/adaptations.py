@@ -2,6 +2,7 @@
 # GNU General Public License (GPL)
 '''This module allows to perform some standard sets of adaptations in the
    PloneMeeting data structures and workflows.'''
+from __future__ import absolute_import, print_function
 
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
@@ -308,7 +309,7 @@ def clone_permissions(wf_id, base_state_id, new_state_id):
     wf = wfTool.getWorkflowById(wf_id)
     base_state = wf.states[base_state_id]
     new_state = wf.states[new_state_id]
-    for permission, roles in base_state.permission_roles.iteritems():
+    for permission, roles in base_state.permission_roles.items():
         # if roles is a list, it means it is acquired
         new_state.setPermission(permission, isinstance(roles, list) and 1 or 0, roles)
 
@@ -355,7 +356,7 @@ def _addDecidedState(new_state_id,
     # use same permissions as used by the base_state
     base_state = wf.states[base_state_id]
     new_state = wf.states[new_state_id]
-    for permission, roles in base_state.permission_roles.iteritems():
+    for permission, roles in base_state.permission_roles.items():
         new_state.setPermission(permission, 0, roles)
 
 
@@ -378,7 +379,7 @@ def _addIsolatedState(new_state_id,
     new_state = wf.states[new_state_id]
     # use same permissions as used by the base_state_id state (default 'accepted')
     base_state = wf.states[base_state_id]
-    for permission, roles in base_state.permission_roles.iteritems():
+    for permission, roles in base_state.permission_roles.items():
         new_state.setPermission(permission, 0, roles)
 
     # transitions
@@ -862,7 +863,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # which is the same as state "frozen" (or "decided") in the previous setting.
                 frozen = wf.states['frozen']
                 decisions_published = wf.states['decisions_published']
-                for permission, roles in frozen.permission_roles.iteritems():
+                for permission, roles in frozen.permission_roles.items():
                     decisions_published.setPermission(permission, 0, roles)
                 # Transition "backToPublished" must be protected by a popup, like
                 # any other "correct"-like transition.
@@ -1016,7 +1017,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     # Initialize permission->roles mapping for new state "to_transition",
                     # which is the same as state 'validated'
                     perm_cloned_state = wf.states[infos.get('perm_cloned_state', 'validated')]
-                    for permission, roles in perm_cloned_state.permission_roles.iteritems():
+                    for permission, roles in perm_cloned_state.permission_roles.items():
                         if infos.get('remove_modify_access', True) and permission in edit_permissions:
                             # remove every roles but 'Manager', 'MeetingManager',
                             # 'MeetingBudgetImpactEditor' and 'MeetingInternalNotesEditor'

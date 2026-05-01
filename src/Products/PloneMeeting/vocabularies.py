@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import DxPortalTypesVocabulary
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
@@ -87,6 +89,7 @@ from zope.schema.vocabulary import SimpleVocabulary
 
 import html
 import itertools
+import six
 
 
 def _resolve_dgf_context(context):
@@ -3202,7 +3205,7 @@ class PMUsers(UsersFactory):
                 userids.append(user_id)
                 # bypass special characters, may happen when using LDAP
                 try:
-                    unicode(user_id)
+                    six.text_type(user_id)
                 except UnicodeDecodeError:
                     continue
                 term_title = get_user_fullname(user_id, with_user_id=True)
@@ -3521,7 +3524,7 @@ def _dl_to_vocabulary(display_list):
     terms = []
     for value in display_list:
         label = display_list.getValue(value)
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             token = str(value)
         elif isinstance(value, unicode):
             token = value.encode('utf-8')

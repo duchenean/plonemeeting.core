@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
@@ -82,7 +84,7 @@ class ChangeItemListTypeView(BrowserView):
 
         try:
             notify(ItemListTypeChangedEvent(self.context, old_listType))
-        except PloneMeetingError, msg:
+        except PloneMeetingError as msg:
             # back to original state
             self.context.list_type = old_listType
             self.context._update_after_edit(idxs=['listType'])

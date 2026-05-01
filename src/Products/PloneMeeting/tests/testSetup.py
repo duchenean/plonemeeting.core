@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from imio.helpers.content import object_values
 from pkgutil import iter_importers
 from plone import api
@@ -105,11 +107,11 @@ class testSetup(PloneMeetingTestCase):
                 if no_pod_portal_types:
                     no_pod_portal_types = [
                         pod_template for pod_template, dummy, dummy in
-                        view.no_pod_portal_types.values()[0]
+                        list(view.no_pod_portal_types.values())[0]
                         if pod_template.portal_type != 'DashboardPODTemplate']
                 self.assertFalse(no_pod_portal_types)
                 # check that there are no new keys in messages
-                self.assertEqual(view.messages.keys(),
+                self.assertEqual(list(view.messages.keys()),
                                  ['check_pod_template_error',
                                   'check_pod_template_no_obj_found',
                                   'check_pod_template_no_pod_portal_types',

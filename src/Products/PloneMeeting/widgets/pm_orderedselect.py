@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from z3c.form.browser.orderedselect import OrderedSelectWidget
 from z3c.form.interfaces import IFieldWidget
 from z3c.form.interfaces import IOrderedSelectWidget

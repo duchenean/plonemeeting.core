@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from imio.actionspanel.utils import findViewableURL
 from imio.helpers.content import get_vocab

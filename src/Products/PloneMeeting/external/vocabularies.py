@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from natsort import humansorted
 from operator import attrgetter
 from plone import api

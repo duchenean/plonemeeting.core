@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
 from ftw.labels.interfaces import ILabeling

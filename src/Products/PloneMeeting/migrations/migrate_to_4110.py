@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate

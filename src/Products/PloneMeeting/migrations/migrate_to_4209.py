@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.content.style_template import IStyleTemplate
 from collective.documentviewer.settings import GlobalSettings

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from Acquisition import aq_base
 from cPickle import dumps
 from imio.helpers.cache import get_current_user_id
@@ -180,9 +182,9 @@ def getStatistics(self):
 
     for ob in objects:
         size = len(dumps(self._data[ob]))
-        hits = sum(entry[2] for entry in self._data[ob].itervalues())
+        hits = sum(entry[2] for entry in self._data[ob].values())
         from DateTime import DateTime
-        older_date = min(entry[1] for entry in self._data[ob].itervalues())
+        older_date = min(entry[1] for entry in self._data[ob].values())
         result.append({'path': ob,
                        'hits': hits,
                        'misses': self._misses.get(ob, 0),

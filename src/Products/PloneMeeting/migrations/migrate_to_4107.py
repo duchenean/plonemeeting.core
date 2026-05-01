@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from plone import api
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.PloneMeeting.migrations import logger

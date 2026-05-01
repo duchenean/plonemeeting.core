@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function
+
 from plone import api
 from plone.memoize.view import memoize
 from Products.Five.browser import BrowserView

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from imio.helpers.security import fplog
 from plone.z3cform.layout import wrap_form

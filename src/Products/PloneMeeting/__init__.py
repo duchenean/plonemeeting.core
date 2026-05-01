@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import allow_module
 from AccessControl import allow_type
 from datetime import datetime
@@ -16,7 +18,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.validation import validation
 from Products.validation.validators.BaseValidators import baseValidators
 from Products.validation.validators.BaseValidators import protocols
-from validators import ATCertifiedSignaturesValidator
+from .validators import ATCertifiedSignaturesValidator
 
 import logging
 
@@ -51,7 +53,7 @@ def initialize(context):
     """initialize product (called by zope)"""
 
     from Products.PloneMeeting import monkey  # noqa
-    import ToolPloneMeeting
+    from . import ToolPloneMeeting
 
     # Initialize portal tools
     tools = [ToolPloneMeeting.ToolPloneMeeting]

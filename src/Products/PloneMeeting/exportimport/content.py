@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from collective.contact.plonegroup.browser.settings import invalidate_soev_cache
 from collective.contact.plonegroup.browser.settings import invalidate_ssoev_cache
 from collective.contact.plonegroup.config import get_registry_functions
@@ -50,6 +52,7 @@ from zope.intid.interfaces import IIntIds
 
 import os
 import transaction
+import six
 
 
 # PloneMeeting-Error related constants -----------------------------------------
@@ -95,7 +98,7 @@ class ToolInitializer:
         # only if it was not already done before
         # by another profile, it is the case if some MeetingConfigs exist
         if force or not self.tool.objectIds('MeetingConfig'):
-            for k, v in self.profileData.getData().iteritems():
+            for k, v in self.profileData.getData().items():
                 if k == 'advisersConfig':
                     # turn org id into uid
                     for adviserConfig in v:
@@ -256,7 +259,7 @@ class ToolInitializer:
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                   'meeting_date',
-                                  unicode(data.maxDaysDecisions))
+                                  six.text_type(data.maxDaysDecisions))
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,

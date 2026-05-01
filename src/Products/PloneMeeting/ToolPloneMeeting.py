@@ -4,6 +4,8 @@
 #
 # GNU General Public License (GPL)
 #
+from __future__ import absolute_import, print_function
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from App.class_init import InitializeClass
@@ -91,7 +93,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from zope.interface import implements
 
-import interfaces
+from . import interfaces
 import OFS.Moniker
 import time
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from plone import api
 from plone.dexterity.browser.view import DefaultView
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from ftw.labels.browser.labeling import Labeling
 from ftw.labels.browser.labelsjar import LabelsJar

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.config import set_sort_categorized_tab

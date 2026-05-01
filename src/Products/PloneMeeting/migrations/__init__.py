@@ -5,6 +5,7 @@
 '''This module defines functions that allow to migrate to a given version of
    PloneMeeting for production sites that run older versions of PloneMeeting.
    You must run every migration function in the right chronological order.'''
+from __future__ import absolute_import, print_function
 
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
@@ -333,7 +334,7 @@ class Migrator(BaseMigrator):
         # as clean as possible so it can be used to know what changed
         data = {}
         for result in results:
-            pt_uid, infos = result.items()[0]
+            pt_uid, infos = list(result.items())[0]
             pt = uuidToObject(pt_uid, unrestricted=True)
             pt_path_and_title = "{0} - {1}".format(
                 '/'.join(pt.getPhysicalPath()), pt.Title())

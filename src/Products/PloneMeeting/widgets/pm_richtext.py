@@ -2,6 +2,8 @@
 
 # P6 migration: CKEditor dropped, reimplement quick-edit/AjaxSave hooks under TinyMCE in Stage D.
 # from collective.ckeditor.browser.ckeditorview import Z3CFormWidgetSettings
+from __future__ import absolute_import, print_function
+
 from plone import api
 from plone.app.textfield.widget import IRichTextWidget
 from plone.app.textfield.widget import RichTextWidget

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
@@ -139,6 +141,7 @@ import socket
 import unicodedata
 import unidecode
 import urlparse
+import six
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -774,7 +777,7 @@ def getMailRecipient(userIdOrInfo):
     '''This method returns the mail recipient (=string based on email and
        fullname if present) from a user id or UserInfo retrieved from a
        call to portal_membership.getMemberById.'''
-    if isinstance(userIdOrInfo, basestring):
+    if isinstance(userIdOrInfo, six.string_types):
         # It is a user ID. Get the corresponding UserInfo instance
         userInfo = api.user.get(userIdOrInfo)
     else:
@@ -964,10 +967,10 @@ def addDataChange(obj, previousData=None):
     # Remove from p_previousData values that were not changed or that were empty
     for name in previousData.keys():
         oldValue = previousData[name]
-        if isinstance(oldValue, basestring):
+        if isinstance(oldValue, six.string_types):
             oldValue = oldValue.strip()
         newValue = _get_field_value(obj, name)
-        if isinstance(newValue, basestring):
+        if isinstance(newValue, six.string_types):
             newValue = newValue.strip()
         if oldValue == newValue:
             del previousData[name]
@@ -1409,7 +1412,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                 if '.' in transform['field_name']:
                     if res is None:
                         res = u''
-                    if not isinstance(res, basestring):
+                    if not isinstance(res, six.string_types):
                         raise TypeError(
                             "Value is not File or String (%s - %s)" %
                             (type(res), type(res)))

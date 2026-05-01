@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from imio.helpers.setup import load_type_from_package
 from imio.webspellchecker.config import set_disable_autosearch_in
 from Products.PloneMeeting.migrations import logger

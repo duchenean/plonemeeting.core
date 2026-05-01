@@ -9,6 +9,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.tests.testViews import SAMPLE_ERROR_MESSAGE
 

@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -45,6 +47,7 @@ from zope.security.management import newInteraction
 import os
 import Products.PloneMeeting
 import transaction
+import six
 
 
 class testContacts(PloneMeetingTestCase):
@@ -296,8 +299,8 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(meeting.get_item_excused(by_persons=True))
 
         # byebye person on item1 and item2
-        hp1_uid = unicode(meeting_attendees[0])
-        hp2_uid = unicode(meeting_attendees[1])
+        hp1_uid = six.text_type(meeting_attendees[0])
+        hp2_uid = six.text_type(meeting_attendees[1])
         byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form')
         byebye_form.meeting = meeting
@@ -319,7 +322,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(list(meeting.get_item_absents(by_persons=True).keys()), [hp1_uid])
         self.assertEqual(
             sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
@@ -342,7 +345,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp3_uid])
+        self.assertEqual(list(meeting.get_item_non_attendees(by_persons=True).keys()), [hp3_uid])
         self.assertEqual(
             sorted(meeting.get_item_non_attendees(by_persons=True)[hp3_uid]),
             sorted([item1_uid, item2_uid]))
@@ -360,7 +363,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(list(meeting.get_item_absents(by_persons=True).keys()), [hp1_uid])
         self.assertEqual(
             sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
@@ -370,7 +373,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_excused().keys()),
             sorted([item1_uid]))
-        self.assertEqual(meeting.get_item_excused(by_persons=True).keys(), [hp2_uid])
+        self.assertEqual(list(meeting.get_item_excused(by_persons=True).keys()), [hp2_uid])
         self.assertEqual(
             sorted(meeting.get_item_excused(by_persons=True)[hp2_uid]),
             sorted([item1_uid]))
@@ -380,7 +383,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp3_uid])
+        self.assertEqual(list(meeting.get_item_non_attendees(by_persons=True).keys()), [hp3_uid])
         self.assertEqual(
             sorted(meeting.get_item_non_attendees(by_persons=True)[hp3_uid]),
             sorted([item1_uid, item2_uid]))
@@ -1408,13 +1411,13 @@ class testContacts(PloneMeetingTestCase):
         meeting.ordered_contacts[self.hp1_uid]['voter'] = False
         # by default return voters and non voters
         self.assertEqual(
-            len(mpa(render_as_html=False).items()[0][1]),
+            len(list(mpa(render_as_html=False).items())[0][1]),
             4)
         self.assertEqual(
-            len(mpa(is_voter=True, render_as_html=False).items()[0][1]),
+            len(list(mpa(is_voter=True, render_as_html=False).items())[0][1]),
             3)
         self.assertEqual(
-            len(mpa(is_voter=False, render_as_html=False).items()[0][1]),
+            len(list(mpa(is_voter=False, render_as_html=False).items())[0][1]),
             1)
 
     def test_pm_Print_attendees_committee_id(self):
@@ -1599,13 +1602,13 @@ class testContacts(PloneMeetingTestCase):
         meeting.ordered_contacts[self.hp1_uid]['voter'] = False
         # by default return voters and non voters
         self.assertEqual(
-            len(mhpabt(render_as_html=False)['attendee'].items()[0][1]),
+            len(list(mhpabt(render_as_html=False)['attendee'].items())[0][1]),
             4)
         self.assertEqual(
-            len(mhpabt(is_voter=True, render_as_html=False)['attendee'].items()[0][1]),
+            len(list(mhpabt(is_voter=True, render_as_html=False)['attendee'].items())[0][1]),
             3)
         self.assertEqual(
-            len(mhpabt(is_voter=False, render_as_html=False)['attendee'].items()[0][1]),
+            len(list(mhpabt(is_voter=False, render_as_html=False)['attendee'].items())[0][1]),
             1)
 
     def test_pm_Print_attendees_by_type_committee_id(self):
@@ -2729,7 +2732,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         meeting_attendees = meeting.get_attendees()
-        hp1_uid = unicode(meeting_attendees[0])
+        hp1_uid = six.text_type(meeting_attendees[0])
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -2754,7 +2757,7 @@ class testContacts(PloneMeetingTestCase):
         # item
         item_view = item1.restrictedTraverse('@@display-meeting-item-redefined-position')
         item_view_rendered = item_view(hp1_uid)
-        self.assertTrue(unicode("Directeur Général", "utf-8") in item_view_rendered)
+        self.assertTrue(u"Directeur Général" in item_view_rendered)
         self.assertTrue(item1.absolute_url() in item_view_rendered)
         self.assertTrue(item2.absolute_url() in item_view_rendered)
         # meeting

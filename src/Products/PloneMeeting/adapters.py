@@ -3,6 +3,8 @@
 # File: adapters.py
 #
 
+from __future__ import absolute_import, print_function
+
 from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
@@ -812,7 +814,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
             new_event = full_datachanges_history[i].copy()
             new_event['changes'] = {}
             new_event['type'] = self.history_type
-            for name, oldValue in full_datachanges_history[i]['changes'].iteritems():
+            for name, oldValue in full_datachanges_history[i]['changes'].items():
                 widgetName = self._get_widget_name(name)
                 if widgetName == 'RichWidget':
                     if xhtmlContentIsEmpty(oldValue):

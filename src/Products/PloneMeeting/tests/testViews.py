@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 import unittest
 
 from AccessControl import Unauthorized
@@ -67,6 +69,7 @@ from zope.i18n import translate
 
 import magic
 import transaction
+import six
 
 
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
@@ -1023,7 +1026,7 @@ class testViews(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@item-more-infos')
         view()
-        self.assertEqual(view.getVisibleFields().keys(),
+        self.assertEqual(list(view.getVisibleFields().keys()),
                          ['description', 'decision', 'motivation'])
 
     def test_pm_ItemMoreInfosItemsVisibleFields(self):
@@ -1043,7 +1046,7 @@ class testViews(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@item-more-infos')
         view(fieldsConfigAttr='itemsVisibleFields')
-        self.assertEqual(view.getVisibleFields().keys(),
+        self.assertEqual(list(view.getVisibleFields().keys()),
                          ['annexes', 'advices', 'description', 'motivation', 'decision', 'privacy'])
 
     def test_pm_ItemMoreInfosNotViewableItem(self):
@@ -1118,12 +1121,12 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item))
         view = item.restrictedTraverse('@@item-more-infos')
         view()
-        self.assertEqual(view.getVisibleFields().keys(), ['description'])
+        self.assertEqual(list(view.getVisibleFields().keys()), ['description'])
         # define TAL expression
         cfg.items_not_viewable_visible_fields_tal_expr = "python: item.query_state() != 'itemcreated'"
         self.cleanMemoize()
         view()
-        self.assertEqual(view.getVisibleFields().keys(), [])
+        self.assertEqual(list(view.getVisibleFields().keys()), [])
         self.proposeItem(item)
         cfg.items_not_viewable_visible_fields = ('MeetingItem.description', )
 
@@ -1491,7 +1494,7 @@ class testViews(PloneMeetingTestCase):
         meeting.place = u'Place1'
         self.assertEqual(helper.print_value("place"), u'Place1')
         meeting.place = PLACE_OTHER
-        meeting.place_other = unicode('Spécial place', 'utf-8')
+        meeting.place_other = u'Sp\xe9cial place'
         self.assertEqual(helper.print_value("place"), u'Sp\xe9cial place')
 
     def test_pm_MeetingUpdateItemReferences(self):
@@ -1924,7 +1927,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         searches_items = self.getMeetingFolder().searches_items
         form = searches_items.restrictedTraverse('@@labels-batch-action')
-        self.request.form['form.widgets.uids'] = unicode(item.UID())
+        self.request.form['form.widgets.uids'] = six.text_type(item.UID())
         self.request['form.widgets.action_choice'] = u'overwrite'
         self.request['form.widgets.added_values'] = [u'label2']
         self.request['form.widgets.removed_values'] = []
@@ -1936,7 +1939,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue("label2" in form._vocabulary())
         form.handleApply(form, None)
         # not editable "label1" was not removed
-        self.assertEqual(labeling.storage.keys(), ['label1', 'label2'])
+        self.assertEqual(list(labeling.storage.keys()), ['label1', 'label2'])
         # when editable, it is removed
         self.changeUser('pmManager')
         searches_items = self.getMeetingFolder().searches_items
@@ -1948,7 +1951,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue("label1" in form._vocabulary())
         self.assertTrue("label2" in form._vocabulary())
         form.handleApply(form, None)
-        self.assertEqual(labeling.storage.keys(), ['label2'])
+        self.assertEqual(list(labeling.storage.keys()), ['label2'])
 
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call update_local_roles on selected elements."""
@@ -2002,7 +2005,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in meeting.__ac_local_roles__)
         self._setPowerObserverStates(field_name='meeting_states', states=('created',))
         searches_decisions = self.getMeetingFolder().searches_decisions
-        self.request.form['form.widgets.uids'] = unicode(meeting.UID())
+        self.request.form['form.widgets.uids'] = six.text_type(meeting.UID())
         form = searches_decisions.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
         form.update()

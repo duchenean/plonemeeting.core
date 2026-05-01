@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -45,6 +47,7 @@ from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.interfaces import RequiredMissing
+import six
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -2089,9 +2092,9 @@ class testAdvices(PloneMeetingTestCase):
         item._update_after_edit()
         # add comment to developers advice
         comment = u"Proposing group comment héhé"
-        self.request['advice_id'] = unicode(self.developers_uid)
+        self.request['advice_id'] = six.text_type(self.developers_uid)
         form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        self.request.form['form.widgets.advice_uid'] = unicode(self.developers_uid)
+        self.request.form['form.widgets.advice_uid'] = six.text_type(self.developers_uid)
         # first set None, it is saved as u""
         self.request.form['form.widgets.proposing_group_comment'] = None
         form.update()
@@ -3828,7 +3831,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) test removing inheritance, make sure 'vendors' not in optionalAdvisers
         item2.optional_advisers = ()
-        self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
+        self.request['form.widgets.advice_uid'] = six.text_type(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
@@ -3894,7 +3897,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) check 'remove', for now, not removeable because item not in relevant state
         item2.optional_advisers = ()
-        self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
+        self.request['form.widgets.advice_uid'] = six.text_type(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
@@ -4090,14 +4093,14 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # developers advice was asked
-        self.assertEqual(item.adviceIndex.keys(), [self.developers_uid])
+        self.assertEqual(list(item.adviceIndex.keys()), [self.developers_uid])
         self.proposeItem(item)
         # vendors advice was asked
         self.assertEqual(sorted(item.adviceIndex.keys()),
                          sorted([self.developers_uid, self.vendors_uid]))
         new_item = item.clone()
         # clone does not break and developers advice was asked
-        self.assertEqual(new_item.adviceIndex.keys(), [self.developers_uid])
+        self.assertEqual(list(new_item.adviceIndex.keys()), [self.developers_uid])
 
     def test_pm_AdviserNotAbleToAddAnnexToItem(self):
         """This test a bug that was fixed becaues we used the "Contributor" role

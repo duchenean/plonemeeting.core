@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, print_function
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.z3cform.datagridfield import DataGridFieldFactory
