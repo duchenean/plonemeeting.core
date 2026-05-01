@@ -1370,4 +1370,11 @@
             permission="zope2.View" />
     </configure>
 
+    <!-- ToolPloneMeeting edit form -->
+    <browser:page
+        name="tool-edit"
+        for="Products.PloneMeeting.interfaces.IToolPloneMeeting"
+        class=".tool_edit.ToolEditForm"
+        permission="cmf.ModifyPortalContent" />
+
 </configure>

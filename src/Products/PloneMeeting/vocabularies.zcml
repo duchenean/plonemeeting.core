@@ -317,4 +317,10 @@
   <utility component=".vocabularies.ItemInitiatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.item_initiators_vocabulary" />
 
+  <!-- ToolPloneMeeting DX schema vocabularies -->
+  <utility component=".vocabularies.WeekDaysVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.weekdays_vocabulary" />
+  <utility component=".vocabularies.DeferParentReindexVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.defer_parent_reindex_vocabulary" />
+
 </configure>

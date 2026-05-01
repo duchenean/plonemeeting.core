@@ -54,6 +54,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
+from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
 from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -4661,3 +4662,35 @@ class ItemInitiatorsVocabulary(object):
 
 
 ItemInitiatorsVocabularyFactory = ItemInitiatorsVocabulary()
+
+
+class WeekDaysVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        request = getattr(context, 'REQUEST', None)
+        terms = []
+        for day in PY_DATETIME_WEEKDAYS:
+            title = translate('weekday_%s' % day, domain='plonelocales',
+                              context=request)
+            terms.append(SimpleTerm(value=day, token=day, title=title))
+        return SimpleVocabulary(terms)
+
+
+WeekDaysVocabularyFactory = WeekDaysVocabulary()
+
+
+class DeferParentReindexVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        request = getattr(context, 'REQUEST', None)
+        terms = []
+        for defer in ('annex', 'item_reference'):
+            title = translate('defer_reindex_for_%s' % defer,
+                              domain='PloneMeeting', context=request)
+            terms.append(SimpleTerm(value=defer, token=defer, title=title))
+        return SimpleVocabulary(terms)
+
+
+DeferParentReindexVocabularyFactory = DeferParentReindexVocabulary()
