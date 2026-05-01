@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import cleanRamCache
+from imio.helpers.content import richtextval
 from plone import api
 from Products.PloneMeeting.browser.itemvotes import _should_disable_apply_until_item_number
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
@@ -106,13 +107,13 @@ class testVotes(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertFalse(item.show_votes())
         self.presentItem(item)
-        self.assertEqual(item.getPollType(), 'freehand')
+        self.assertEqual(item.poll_type, 'freehand')
         self.assertTrue(item.show_votes())
-        item.setPollType('secret')
+        item.poll_type = 'secret'
         self.assertTrue(item.show_votes())
-        item.setPollType('no_vote')
+        item.poll_type = 'no_vote'
         self.assertFalse(item.show_votes())
-        item.setPollType('secret')
+        item.poll_type = 'secret'
         self.assertTrue(item.show_votes())
         # disable votes
         cfg.use_votes = False
@@ -895,7 +896,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(secret_item in voted_items['secret'])
         voted_view()
         # no_vote
-        public_item.setPollType('no_vote')
+        public_item.poll_type = 'no_vote'
         del meeting.item_votes[public_item.UID()]
         transaction.commit()
         self.assertEqual(public_item.get_item_votes(), [])
@@ -909,7 +910,7 @@ class testVotes(PloneMeetingTestCase):
            It manage changes, but also avoid to change from a "secret" mode
            to a "public" mode if some votes are already encoded.
            The validation also work from MeetingItem edit form."""
-        self._enableField('pollType')
+        self._enableField('poll_type')
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
@@ -921,20 +922,20 @@ class testVotes(PloneMeetingTestCase):
         self.assertRaises(KeyError, secret_item.validate_pollType, "unexisting")
         # can not switch to no_vote if votes encoded
         self.assertTrue(secret_item.get_item_votes())
-        original_poll_type = secret_item.getPollType()
+        original_poll_type = secret_item.poll_type
         self.assertEqual(original_poll_type, 'secret')
         change_pt_view("no_vote")
         self.assertTrue(secret_item.validate_pollType("no_vote"))
-        self.assertEqual(secret_item.getPollType(), original_poll_type)
+        self.assertEqual(secret_item.poll_type, original_poll_type)
         # can not switch to a "public" mode vote
         change_pt_view("freehand")
-        self.assertEqual(secret_item.getPollType(), original_poll_type)
+        self.assertEqual(secret_item.poll_type, original_poll_type)
         self.assertTrue(secret_item.validate_pollType("freehand"))
         # but can change to a vote is same mode, "secret"
         self.failIf(secret_item.validate_pollType("secret_separated"))
         change_pt_view("secret_separated")
-        self.assertNotEqual(secret_item.getPollType(), original_poll_type)
-        self.assertEqual(secret_item.getPollType(), "secret_separated")
+        self.assertNotEqual(secret_item.poll_type, original_poll_type)
+        self.assertEqual(secret_item.poll_type, "secret_separated")
 
     def test_pm_AsyncLoadMeetingAssemblyAndSignatures(self):
         """The @@load_meeting_assembly_and_signatures will load attendees
@@ -1183,15 +1184,15 @@ class testVotes(PloneMeetingTestCase):
         if self._check_wfa_available(['no_publication']):
             self._activate_wfas(('no_publication', ), keep_existing=False)
         self._removeConfigObjectsFor(cfg)
-        self._enableField('votesResult')
-        self._enableField('votesResult_after_motivation')
+        self._enableField('votes_result')
+        self._enableField('votes_result_after_motivation')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertFalse(item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.assertFalse(item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(item, 'votes_result'))
         self.changeUser('pmManager')
-        self.assertFalse(item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.assertFalse(item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(item, 'votes_result'))
 
         # get outside meeting
         self.assertEqual(cfg.votes_result_tal_expr, '')
@@ -1211,8 +1212,8 @@ class testVotes(PloneMeetingTestCase):
             self._createMeetingWithVotes()
         # votes are editable as soon as in a meeting (presented)
         self.assertEqual(public_item.query_state(), 'presented')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(may_view_field(public_item, 'votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(may_view_field(public_item, 'votes_result'))
         self.assertEqual(
             public_item.getVotesResult(),
             '<p>Il y a 4 votants.</p><p>Par 2 voix pour, une voix contre '
@@ -1232,36 +1233,36 @@ class testVotes(PloneMeetingTestCase):
         # freeze the meeting and set values
         self.freezeMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'itemfrozen')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(secret_item.mayQuickEdit('votes_result'))
 
         # when a value is set, then it is used
         self.assertFalse(public_item.getVotesResult(real=True))
         self.assertFalse(secret_item.getVotesResult(real=True))
-        public_item.setVotesResult('<p>Custom public text.</p>')
+        public_item.votes_result = richtextval('<p>Custom public text.</p>')
         self.assertEqual(public_item.getVotesResult(), '<p>Custom public text.</p>')
         self.assertEqual(public_item.getVotesResult(real=True), '<p>Custom public text.</p>')
-        secret_item.setVotesResult('<p>Custom secret text.</p>')
+        secret_item.votes_result = richtextval('<p>Custom secret text.</p>')
         self.assertEqual(secret_item.getVotesResult(), '<p>Custom secret text.</p>')
         self.assertEqual(secret_item.getVotesResult(real=True), '<p>Custom secret text.</p>')
 
         # decide item, still editable until meeting is closed
         self.decideMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'itemfrozen')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
-        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
+        self.assertTrue(secret_item.mayQuickEdit('votes_result'))
         self.do(public_item, 'accept')
         self.assertEqual(public_item.query_state(), 'accepted')
-        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votes_result'))
         self.closeMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'accepted')
-        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+        self.assertFalse(public_item.mayQuickEdit('votes_result'))
 
         # wrong expression will not break the view, if result is not html
         # a portal_messag is displayed
         IStatusMessage(self.request).show()
-        item.setVotesResult('')
-        public_item.setVotesResult('')
+        item.votes_result = richtextval('')
+        public_item.votes_result = richtextval('')
         cfg.votes_result_tal_expr = "string:not html"
         cleanRamCache()
         # no message as item not in a meeting

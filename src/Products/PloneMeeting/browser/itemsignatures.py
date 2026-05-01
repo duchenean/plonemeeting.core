@@ -166,7 +166,7 @@ class ManageItemSignaturesForm(form.Form):
                 until_item_number=self.apply_until_item_number,
                 meeting=self.context.getMeeting())
             for itemToUpdate in items_to_update:
-                itemToUpdate.setItemSignatures(self.item_signatures)
+                itemToUpdate.item_signatures = self.item_signatures
 
             first_item_number = items_to_update[0].getItemNumber(for_display=True)
             last_item_number = items_to_update[-1].getItemNumber(for_display=True)

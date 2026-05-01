@@ -5,6 +5,28 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- B.2.1: infrastructure prep for the DX MeetingItem swap. Adds 6 new
+  ``IVocabularyFactory`` wrappers in ``vocabularies.py`` for the AT
+  instance methods that backed the ``emergency``, ``preferred_meeting``,
+  ``item_tags``, ``item_initiator``, ``meeting_transition_inserting_me``
+  and ``completeness`` fields. Reuses the pre-existing
+  ``ItemCategoriesVocabulary`` / ``ItemClassifiersVocabulary`` for
+  ``category`` / ``classifier``. Adds a DX ``IObjectAddedEvent``
+  subscriber on ``content.meetingitem.IMeetingItem`` mirroring the AT
+  ``IObjectInitializedEvent`` handler. **No** AT compatibility shims
+  on the DX class — caller refactors land in B.2.2-B.2.5; the FTI
+  swap is held to the end of B.2 to keep CI green throughout.
+  [duchenean]
+
+- B.2.0: declare DX `MeetingItem` schema as `content/meetingitem.py`
+  with all 72 AT fields ported to snake_case, per-field
+  `form.read_permission` / `form.write_permission` directives,
+  and a `MeetingItemSchemaPolicy` registered as
+  `schema_policy_meetingitem`. Foundational only — the FTI swap, AT
+  compatibility shims, and caller sweeps land in B.2.1+. Punch list
+  in ``MIGRATION_SUMMARY_MEETINGITEM.md``.
+  [duchenean]
+
 - Removed dead/dev-only `install_requires` entries: `archetypes.schematuning`
   (AT-only perf overlay, irrelevant once `MeetingItem`/`MeetingConfig`
   go DX in Stage B/C) and `collective.usernamelogger` (dev-only login

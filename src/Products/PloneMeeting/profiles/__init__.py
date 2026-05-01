@@ -505,13 +505,13 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedMeetingAttributes = ['assembly', 'signatures']
         self.orderedAssociatedOrganizations = []
         self.orderedGroupsInCharge = []
-        # Must the "toDiscuss" value be set when inserting an item into a
+        # Must the "to_discuss" value be set when inserting an item into a
         # meeting ? If no, the user having permission to write the item will be
         # able to set this value, as soon as on item creation.
         self.toDiscussSetOnItemInsert = True
-        # What must be the default value for the "toDiscuss" field for normal items ?
+        # What must be the default value for the "to_discuss" field for normal items ?
         self.toDiscussDefault = True
-        # What must be the default value for the "toDiscuss" field for late items ?
+        # What must be the default value for the "to_discuss" field for late items ?
         self.toDiscussLateDefault = True
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
@@ -582,13 +582,13 @@ class MeetingConfigDescriptor(Descriptor):
         self.enableAddQuickAdvice = False
         self.itemInternalNotesEditableBy = []
         self.itemFieldsConfig = (
-            {'name': "neededFollowUp",
+            {'name': "needed_follow_up",
              'view': "python: item.may_view_follow_up()",
-             'edit': "python: item.may_edit_follow_up('neededFollowUp')"},
-            {'name': "providedFollowUp",
+             'edit': "python: item.may_edit_follow_up('needed_follow_up')"},
+            {'name': "provided_follow_up",
              'view': "python: item.may_view_follow_up()",
-             'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
-            {'name': "groupsInChargeNotes",
+             'edit': "python: item.may_edit_follow_up('provided_follow_up')"},
+            {'name': "groups_in_charge_notes",
              'view': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=[item.getProposingGroup()] + "
                 "item.getGroupsInCharge())",
              'edit': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=item.getGroupsInCharge())"},
@@ -912,7 +912,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.functionalAdminName = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
-        self.enableScanDocs = False
         self.deferParentReindex = ['annex', 'item_reference']
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [

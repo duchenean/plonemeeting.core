@@ -379,8 +379,8 @@ class Migrator(BaseMigrator):
         from Products.PloneMeeting.profiles import PloneMeetingConfiguration
         defaultPMConfig = PloneMeetingConfiguration('', '', '')
         defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
-        currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
-        storedHolidays = list(self.tool.getHolidays())
+        currentHolidays = [holiday['date'] for holiday in self.tool.holidays]
+        storedHolidays = list(self.tool.holidays)
         highestStoredHoliday = DateTime(storedHolidays[-1]['date'])
         for defaultHoliday in defaultHolidays:
             # update if not there and if higher that highest stored holiday
@@ -388,7 +388,7 @@ class Migrator(BaseMigrator):
                DateTime(defaultHoliday) > highestStoredHoliday:
                 storedHolidays.append({'date': defaultHoliday})
                 logger.info('Adding {0} to holidays'.format(defaultHoliday))
-        self.tool.setHolidays(storedHolidays)
+        self.tool.holidays = storedHolidays
         logger.info('Done.')
 
     def addNewSearches(self):

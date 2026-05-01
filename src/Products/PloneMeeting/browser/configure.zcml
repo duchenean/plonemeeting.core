@@ -214,6 +214,23 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- MeetingItem -->
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="view"
+      class="Products.PloneMeeting.browser.views.MeetingItemDefaultView"
+      permission="zope2.View" />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="base_view"
+      class="Products.PloneMeeting.browser.views.MeetingItemDefaultView"
+      permission="zope2.View" />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="base_edit"
+      class="Products.PloneMeeting.browser.views.MeetingItemEditView"
+      permission="cmf.ModifyPortalContent" />
+
     <!-- Meeting -->
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
@@ -1352,5 +1369,12 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
     </configure>
+
+    <!-- ToolPloneMeeting edit form -->
+    <browser:page
+        name="tool-edit"
+        for="Products.PloneMeeting.interfaces.IToolPloneMeeting"
+        class=".tool_edit.ToolEditForm"
+        permission="cmf.ModifyPortalContent" />
 
 </configure>

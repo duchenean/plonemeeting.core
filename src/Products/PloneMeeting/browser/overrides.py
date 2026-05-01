@@ -1094,9 +1094,12 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.portal_type in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate'] and \
            not check_zope_admin():
             return False
-        return _checkPermission(ModifyPortalContent, self.context) and \
-            (not self.context.portal_type == 'MeetingConfig' or
-             self.context.Schema().editableFields(self.context.Schema()))
+        if not _checkPermission(ModifyPortalContent, self.context):
+            return False
+        schema_method = getattr(aq_base(self.context), 'Schema', None)
+        if schema_method is not None:
+            return bool(self.context.Schema().editableFields(self.context.Schema()))
+        return True
 
     def renderLinkedPloneGroups(self):
         """

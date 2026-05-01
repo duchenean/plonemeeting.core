@@ -15,6 +15,16 @@
                    Products.Archetypes.interfaces.IObjectInitializedEvent"
               handler=".events.onItemInitialized" />
 
+  <!-- DX MeetingItem lifecycle events (B.2.1) -->
+  <!-- Targets the schema iface (.content.meetingitem.IMeetingItem) so this
+       fires for DX instances only, mirroring the AT IObjectInitializedEvent
+       handler. The marker-iface IObjectAddedEvent subscriber below also fires
+       for DX instances and runs onItemAdded — both end up calling
+       item_added_or_initialized(), matching the AT call-twice behavior. -->
+  <subscriber for=".content.meetingitem.IMeetingItem
+                   zope.lifecycleevent.IObjectAddedEvent"
+              handler=".events.onItemInitialized" />
+
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onItemAdded" />

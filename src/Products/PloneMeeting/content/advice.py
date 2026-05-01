@@ -187,7 +187,7 @@ class MeetingAdvice(Container):
         # we can not return a translated msg using _ so translate it
         return translate(
             "Advice ${advice_label} given on item ${item_title}",
-            mapping={'item_title': unicode(parent.Title(), 'utf-8'),
+            mapping={'item_title': safe_unicode(parent.Title()),
                      'advice_label': label},
             domain="PloneMeeting",
             default="Advice given on item",

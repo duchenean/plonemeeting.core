@@ -52,6 +52,8 @@
              name="schema_policy_pm_content_subcategory" />
     <utility factory=".meetingconfig.MeetingConfigSchemaPolicy"
              name="schema_policy_meetingconfig" />
+    <utility factory=".meetingitem.MeetingItemSchemaPolicy"
+             name="schema_policy_meetingitem" />
 
     <!-- MeetingConfig DX class interface declarations -->
     <class class=".meetingconfig.MeetingConfig">

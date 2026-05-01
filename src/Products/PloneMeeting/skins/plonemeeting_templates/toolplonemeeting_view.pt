@@ -134,7 +134,8 @@
         </dl>
       </fieldset>
 
-      <!-- Misc -->
+      <!-- Misc: AT field widgets (will be replaced by z3c.form edit view) -->
+      <tal:miscFields condition="python: here.getField('meetingFolderTitle') is not None">
       <fieldset>
         <legend>
          <span i18n:translate="tool_plonemeeting_misc"></span>
@@ -213,6 +214,7 @@
         </table>
       </fieldset>
       </tal:customFields>
+      </tal:miscFields>
 
     <fieldset tal:condition="isRealManager">
       <legend i18n:translate="heading_actions"></legend>

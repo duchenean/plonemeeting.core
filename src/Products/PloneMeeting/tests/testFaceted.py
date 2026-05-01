@@ -806,14 +806,14 @@ class testFaceted(PloneMeetingTestCase):
                           'not_given',
                           'positive'])
         # ToolPloneMeeting.advisersConfig.advice_types
-        self.tool.setAdvisersConfig(
-            ({'advice_types': ['positive_with_remarks'],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive_with_remarks',
-              'org_uids': [self.vendors_uid],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []}, ))
+        self.tool.advisers_config = [
+            {'advice_types': ['positive_with_remarks'],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive_with_remarks',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         self.tool.at_post_edit_script()
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
@@ -967,8 +967,8 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.vendors_reviewers, self.developers_reviewers)
         cfg.selectable_restricted_copy_groups = (self.vendors_reviewers, )
-        self._enableField('copyGroups')
-        self._enableField('restrictedCopyGroups')
+        self._enableField('copy_groups')
+        self._enableField('restricted_copy_groups')
         self.changeUser('pmManager')
         self.assertEqual(
             get_vocab_values(cfg, "Products.PloneMeeting.vocabularies.copygroupsvocabulary"),

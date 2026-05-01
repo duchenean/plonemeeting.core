@@ -117,7 +117,7 @@ from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.content.meeting import Meeting
-from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import IMeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
@@ -174,6 +174,7 @@ import re
 
 logger = logging.getLogger('PloneMeeting')
 
+_SENTINEL = object()
 
 # ---------------------------------------------------------------------------
 # AT camelCase → DX snake_case field name mapping (used for dynamic lookups)
@@ -2600,6 +2601,49 @@ class MeetingConfig(Container):
         """
         return None
 
+    def __getattr__(self, name):
+        if name.startswith('set') and len(name) > 3 and name[3].isupper():
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+            dx_name = _at_to_dx(field_name)
+            if dx_name != field_name and dx_name in IMeetingConfig:
+                def _setter(value, **kwargs):
+                    setattr(self, field_name, value)
+                return _setter
+        elif name.startswith('get') and len(name) > 3 and name[3].isupper():
+            field_name = name[3:]
+            field_name = field_name[0].lower() + field_name[1:]
+            dx_name = _at_to_dx(field_name)
+            if dx_name != field_name:
+                value = getattr(aq_base(self), dx_name, _SENTINEL)
+                if value is not _SENTINEL:
+                    return lambda **kw: value
+        if name and not name.startswith('_') and name[0].islower() \
+                and any(c.isupper() for c in name):
+            dx_name = _at_to_dx(name)
+            if dx_name != name:
+                value = getattr(aq_base(self), dx_name, _SENTINEL)
+                if value is not _SENTINEL:
+                    return value
+        return super(MeetingConfig, self).__getattr__(name)
+
+    def __setattr__(self, name, value):
+        if name and not name.startswith('_') and name[0].islower() \
+                and any(c.isupper() for c in name):
+            dx_name = _at_to_dx(name)
+            if dx_name != name and dx_name in IMeetingConfig:
+                    if isinstance(value, (set, frozenset)):
+                        value = list(value)
+                    elif isinstance(value, tuple):
+                        value = list(value)
+                    if dx_name in _DATAGRID_COL_KEY_MAP and isinstance(value, list):
+                        col_map = _DATAGRID_COL_KEY_MAP[dx_name]
+                        value = [{col_map.get(k, k): v for k, v in row.items()}
+                                 for row in value]
+                    super(MeetingConfig, self).__setattr__(dx_name, value)
+                    return
+        super(MeetingConfig, self).__setattr__(name, value)
+
     def validate(self, REQUEST=None, errors=None, data=None):
         """AT compatibility shim: call per-field validators for fields present in data."""
         if data is None:
@@ -2740,7 +2784,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'takenOverBy' in cfg.used_item_attributes "
+                    'tal_condition': "python: 'taken_over_by' in cfg.used_item_attributes "
                                      "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
                                      "or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -3177,7 +3221,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: 'neededFollowUp' in cfg.used_item_attributes and "
+                    'tal_condition': "python: 'needed_follow_up' in cfg.used_item_attributes and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3197,7 +3241,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'providedFollowUp' in cfg.used_item_attributes and "
+                    'tal_condition': "python: 'provided_follow_up' in cfg.used_item_attributes and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3318,6 +3362,9 @@ class MeetingConfig(Container):
         self.custom_advisers = [dict(v) for v in value]
         self.modification_date = DateTime()
 
+    def getCustomAdvisers(self):
+        return self.custom_advisers or []
+
 
     security.declareProtected(WriteRiskyConfig, 'setPowerObservers')
     def setPowerObservers(self, value, **kwargs):
@@ -3431,9 +3478,18 @@ class MeetingConfig(Container):
         self.using_groups = value
 
 
+    def getInsertingMethodsOnAddItem(self):
+        """Return inserting_methods_on_add_item with AT camelCase keys."""
+        reverse_map = {v: k for k, v in
+                       _DATAGRID_COL_KEY_MAP.get('inserting_methods_on_add_item', {}).items()}
+        return [{reverse_map.get(k, k): v for k, v in row.items()}
+                for row in (self.inserting_methods_on_add_item or [])]
+
     security.declareProtected(WriteRiskyConfig, 'setInsertingMethodsOnAddItem')
     def setInsertingMethodsOnAddItem(self, value, **kwargs):
-        self.inserting_methods_on_add_item = list(value)
+        col_map = _DATAGRID_COL_KEY_MAP.get('inserting_methods_on_add_item', {})
+        self.inserting_methods_on_add_item = [
+            {col_map.get(k, k): v for k, v in row.items()} for row in value]
 
     security.declareProtected(WriteRiskyConfig, 'setUsedItemAttributes')
     def setUsedItemAttributes(self, value, **kwargs):
@@ -3442,6 +3498,22 @@ class MeetingConfig(Container):
     security.declareProtected(WriteRiskyConfig, 'setItemAdviceStates')
     def setItemAdviceStates(self, value, **kwargs):
         self.item_advice_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceEditStates')
+    def setItemAdviceEditStates(self, value, **kwargs):
+        self.item_advice_edit_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceViewStates')
+    def setItemAdviceViewStates(self, value, **kwargs):
+        self.item_advice_view_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setUseAdvices')
+    def setUseAdvices(self, value, **kwargs):
+        self.use_advices = value
+
+    security.declareProtected(WriteRiskyConfig, 'setSelectableAdvisers')
+    def setSelectableAdvisers(self, value, **kwargs):
+        self.selectable_advisers = list(value)
 
     security.declareProtected(WriteRiskyConfig, 'setOnTransitionFieldTransforms')
     def setOnTransitionFieldTransforms(self, value, **kwargs):
@@ -3462,6 +3534,10 @@ class MeetingConfig(Container):
     security.declareProtected(WriteRiskyConfig, 'setItemsVisibleFields')
     def setItemsVisibleFields(self, value, **kwargs):
         self.items_visible_fields = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemFieldsConfig')
+    def setItemFieldsConfig(self, value, **kwargs):
+        self.item_fields_config = list(value)
 
     security.declareProtected(WriteRiskyConfig, 'setOnMeetingTransitionItemActionToExecute')
     def setOnMeetingTransitionItemActionToExecute(self, value, **kwargs):
@@ -3828,7 +3904,7 @@ class MeetingConfig(Container):
         res = self.config_group
         if full:
             tool = api.portal.get_tool('portal_plonemeeting')
-            configGroups = tool.getConfigGroups()
+            configGroups = tool.config_groups
             res = [configGroup for configGroup in configGroups
                    if configGroup['row_id'] == self.getConfigGroup()]
             res = res and res[0] or {}
@@ -4374,23 +4450,23 @@ class MeetingConfig(Container):
         '''Some attributes on an item are mutually exclusive. This validator
            ensures that wrong combinations aren't used.'''
         pm = 'PloneMeeting'
-        # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
-        if 'proposingGroupWithGroupInCharge' in newValue and 'groupsInCharge' in newValue:
+        # Prevent combined use of "proposing_group_with_group_in_charge" and "groups_in_charge"
+        if 'proposing_group_with_group_in_charge' in newValue and 'groups_in_charge' in newValue:
             return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
                              domain=pm,
                              context=self.REQUEST)
         # votesResult must be enabled to use
-        # votesResult_after_motivation/votesResult_after_decisionEnd
-        # and votesResult_after_motivation/votesResult_after_decisionEnd can not
+        # votes_result_after_motivation/votes_result_after_decision_end
+        # and votes_result_after_motivation/votes_result_after_decision_end can not
         # be used at the same time
-        if 'votesResult_after_motivation' in newValue and \
-           'votesResult_after_decisionEnd' in newValue:
+        if 'votes_result_after_motivation' in newValue and \
+           'votes_result_after_decision_end' in newValue:
             return translate('no_votesResult_after_together',
                              domain=pm,
                              context=self.REQUEST)
-        if ('votesResult_after_motivation' in newValue or
-            'votesResult_after_decisionEnd' in newValue) and \
-                'votesResult' not in newValue:
+        if ('votes_result_after_motivation' in newValue or
+            'votes_result_after_decision_end' in newValue) and \
+                'votes_result' not in newValue:
             return translate('no_votesResult_after_without_votesResult',
                              domain=pm,
                              context=self.REQUEST)
@@ -5028,7 +5104,7 @@ class MeetingConfig(Container):
             # pass 'template_row_marker'
             if value.get('orderindex_', None) == 'template_row_marker':
                 continue
-            res.append(value['insertingMethod'])
+            res.append(value.get('inserting_method') or value.get('insertingMethod'))
         # now that we have a list in res, we can check
         # first check presence of 'at_the_end'
         if 'at_the_end' in res and len(res) > 1:
@@ -5056,20 +5132,20 @@ class MeetingConfig(Container):
         usedItemAttrs = self.used_item_attributes
         if 'on_to_discuss' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
-                notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
+                notUsingToDiscuss = 'to_discuss' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingToDiscuss = 'toDiscuss' not in usedItemAttrs
+                notUsingToDiscuss = 'to_discuss' not in usedItemAttrs
             if notUsingToDiscuss:
                 return translate('inserting_methods_not_using_to_discuss_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
-        # check that if we selected 'on_poll_type', we actually use the field 'pollType'...
+        # check that if we selected 'on_poll_type', we actually use the field 'poll_type'...
         if 'on_poll_type' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
-                notUsingPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
+                notUsingPollType = 'poll_type' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingPollType = 'pollType' not in usedItemAttrs
+                notUsingPollType = 'poll_type' not in usedItemAttrs
             if notUsingPollType:
                 return translate('inserting_methods_not_using_poll_type_error',
                                  domain='PloneMeeting',
@@ -5086,7 +5162,8 @@ class MeetingConfig(Container):
                                  context=self.REQUEST)
             # may not use 'reverse'
             privacy_reverse = [value['reverse'] for value in values
-                               if value['insertingMethod'] == 'on_privacy'][0]
+                               if (value.get('inserting_method') or
+                                   value.get('insertingMethod')) == 'on_privacy'][0]
             if privacy_reverse == '1':
                 return translate('inserting_methods_on_privacy_reverse_error',
                                  domain='PloneMeeting',
@@ -5138,6 +5215,9 @@ class MeetingConfig(Container):
 
     def setCertifiedSignatures(self, value):
         '''Set certified_signatures field value.'''
+        col_map = _DATAGRID_COL_KEY_MAP.get('certified_signatures', {})
+        if col_map and value:
+            value = [{col_map.get(k, k): v for k, v in row.items()} for row in value]
         self.certified_signatures = value
 
     def setOrderedAssociatedOrganizations(self, value):
@@ -5245,10 +5325,10 @@ class MeetingConfig(Container):
            - fields not rendered correctly : itemAssembly/itemAssemblyExcused/itemAssemblyAbsents/itemSignatures,
              manuallyLinkedItems, otherMeetingConfigsClonableToEmergency/otherMeetingConfigsClonableToPrivacy."""
         return ['id', 'title',
-                'templateUsingGroups', 'meetingTransitionInsertingMe',
-                'itemAssembly', 'itemAssemblyExcused', 'itemAssemblyAbsents', 'itemSignatures',
-                'manuallyLinkedItems',
-                'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
+                'template_using_groups', 'meeting_transition_inserting_me',
+                'item_assembly', 'item_assembly_excused', 'item_assembly_absents', 'item_signatures',
+                'manually_linked_items',
+                'other_meeting_configs_clonable_to_emergency', 'other_meeting_configs_clonable_to_privacy']
 
     def _extraMeetingRelatedColumns(self):
         """ """
@@ -5297,7 +5377,8 @@ class MeetingConfig(Container):
             expression=tal_expr,
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
-            empty_expr_is_true=empty_expr_is_true)
+            empty_expr_is_true=empty_expr_is_true,
+            raise_on_error=True)
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
@@ -5372,8 +5453,9 @@ class MeetingConfig(Container):
                     metaTypeName, metaTypeName)
                 realMetaType = 'MeetingItem' if metaTypeName.startswith('MeetingItem') \
                     else metaTypeName
+                baseFTI = getattr(portal_types, realMetaType)
                 portal_types.manage_addTypeInformation(
-                    getattr(portal_types, realMetaType).meta_type,
+                    baseFTI.meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
 
                 # Set the human readable title explicitly
@@ -5381,6 +5463,19 @@ class MeetingConfig(Container):
                 portalType.title = portalTypeName
                 # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
                 portalType.global_allow = True
+
+                # Copy DX FTI properties from the base type.
+                # Use metaTypeName (not realMetaType) so each subtype
+                # (MeetingItemRecurring, MeetingItemTemplate) gets its own klass.
+                dxBaseFTI = getattr(portal_types, metaTypeName)
+                if dxBaseFTI.meta_type == 'Dexterity FTI':
+                    portalType.klass = dxBaseFTI.klass
+                    portalType.schema_policy = dxBaseFTI.schema_policy
+                    portalType.behaviors = dxBaseFTI.behaviors
+                    portalType.schema = dxBaseFTI.schema
+                    portalType.model_source = dxBaseFTI.model_source
+                    portalType.filter_content_types = dxBaseFTI.filter_content_types
+                    portalType.allowed_content_types = dxBaseFTI.allowed_content_types
 
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     # Update the typesUseViewActionInListings property of site_properties
@@ -6090,24 +6185,29 @@ class MeetingConfig(Container):
         return self._listFieldsFor(baseClass, widget_type='RichWidget')
 
     def _listFieldsFor(self,
-                       baseClass,
-                       widget_type=None,
+                       schema_iface,
                        ignored_field_ids=[],
                        hide_not_visible=False):
-        """ """
+        """List (key, label) tuples for DX schema fields.
+
+        ``schema_iface`` is the Dexterity schema interface (e.g. IMeetingItem).
+        """
+        from zope.schema import getFieldsInOrder
         d = 'PloneMeeting'
+        class_name = schema_iface.__name__[1:]  # IMeetingItem -> MeetingItem
         res = []
-        for field in baseClass.schema.filterFields(isMetadata=False):
-            fieldName = field.getName()
-            if fieldName not in ignored_field_ids and \
-               (not widget_type or field.widget.getName() == widget_type) and \
-               (not hide_not_visible or field.widget.visible):
-                label_msgid = getattr(
-                    field.widget, 'label_msgid', field.widget.label)
-                msg = u'%s.%s ➔ %s' % (
-                    baseClass.__name__, fieldName,
-                    translate(label_msgid, domain=d, context=self.REQUEST))
-                res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
+        for field_name, field in getFieldsInOrder(schema_iface):
+            if field_name in ignored_field_ids:
+                continue
+            if hide_not_visible and field.required is False and \
+               getattr(field, 'defaultFactory', None) is None and \
+               not field.default:
+                pass  # include it, visibility is controlled by _field_conditions
+            msg = u'%s.%s ➔ %s' % (
+                class_name, field_name,
+                translate("title_{0}".format(field_name),
+                          domain=d, context=self.REQUEST))
+            res.append(('%s.%s' % (class_name, field_name), msg))
         return res
 
     security.declarePublic('listTransformTypes')
@@ -6318,16 +6418,13 @@ class MeetingConfig(Container):
     def getRecurringItems(self, onlyActive=True):
         '''Gets the recurring items defined in the configuration.
            If p_onlyActive is True, only returns 'active' items.'''
-        res = []
         itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        all_items = itemsFolder.objectValues(
+            ('MeetingItem', 'MeetingItemRecurring'))
         if not onlyActive:
-            res = itemsFolder.objectValues('MeetingItem')
-        else:
-            res = []
-            for item in itemsFolder.objectValues('MeetingItem'):
-                if item.query_state() == 'active':
-                    res.append(item)
-        return res
+            return list(all_items)
+        return [item for item in all_items
+                if item.query_state() == 'active']
 
     def _itemTemplatesQuery(self, onlyActive=True, filtered=False):
         '''Returns the catalog query to get item templates.'''
@@ -6837,7 +6934,7 @@ class MeetingConfig(Container):
 
     def show_copy_groups_search(self):
         '''Condition for showing the searchallitemsincopy DashboardCollection.'''
-        return bool('copyGroups' in self.used_item_attributes and
+        return bool('copy_groups' in self.used_item_attributes and
                     set(get_plone_groups_for_user()).intersection(
                         self.selectable_copy_groups))
 
@@ -7021,7 +7118,7 @@ class MeetingConfig(Container):
                 translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
             ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
                 translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
-            ("copyGroups", u"{0} (copyGroups)".format(
+            ("copy_groups", u"{0} (copyGroups)".format(
                 translate("header_copyGroups", domain=d, context=self.REQUEST))),
             ("committees_index", u"{0} (committees_index)".format(
                 translate("header_committees_index", domain=d, context=self.REQUEST))),
@@ -7029,13 +7126,13 @@ class MeetingConfig(Container):
                 translate("header_committees_index_acronym", domain=d, context=self.REQUEST))),
             ("privacy", u"{0} (privacy)".format(
                 translate("header_privacy", domain=d, context=self.REQUEST))),
-            ("pollType", u"{0} (pollType)".format(
+            ("poll_type", u"{0} (pollType)".format(
                 translate("header_pollType", domain=d, context=self.REQUEST))),
             ("advices", u"{0} (advices)".format(
                 translate("header_advices", domain=d, context=self.REQUEST))),
             ("getItemIsSigned", u"{0} (getItemIsSigned)".format(
                 translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
-            ("toDiscuss", u"{0} (toDiscuss)".format(
+            ("to_discuss", u"{0} (toDiscuss)".format(
                 translate('header_toDiscuss', domain=d, context=self.REQUEST))),
             ("item_meeting_deadline_date", u"{0} (meetingDeadlineDate)".format(
                 translate('header_item_meeting_deadline_date', domain=d, context=self.REQUEST))),
@@ -7182,7 +7279,7 @@ class MeetingConfig(Container):
         '''Vocabulary for itemFieldsToKeepConfigSortingFor field.'''
         d = "PloneMeeting"
         res = DisplayList((
-            ('proposingGroup', translate('PloneMeeting_label_proposingGroup',
+            ('proposing_group', translate('PloneMeeting_label_proposingGroup',
                                          domain=d,
                                          context=self.REQUEST)),
             ('category', translate('PloneMeeting_label_category',
@@ -7191,10 +7288,10 @@ class MeetingConfig(Container):
             ('classifier', translate('PloneMeeting_label_classifier',
                                      domain=d,
                                      context=self.REQUEST)),
-            ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
+            ('associated_groups', translate('PloneMeeting_label_associatedGroups',
                                            domain=d,
                                            context=self.REQUEST)),
-            ('groupsInCharge', translate('PloneMeeting_label_groupsInCharge',
+            ('groups_in_charge', translate('PloneMeeting_label_groupsInCharge',
                                          domain=d,
                                          context=self.REQUEST)),
         ))
@@ -7311,7 +7408,7 @@ class MeetingConfig(Container):
                 translate('no_config_group',
                           domain='PloneMeeting',
                           context=self.REQUEST))]
-        for configGroup in tool.getConfigGroups():
+        for configGroup in tool.config_groups:
             res.append(
                 (configGroup['row_id'],
                  safe_unicode(configGroup['label'])))
@@ -7586,7 +7683,7 @@ class MeetingConfig(Container):
         # insert some static selectable values, ignore static that are also in _listFieldsFor
         res = [(k, v) for k, v in self.listItemRelatedColumns()
                if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
-        res += self._listFieldsFor(MeetingItem,
+        res += self._listFieldsFor(IMeetingItem,
                                    ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                    hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
@@ -7605,7 +7702,7 @@ class MeetingConfig(Container):
         # insert some static selectable values, ignore static that are also in _listFieldsFor
         res = [(k, v) for k, v in self.listItemRelatedColumns()
                if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
-        res += self._listFieldsFor(MeetingItem,
+        res += self._listFieldsFor(IMeetingItem,
                                    ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                    hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
@@ -7624,7 +7721,7 @@ class MeetingConfig(Container):
     def listItemsListVisibleFields(self):
         '''Vocabulary for the 'itemsListVisibleFields/itemsNotViewableVisibleFields' fields.
            Every fields available on the MeetingItem can be selectable.'''
-        res = self._listFieldsFor(MeetingItem,
+        res = self._listFieldsFor(IMeetingItem,
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
         return DisplayList(tuple(res))
@@ -7816,7 +7913,7 @@ class MeetingConfig(Container):
                                                     domain=d,
                                                     context=self.REQUEST)),
             # relevant if using copyGroups
-            ("copyGroups", translate('event_item_copy_groups',
+            ("copy_groups", translate('event_item_copy_groups',
                                      domain=d,
                                      context=self.REQUEST)), ]
 
@@ -7976,17 +8073,15 @@ class MeetingConfig(Container):
     security.declarePrivate('listUsedItemAttributes')
 
     def listUsedItemAttributes(self):
-        res = self.listAttributes(MeetingItem.schema, optionalOnly=True)
-        # add special values for votesResult to repeat it after motivation
-        # and/or after decisionEnd
-        res.add('votesResult_after_motivation',
-                '%s (votesResult_after_motivation)' %
-                (translate('votesResult_after_motivation',
+        res = get_dx_attrs('MeetingItem', optional_only=True)
+        res.add('votes_result_after_motivation',
+                '%s (votes_result_after_motivation)' %
+                (translate('votes_result_after_motivation',
                            domain='PloneMeeting',
                            context=self.REQUEST)))
-        res.add('votesResult_after_decisionEnd',
-                '%s (votesResult_after_decisionEnd)' %
-                (translate('votesResult_after_decisionEnd',
+        res.add('votes_result_after_decision_end',
+                '%s (votes_result_after_decision_end)' %
+                (translate('votes_result_after_decision_end',
                            domain='PloneMeeting',
                            context=self.REQUEST)))
         res.add('labels', '%s (labels)' %
@@ -7998,7 +8093,7 @@ class MeetingConfig(Container):
     security.declarePrivate('listItemAttributes')
 
     def listItemAttributes(self):
-        return self.listAttributes(MeetingItem.schema).sortedByValue()
+        return get_dx_attrs('MeetingItem', optional_only=False)
 
     security.declarePrivate('listMeetingAttributes')
 

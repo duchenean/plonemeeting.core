@@ -28,7 +28,7 @@ class ItemListTypeView(BrowserView):
         '''Returns a list of listTypes the current user can set the item to.'''
         if not self.context.adapted().mayChangeListType():
             return []
-        list_type = self.context.getListType()
+        list_type = self.context.list_type
         return [term for term in self.vocab if term.value != list_type]
 
     def force_faceted(self):
@@ -38,7 +38,7 @@ class ItemListTypeView(BrowserView):
 
     def currentListTypeTitle(self):
         """ """
-        return self.vocab.getTerm(self.context.getListType()).title
+        return self.vocab.getTerm(self.context.list_type).title
 
     def displayCurrentListType(self):
         '''Display current listType?  We display it on the item view but not on the meeting_view
@@ -74,8 +74,8 @@ class ChangeItemListTypeView(BrowserView):
 
         # save old_listType so we can pass it the the ItemListTypeChangedEvent
         # set the new listType and notify events
-        old_listType = self.context.getListType()
-        self.context.setListType(new_value)
+        old_listType = self.context.list_type
+        self.context.list_type = new_value
         self.context._update_after_edit(idxs=['listType'])
         if new_value == 'late':
             self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
@@ -84,7 +84,7 @@ class ChangeItemListTypeView(BrowserView):
             notify(ItemListTypeChangedEvent(self.context, old_listType))
         except PloneMeetingError, msg:
             # back to original state
-            self.context.setListType(old_listType)
+            self.context.list_type = old_listType
             self.context._update_after_edit(idxs=['listType'])
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(msg, type='warning')

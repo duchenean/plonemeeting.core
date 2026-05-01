@@ -139,7 +139,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.presentItem(item)
-        item.setItemInitiator((hp_uid,))
+        item.item_initiator = (hp_uid,)
         item._update_after_edit()
 
         # hp not deletable because used in MC and meeting item
@@ -154,7 +154,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting item, now it is deletable
-        item.setItemInitiator(())
+        item.item_initiator = ()
         item._update_after_edit()
 
         # not deletable when used as held_position of certified signatures
@@ -1849,13 +1849,13 @@ class testContacts(PloneMeetingTestCase):
         # item.itemInitiator
         # so check the 6 possible "states"
 
-        # first check when the item is using 'proposingGroup', it is the case here
+        # first check when the item is using 'proposing_group', it is the case here
         # for item, make sure other conditions are False
-        item.setAssociatedGroups(())
-        item.setOptionalAdvisers(())
+        item.associated_groups = ()
+        item.optional_advisers = ()
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
-        item.setCopyGroups(())
-        item.setItemInitiator(())
+        item.copy_groups = ()
+        item.item_initiator = ()
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1866,10 +1866,10 @@ class testContacts(PloneMeetingTestCase):
 
         # now check with item having associatedGroups
         item.setProposingGroup(self.vendors_uid)
-        item.setAssociatedGroups((self.developers_uid, ))
-        item.setOptionalAdvisers(())
+        item.associated_groups = (self.developers_uid, )
+        item.optional_advisers = ()
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
-        item.setCopyGroups(())
+        item.copy_groups = ()
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1879,10 +1879,10 @@ class testContacts(PloneMeetingTestCase):
 
         # now check with item having optionalAdvisers
         item.setProposingGroup(self.vendors_uid)
-        item.setAssociatedGroups(())
-        item.setOptionalAdvisers((self.developers_uid, ))
+        item.associated_groups = ()
+        item.optional_advisers = (self.developers_uid, )
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
-        item.setCopyGroups(())
+        item.copy_groups = ()
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1892,8 +1892,8 @@ class testContacts(PloneMeetingTestCase):
 
         # check with groupsInCharge
         item.setProposingGroup(self.vendors_uid)
-        item.setAssociatedGroups(())
-        item.setOptionalAdvisers(())
+        item.associated_groups = ()
+        item.optional_advisers = ()
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
         self._setUpGroupsInCharge(item, groups=[self.developers_uid])
         transaction.commit()
@@ -1904,7 +1904,7 @@ class testContacts(PloneMeetingTestCase):
 
         # check with item having itemInitiator
         self._tearDownGroupsInCharge(item)
-        item.setItemInitiator((self.developers_uid, ))
+        item.item_initiator = (self.developers_uid, )
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1913,9 +1913,9 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # check with item having copyGroups
-        item.setItemInitiator(())
-        self._enableField('copyGroups')
-        item.setCopyGroups((self.developers_reviewers, ))
+        item.item_initiator = ()
+        self._enableField('copy_groups')
+        item.copy_groups = (self.developers_reviewers, )
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1924,7 +1924,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # remove copyGroups
-        item.setCopyGroups(())
+        item.copy_groups = ()
         item._update_after_edit()
         # unselect organizations from plonegroup configuration so it works...
         self._select_organization(self.developers_uid, remove=True)
@@ -1994,7 +1994,7 @@ class testContacts(PloneMeetingTestCase):
                                    context=self.portal.REQUEST))
         # change proposingGroup but use org in templateUsingGroups
         item_template.setProposingGroup(self.developers_uid)
-        item_template.setTemplateUsingGroups((self.vendors_uid, ))
+        item_template.template_using_groups = (self.vendors_uid, )
         item_template._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -2006,7 +2006,7 @@ class testContacts(PloneMeetingTestCase):
                                    mapping={'item_url': item_template_url},
                                    context=self.portal.REQUEST))
         # unselect organizations from plonegroup configuration so it works...
-        item_template.setTemplateUsingGroups(())
+        item_template.template_using_groups = ()
         item_template._update_after_edit()
 
         self._select_organization(self.vendors_uid, remove=True)
@@ -2071,20 +2071,20 @@ class testContacts(PloneMeetingTestCase):
             item,
             'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
             only_factory=True)
-        self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
-        self.assertTrue(self.developers_uid in item.Vocabulary('proposingGroup')[0])
-        self.assertTrue(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
+        self.assertTrue(self.developers_uid in item.Vocabulary('associated_groups')[0])
+        self.assertTrue(self.developers_uid in item.Vocabulary('proposing_group')[0])
+        self.assertTrue(self.developers_reviewers in item.Vocabulary('copy_groups')[0])
         self.assertTrue(self.developers_uid in advisers_vocab_factory(item))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
-        self.assertFalse(self.developers_uid in item.Vocabulary('associatedGroups')[0])
+        self.assertFalse(self.developers_uid in item.Vocabulary('associated_groups')[0])
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
-        self.assertFalse(self.developers_uid in item.Vocabulary('proposingGroup')[0])
-        self.assertFalse(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
+        self.assertFalse(self.developers_uid in item.Vocabulary('proposing_group')[0])
+        self.assertFalse(self.developers_reviewers in item.Vocabulary('copy_groups')[0])
         self.assertFalse(self.developers_uid in advisers_vocab_factory(item))
         self.assertFalse(self.tool.userIsAmong(['creators']))
 
@@ -2643,7 +2643,7 @@ class testContacts(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(hp1))
         notify(ObjectModifiedEvent(hp2))
         # now enable groupsInCharge
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
 
         # create item without groupsInCharge
         self.changeUser('pmCreator1')
@@ -2651,7 +2651,7 @@ class testContacts(PloneMeetingTestCase):
         # by default, check_is_attendee=True, item must be in a meeting
         self.assertEqual(item.get_representatives_in_charge(), [])
         self.assertEqual(item.get_representatives_in_charge(False), [])
-        item.setGroupsInCharge((self.developers_uid, ))
+        item.groups_in_charge = (self.developers_uid, )
         self.assertEqual(item.get_representatives_in_charge(), [])
         self.assertEqual(item.get_representatives_in_charge(False), [hp1, hp2])
         self.changeUser('pmManager')
@@ -2660,7 +2660,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item.get_representatives_in_charge(), [hp1, hp2])
         self.assertEqual(item.get_representatives_in_charge(False), [hp1, hp2])
         # works also when one representative (will be the case most of time)
-        item.setGroupsInCharge((self.vendors_uid, ))
+        item.groups_in_charge = (self.vendors_uid, )
         self.assertEqual(item.get_representatives_in_charge(), [hp2])
         self.assertEqual(item.get_representatives_in_charge(False), [hp2])
 
@@ -2686,7 +2686,7 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_HeldPositionBackRefs(self):
         """This will display back references on a held_position
            to see where it is used."""
-        self._enableField("itemInitiator")
+        self._enableField("item_initiator")
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()

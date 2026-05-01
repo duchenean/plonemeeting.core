@@ -57,7 +57,7 @@ class testPortlets(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', 'itemtemplates'])
         itemTemplate = self.create('MeetingItemTemplate')
-        itemTemplate.setTemplateUsingGroups(('developers', ))
+        itemTemplate.template_using_groups = ('developers', )
         itemTemplate.reindexObject(idxs=['templateUsingGroups', ])
         # pmCreator1 is member of 'developers'
         self.changeUser('pmCreator1')
@@ -96,7 +96,7 @@ class testPortlets(PloneMeetingTestCase):
         self.assertEqual(itemsCategory._get_default_item_template_UID(), empty_item_template_uid)
         # restrict it to developers
         self.changeUser('siteadmin')
-        empty_item_template.setTemplateUsingGroups([self.developers_uid])
+        empty_item_template.template_using_groups = [self.developers_uid]
         empty_item_template.reindexObject(idxs=['templateUsingGroups', ])
         # available for pmCreator1 that is member of developers
         self.changeUser('pmCreator1')

@@ -104,7 +104,7 @@ class ItemSign(BrowserView):
 
         # do this as Manager
         with api.env.adopt_roles(['Manager', ]):
-            itemIsSigned = not self.context.getItemIsSigned()
+            itemIsSigned = not self.context.item_is_signed
             self.context.setItemIsSigned(itemIsSigned)
             notifyModifiedAndReindex(self.context, extra_idxs=['item_is_signed'])
 

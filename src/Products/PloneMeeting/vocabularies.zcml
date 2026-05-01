@@ -303,4 +303,24 @@
   <utility component=".vocabularies.PollTypesVocabularyAliasFactory"
            name="Products.PloneMeeting.vocabularies.poll_types_vocabulary" />
 
+  <!-- DX MeetingItem schema vocabularies (B.2.1) -->
+  <utility component=".vocabularies.ItemEmergenciesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_emergencies_vocabulary" />
+  <utility component=".vocabularies.ItemCompletenessVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_completeness_vocabulary" />
+  <utility component=".vocabularies.ItemTagsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_tags_vocabulary" />
+  <utility component=".vocabularies.ItemMeetingsAcceptingItemsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_meetings_accepting_items_vocabulary" />
+  <utility component=".vocabularies.ItemMeetingTransitionsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_meeting_transitions_vocabulary" />
+  <utility component=".vocabularies.ItemInitiatorsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_initiators_vocabulary" />
+
+  <!-- ToolPloneMeeting DX schema vocabularies -->
+  <utility component=".vocabularies.WeekDaysVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.weekdays_vocabulary" />
+  <utility component=".vocabularies.DeferParentReindexVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.defer_parent_reindex_vocabulary" />
+
 </configure>

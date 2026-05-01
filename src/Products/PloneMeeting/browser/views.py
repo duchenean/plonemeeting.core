@@ -28,6 +28,7 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
@@ -232,6 +233,24 @@ class ItemNumberView(BrowserView):
         return _is_integer(number)
 
 
+class MeetingItemDefaultView(BrowserView):
+    """Default @@view / @@base_view for DX MeetingItem.
+
+    Delegates to the meetingitem_view skin template so that existing
+    TAL rendering (copy groups, advices, votes, etc.) is preserved.
+    """
+
+    def __call__(self):
+        return self.context.restrictedTraverse('meetingitem_view')()
+
+
+class MeetingItemEditView(BrowserView):
+    """@@base_edit for DX MeetingItem — delegates to the DX @@edit form."""
+
+    def __call__(self):
+        return self.context.restrictedTraverse('@@edit')()
+
+
 class ItemIsSignedView(BrowserView):
     """
       This manage the view displaying itemIsSigned widget
@@ -284,7 +303,7 @@ class ItemToDiscussView(BrowserView):
     def __call__parent_cachekey(method, self):
         '''cachekey method for self.__call__.'''
         # check also on portal_url as path to image is cached
-        return self.portal_url, self.context.getToDiscuss(), \
+        return self.portal_url, self.context.to_discuss, \
             self.mayEdit(), self.reviewerMayAskDiscussion()
 
     @ram.cache(__call__parent_cachekey)
@@ -307,13 +326,12 @@ class ItemToDiscussView(BrowserView):
 
     def mayEdit(self):
         """ """
-        toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
-        return _checkPermission(toDiscuss_write_perm, self.context) and \
+        return _checkPermission(ModifyPortalContent, self.context) and \
             self.context.showToDiscuss()
 
     def reviewerMayAskDiscussion(self):
         """Do we use the "reviewer may ask item discussion" ?"""
-        return not self.context.getToDiscuss() and \
+        return not self.context.to_discuss and \
             "askDiscussItem" in self.cfg.mail_item_events and \
             self.context.hasMeeting() and \
             not self.context.is_decided(self.cfg) and \
@@ -2238,7 +2256,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         html_pattern is used to add a html pattern around the list of groups.
         """
         res = []
-        copy_groups = self.context.getCopyGroups()
+        copy_groups = self.context.copy_groups or []
         for copy_group in copy_groups:
             if copy_group.endswith(tuple(suffixes)):
                 group = get_organization(copy_group)
@@ -2597,11 +2615,23 @@ class DisplayCollapsibleRichTextField(BrowserView):
             return ""
 
         self.field_name = field_name
-        field = self.context.getField(field_name)
+        snake_name = _camel_to_snake(field_name)
         if raw:
-            self.field_content = field.getEditAccessor(self.context)()
+            accessor_name = 'getRaw' + field_name[0].upper() + field_name[1:]
+            accessor = getattr(self.context, accessor_name, None)
+            if accessor is not None:
+                self.field_content = accessor()
+            else:
+                value = getattr(self.context, snake_name, None)
+                self.field_content = value.raw if hasattr(value, 'raw') else (value or u'')
         else:
-            self.field_content = field.getAccessor(self.context)()
+            accessor_name = 'get' + field_name[0].upper() + field_name[1:]
+            accessor = getattr(self.context, accessor_name, None)
+            if accessor is not None:
+                self.field_content = accessor()
+            else:
+                value = getattr(self.context, snake_name, None)
+                self.field_content = value.output if hasattr(value, 'output') else (value or u'')
         return self.index()
 
 

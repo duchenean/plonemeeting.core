@@ -11,6 +11,7 @@ from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import get_dx_field
 from z3c.form import button
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
@@ -72,13 +73,13 @@ class AdviceRemoveInheritanceForm(BaseAdviceInfoForm):
             if self.context.showOptionalAdvisers():
                 advisers_vocab = get_vocab(
                     self.context,
-                    self.context.getField('optionalAdvisers').vocabulary_factory,
+                    get_dx_field(self.context, 'optional_advisers').value_type.vocabularyName,
                     **{'include_selected': False, 'include_not_selectable_values': False})
                 if data['advice_uid'] in advisers_vocab:
                     optionalAdvisers = list(self.context.getOptionalAdvisers(computed=True))
                     if data['advice_uid'] not in optionalAdvisers:
                         optionalAdvisers.append(data['advice_uid'])
-                        self.context.setOptionalAdvisers(optionalAdvisers)
+                        self.context.optional_advisers = list(optionalAdvisers)
                     advice_asked_locally = True
             if not advice_asked_locally:
                 api.portal.show_message(

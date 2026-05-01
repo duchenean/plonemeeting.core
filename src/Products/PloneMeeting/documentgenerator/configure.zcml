@@ -11,4 +11,11 @@
                   Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
              factory="Products.PloneMeeting.documentgenerator.condition.PMDashboardPODTemplateCondition" />
 
+    <adapter for="Products.PloneMeeting.content.meetingitem._ATFieldStub
+                  Products.PloneMeeting.content.meetingitem._ATFieldWidgetStub
+                  Products.PloneMeeting.interfaces.IMeetingItem"
+             provides="collective.documentgenerator.interfaces.IFieldRendererForDocument"
+             factory="Products.PloneMeeting.documentgenerator.renderer.ATFieldStubRenderer"
+             permission="zope2.View" />
+
 </configure>

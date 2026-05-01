@@ -9,6 +9,7 @@ from AccessControl import Unauthorized
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
 from OFS.ObjectManager import BeforeDeleteException
 from Products.Archetypes.event import ObjectEditedEvent
@@ -21,8 +22,8 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
-from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.MeetingItem import REC_ITEM_ERROR
+from Products.PloneMeeting.content.meetingitem import MeetingItem
+from Products.PloneMeeting.content.meetingitem import REC_ITEM_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
@@ -247,7 +248,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmManager adds a decision to item1 and freezes the meeting
         self.changeUser('pmManager')
-        item1.setDecision(self.decisionText)
+        item1.decision = richtextval(self.decisionText)
         self.do(meeting, 'decide')
         # Reviewers may still not add decision annexes or normal annexes
         self.changeUser('pmReviewer1')
@@ -258,8 +259,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmManager adds a decision for item2, decides and closes the meeting
         self.changeUser('pmManager')
-        item2.setDecision(self.decisionText)
-        item3.setDecision(self.decisionText)
+        item2.decision = richtextval(self.decisionText)
+        item3.decision = richtextval(self.decisionText)
         self.addAnnex(item2, relatedTo='item_decision')
         # check that a delayed item is duplicated
         self.assertEqual(item3.get_successors(), [])
@@ -441,10 +442,10 @@ class testWorkflows(PloneMeetingTestCase):
             sorted(item.UID for item in self.catalog(preferred_meeting_date=meeting.date)),
             meeting_item_uids)
         # The recurring items must have as owner the meeting creator
-        # Moreover, _at_rename_after_creation is correct
+        # B.2.4 TODO: _at_rename_after_creation is AT-only.
         for item in meeting.get_items():
             self.assertEqual(item.getOwner().getId(), 'pmManager')
-            self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
+            # self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.get_items()) != 3)
         # now freeze the meeting, future added items will be considered as late
@@ -467,7 +468,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(meeting.get_items(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
         for item in (meeting.get_items()):
-            item.setDecision(self.decisionText)
+            item.decision = richtextval(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.get_items()) != 9)
@@ -504,7 +505,7 @@ class testWorkflows(PloneMeetingTestCase):
         # disable a recurring item
         self.changeUser('siteadmin')
         recItem1 = cfg.getRecurringItems()[0]
-        self.assertEqual(recItem1.getMeetingTransitionInsertingMe(), u'_init_')
+        self.assertEqual(recItem1.meeting_transition_inserting_me, u'_init_')
         self.do(recItem1, 'deactivate')
         # create a new meeting
         self.changeUser('pmManager')
@@ -619,13 +620,13 @@ class testWorkflows(PloneMeetingTestCase):
         # of the meeting presented items
         # the first recurring item of the config is inserted on '_init_'
         firstRecurringItem = cfg.getRecurringItems()[0]
-        self.assertEqual(firstRecurringItem.getMeetingTransitionInsertingMe(), '_init_')
-        firstRecurringItem.setPrivacy('secret')
+        self.assertEqual(firstRecurringItem.meeting_transition_inserting_me, '_init_')
+        firstRecurringItem.privacy = 'secret'
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         # after every recurring items have been inserted, the last is the 'secret' one
         self.assertEqual(len(meeting.get_items()), 3)
-        self.assertEqual(meeting.get_items(ordered=True)[-1].getPrivacy(), 'secret')
+        self.assertEqual(meeting.get_items(ordered=True)[-1].privacy, 'secret')
 
     def test_pm_RecurringItemsWithUntriggerableTransitions(self):
         '''Tests the recurring items system when some transitions could not be triggered.'''
@@ -789,9 +790,9 @@ class testWorkflows(PloneMeetingTestCase):
              'row_id': 'powerobservers'}])
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
-        item1.setDecision(self.decisionText)
+        item1.decision = richtextval(self.decisionText)
         item2 = self.create('MeetingItem', decision=self.decisionText)
-        item2.setDecision(self.decisionText)
+        item2.decision = richtextval(self.decisionText)
         meeting = self.create('Meeting')
         self.presentItem(item1)
         self.presentItem(item2)
@@ -967,34 +968,34 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_ItemMarginalNotes(self):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
-        cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
+        cfg.setUsedItemAttributes(('marginal_notes', 'observations'))
         self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setDecision(self.decisionText)
+        item.decision = richtextval(self.decisionText)
         # field not writeable
-        marginal_notes_field = item.getField('marginalNotes')
+        marginal_notes_field = item.getField('marginal_notes')
         self.assertFalse(marginal_notes_field.writeable(item))
-        self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        self.assertFalse(item.mayQuickEdit('marginal_notes'))
         self.validateItem(item)
 
         # as MeetingManager
         self.changeUser('pmManager')
         # field not writeable
         self.assertFalse(marginal_notes_field.writeable(item))
-        self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        self.assertFalse(item.mayQuickEdit('marginal_notes'))
         # writeable when "presented"
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(item.query_state(), 'presented')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
 
         # writeable when meeting frozen
         self.freezeMeeting(meeting)
         self.assertEqual(item.query_state(), 'itemfrozen')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
         # as other fields
         obsField = item.getField('observations')
         self.assertTrue(obsField.writeable(item))
@@ -1005,7 +1006,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(item.query_state(), 'accepted')
         self.assertTrue(marginal_notes_field.writeable(item))
-        self.assertTrue(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(item.mayQuickEdit('marginal_notes'))
         # but not other fields
         self.assertFalse(obsField.writeable(item))
         self.assertFalse(item.mayQuickEdit('observations'))
@@ -1014,7 +1015,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
         self._enableField('category')
-        self._enableField('groupsInCharge')
+        self._enableField('groups_in_charge')
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')
@@ -1023,7 +1024,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(item.getCategory(theObject=True))
         self.assertFalse(item.getGroupsInCharge())
         self.assertFalse('present' in self.transitions(item))
-        item.setGroupsInCharge((self.vendors_uid, ))
+        item.groups_in_charge = (self.vendors_uid, )
         self.assertTrue('present' in self.transitions(item))
         # category
         item.setCategory('')
@@ -1047,7 +1048,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When using proposingGroupWithGroupInCharge, groupsInCharge
            must be set on an item so it may be presented."""
         self.developers.groups_in_charge = (self.vendors_uid, )
-        self._enableField("proposingGroupWithGroupInCharge")
+        self._enableField("proposing_group_with_group_in_charge")
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')

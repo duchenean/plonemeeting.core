@@ -161,10 +161,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Clones a given item in parent item folder.'''
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
-        item1.setItemKeywords('My keywords')
+        item1.item_keywords = 'My keywords'
         item1.setTitle('My title')
-        item1.setBudgetRelated(True)
-        item1.setBudgetInfos('<p>My budget</p>')
+        item1.budget_related = True
+        item1.budget_infos = richtextval('<p>My budget</p>')
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEqual(
@@ -172,10 +172,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Test that some fields are kept...
         self.assertEqual(clonedItem.Title(), item1.Title())
         self.assertEqual(clonedItem.getCategory(), item1.getCategory())
-        self.assertEqual(clonedItem.getBudgetRelated(), item1.getBudgetRelated())
+        self.assertEqual(clonedItem.budget_related, item1.budget_related)
         self.assertEqual(clonedItem.getBudgetInfos(), item1.getBudgetInfos())
         # ... but not others
-        self.failIf(clonedItem.getItemKeywords() == item1.getItemKeywords())
+        self.failIf(clonedItem.item_keywords == item1.item_keywords)
         # The default value is set for unkept fields
         self.assertEqual(clonedItem.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
@@ -300,7 +300,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_CloneItemKeepProposingGroupWithGroupInCharge(self):
         '''Test keepProposingGroup when using field proposingGroupWithGroupInCharge.'''
-        self._enableField('proposingGroupWithGroupInCharge')
+        self._enableField('proposing_group_with_group_in_charge')
         # make pmCreator2 able to see item of pmCreator1 so he may duplicate it
         self._addPrincipalToGroup('pmCreator2', self.developers_observers)
         # set vendors in charge of dev and vice versa
@@ -308,9 +308,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setProposingGroupWithGroupInCharge(
-            item.Vocabulary('proposingGroupWithGroupInCharge')[0][0])
-        self.assertEqual(item.getProposingGroupWithGroupInCharge(),
+        from zope.component import queryUtility
+        from zope.schema.interfaces import IVocabularyFactory
+        vocab = queryUtility(
+            IVocabularyFactory,
+            'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary')
+        item.proposing_group_with_group_in_charge = list(vocab(item))[0].value
+        self.assertEqual(item.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getGroupsInCharge(), [self.vendors_uid])
@@ -320,19 +324,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failIf(self.developers_creators in self.member.getGroups())
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
-                         item.getProposingGroupWithGroupInCharge())
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
+                         item.proposing_group_with_group_in_charge)
         self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.vendors_uid])
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
-        self.assertNotEqual(clonedItem.getProposingGroupWithGroupInCharge(),
-                            item.getProposingGroupWithGroupInCharge())
+        self.assertNotEqual(clonedItem.proposing_group_with_group_in_charge,
+                            item.proposing_group_with_group_in_charge)
         self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
-        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+        self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
 
     def test_pm_PasteItem(self):
@@ -346,7 +350,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item2)
         # Add advices to item2
-        item2.setOptionalAdvisers((self.vendors_uid, ))
+        item2.optional_advisers = (self.vendors_uid, )
         # propose the item so the advice can be given
         self.proposeItem(item2)
         self.changeUser('pmReviewer2')
@@ -696,7 +700,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
@@ -725,7 +729,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
@@ -754,7 +758,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.other_meeting_configs_clonable_to = (cfg2Id,)
         item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
@@ -825,16 +829,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
-        item1.setCopyGroups((self.vendors_reviewers,))
+        item1.copy_groups = (self.vendors_reviewers,)
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setCopyGroups((self.vendors_reviewers,))
+        item2.copy_groups = (self.vendors_reviewers,)
         self.proposeItem(item2)
         # copyGroups roles are set for item1, not for item2
         self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)
@@ -990,7 +994,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
         # make message shows
-        self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%y/%m/%d')}])
+        self.tool.holidays = [{'date': (DateTime() + 59).strftime('%y/%m/%d')}]
         self.assertTrue(self.tool.showHolidaysWarning(self.meetingConfig))
         # not shown if passing something else than a MeetingConfig
         self.assertFalse(self.tool.showHolidaysWarning(self.portal))
@@ -1001,7 +1005,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # not shown if last defined holiday is in more than 60 days
         self.changeUser('pmManager')
-        self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
+        self.tool.holidays = [{'date': (DateTime() + 61).strftime('%Y/%m/%d')}]
         self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
     def test_pm_UserIsAmong(self):
@@ -1050,7 +1054,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            can not be removed."""
         # create 3 configGroups and make cfg use the second one
         cfg = self.meetingConfig
-        self.tool.setConfigGroups(
+        self.tool._set_config_groups(
             (
                 {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
                 {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
@@ -1328,7 +1332,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         # configure a holday for tomorrow
         tomorrow = (date.today() + timedelta(days=1)).strftime('%Y/%m/%d')
-        self.tool.setHolidays(({'date': tomorrow}, ))
+        self.tool.holidays = [{'date': tomorrow}]
         self.changeUser("pmManager")
         item = self.create('MeetingItem')
         # delay not started so holiday may be removed
@@ -1368,15 +1372,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
-        self.tool.setAdvisersConfig(
-            ({'advice_types': ['positive',
-                               'positive_with_remarks'],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive_with_remarks',
-              'org_uids': [self.vendors_uid],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []}, ))
+        self.tool.advisers_config = [
+            {'advice_types': ['positive',
+                              'positive_with_remarks'],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive_with_remarks',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         self.tool.at_post_edit_script()
         # create item and ask 2 advices
         self.changeUser('pmCreator1')
@@ -1466,14 +1470,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
               'show_advice_on_final_wf_transition': '1',
               'wf_adaptations': []},)))
         # NOT USED, change
-        self.tool.setAdvisersConfig(
-            ({'advice_types': [],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive',
-              'org_uids': [],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []},))
+        self.tool.advisers_config = [
+            {'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         duplicate_workflow('meetingadvice_workflow', 'meetingadvicecustom_workflow')
         self.failIf(self.tool.validate_advisersConfig(
             ({'advice_types': [],
@@ -1485,7 +1489,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
               'wf_adaptations': []},)))
         # NOT USED, remove
         self.failIf(self.tool.validate_advisersConfig(()))
-        self.tool.setAdvisersConfig(())
+        self.tool.advisers_config = []
 
         # USED, add
         self.changeUser('pmCreator1')
@@ -1515,7 +1519,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
              'wf_adaptations': []},)
         self.assertEqual(self.tool.validate_advisersConfig(values), msg)
         # USED, change
-        self.tool.setAdvisersConfig(values)
+        self.tool.advisers_config = [dict(v) for v in values]
         values[0]['base_wf'] = 'meetingadvicecustom_workflow'
         self.assertEqual(self.tool.validate_advisersConfig(values), msg)
 
