@@ -1,0 +1,274 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:plone="http://namespaces.plone.org/plone"
+           xmlns:zcml="http://namespaces.zope.org/zcml"
+           i18n_domain="PloneMeeting">
+
+    <browser:viewlet
+        name="plone.contentactions"
+        for="*"
+        view="plone.app.layout.globals.interfaces.IViewView"
+        manager="plone.app.layout.viewlets.interfaces.IContentViews"
+        class="plonemeeting.portal.browser.overrides.PMContentActionsViewlet"
+        layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
+    <browser:viewlet
+        name="plone.contentactions"
+        for="*"
+        view="plone.app.content.browser.interfaces.IFolderContentsView"
+        manager="plone.app.layout.viewlets.interfaces.IContentViews"
+        class="plonemeeting.portal.browser.overrides.PMContentActionsViewlet"
+        layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
+    <browser:viewlet
+        name="plone.global_sections"
+        manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
+        class=".browser.overrides.PMGlobalSectionsViewlet"
+        template="browser/templates/sections.pt"
+        layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- Override imio.history document byline -->
+    <browser:viewlet
+        name="imio.history.documentbyline"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".browser.overrides.PMDocumentBylineViewlet"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        permission="zope2.View" />
+
+    <configure package="collective.eeafaceted.dashboard.browser">
+      <browser:viewlet
+          for="eea.facetednavigation.interfaces.IFacetedNavigable"
+          name="dashboard-document-generation-link"
+          manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
+          class="plonemeeting.portal.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
+          template="templates/generationlinks.pt"
+          layer="collective.eeafaceted.dashboard.interfaces.IFacetedDashboardLayer"
+          permission="zope2.View" />
+    </configure>
+
+    <browser:page
+        name="overview-controlpanel"
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        class=".browser.overrides.PloneMeetingOverviewControlPanel"
+        permission="plone.app.controlpanel.Overview" />
+
+    <!-- Folder contents -->
+    <configure package="plone.app.content">
+        <browser:page
+            for="*"
+            class="plonemeeting.portal.browser.overrides.PMFolderContentsView"
+            name="folder_contents"
+            template="browser/folder_contents.pt"
+            permission="cmf.ListFolderContents" />
+    </configure>
+
+    <configure package="imio.actionspanel">
+        <browser:page
+            for="plonemeeting.portal.interfaces.IMeetingItem"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.MeetingItemActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="plonemeeting.portal.content.meeting.IMeeting"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.MeetingActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <!-- the facade view used for JS ajax calls -->
+        <browser:view
+            for="*"
+            name="facade_actions_panel"
+            class="plonemeeting.portal.browser.overrides.FacadeActionsPanelView"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <!-- Enable transition confirmation for transitions available on the meetingadvice -->
+        <browser:page
+            for="plonemeeting.portal.content.advice.IMeetingAdvice"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.AdviceActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <!-- Enable history for Managers -->
+        <browser:page
+            for="imio.annex.content.annex.IAnnex"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.annexes.AnnexActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+
+        <browser:page
+            for="plonemeeting.portal.interfaces.IConfigElement"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="plonemeeting.portal.interfaces.IMeetingItem"
+            name="config_actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
+            for="collective.iconifiedcategory.content.base.ICategorize"
+            name="actions_panel"
+            class="plonemeeting.portal.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+    </configure>
+
+    <configure package="collective.eeafaceted.collectionwidget">
+        <browser:page
+            for="OFS.interfaces.IItem"
+            name="render_collection_widget_category"
+            class="plonemeeting.portal.browser.overrides.PMRenderCategoryView"
+            template="browser/templates/category.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View"
+            />
+        <browser:page
+            for="imio.dashboard.interfaces.IContactsDashboard"
+            name="render_collection_widget_category"
+            class="plonemeeting.portal.browser.overrides.PMRenderCategoryView"
+            template="browser/templates/category.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View"
+            />
+        <browser:page
+            for="OFS.interfaces.IItem"
+            name="render_collection_widget_term"
+            class="plonemeeting.portal.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            layer="plonemeeting.portal.interfaces.IPloneMeetingLayer"
+            permission="zope2.View"
+            />
+    </configure>
+
+    <configure package="collective.eeafaceted.z3ctable">
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="plonemeeting.portal.columns.PMPrettyLinkColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="pretty_link" />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="plonemeeting.portal.columns.ItemCheckBoxColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="select_row" />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="plonemeeting.portal.columns.PMActionsColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="actions"
+        />
+    </configure>
+
+    <adapter for="eea.facetednavigation.interfaces.IFacetedNavigable"
+             provides="eea.facetednavigation.interfaces.ICriteria"
+             factory="plonemeeting.portal.adapters.Criteria" />
+
+    <adapter for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
+             provides="collective.eeafaceted.dashboard.interfaces.IDashboardGenerablePODTemplates"
+             factory=".adapters.PMDashboardGenerablePODTemplatesAdapter"/>
+
+    <!-- IPrettyLink -->
+    <adapter zcml:condition="not-installed imio.zamqp.pm"
+             for="imio.annex.content.annex.IAnnex"
+             factory=".adapters.PMAnnexPrettyLinkAdapter"
+             provides="imio.prettylink.interfaces.IPrettyLink" />
+
+    <!-- Vocabularies -->
+    <utility component=".vocabularies.PMExistingPODTemplateFactory"
+             name="collective.documentgenerator.ExistingPODTemplate" />
+    <utility component=".vocabularies.PMPortalTypesVocabularyFactory"
+             name="collective.documentgenerator.PortalTypes" />
+    <utility component=".vocabularies.PMStyleTemplatesVocabularyFactory"
+             name="collective.documentgenerator.StyleTemplates" />
+    <utility component=".vocabularies.PMDashboardCollectionsVocabularyFactory"
+             name="collective.eeafaceted.dashboard.dashboardcollectionsvocabulary" />
+    <utility provides="zope.schema.interfaces.IVocabularyFactory"
+             name="collective.iconifiedcategory.categories"
+             factory=".vocabularies.PMCategoryVocabulary" />
+    <utility provides="zope.schema.interfaces.IVocabularyFactory"
+             name="collective.iconifiedcategory.category_titles"
+             factory=".vocabularies.PMCategoryTitleVocabulary" />
+    <utility component=".vocabularies.PMMergeTemplatesVocabularyFactory"
+             name="collective.documentgenerator.MergeTemplates" />
+    <utility component=".vocabularies.PMDxPortalTypesVocabularyFactory"
+             name="collective.internalnumber.portaltypevocabulary" />
+
+    <!-- Batch actions overrides -->
+    <browser:page
+        for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
+        name="transition-batch-action"
+        class=".browser.batchactions.PMTransitionBatchActionForm"
+        permission="zope2.View" />
+
+    <browser:page
+        for="*"
+        name="plone"
+        class="plonemeeting.portal.browser.overrides.PMPlone"
+        permission="zope.Public"
+        allowed_interface="Products.CMFPlone.browser.interfaces.IPlone" />
+
+    <configure package="plone.app.search" zcml:condition="installed collective.solr">
+        <browser:page
+          name="search"
+          class="plone.app.search.browser.Search"
+          permission="zope2.View"
+          for="plone.app.layout.navigation.interfaces.INavigationRoot"
+          template="search.pt"
+          layer="collective.solr.browser.interfaces.IThemeSpecific"
+          zcml:condition="not-have plone-5" />
+    </configure>
+
+    <!-- P6 migration: CKEditor dropped, reimplement under TinyMCE in Stage D.
+    <adapter
+        for="z3c.form.interfaces.IWidget"
+        factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
+    -->
+
+    <adapter
+        for="Products.Five.BrowserView"
+        factory=".browser.overrides.pm_default_popup_template"
+        name="popup"
+        provides="zope.formlib.namedtemplate.INamedTemplate" />
+
+</configure>

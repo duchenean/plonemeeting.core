@@ -4,7 +4,7 @@ from setuptools import setup
 
 version = '6.0.0.dev0'
 
-setup(name='Products.PloneMeeting',
+setup(name='plonemeeting.portal',
       version=version,
       description="Official meetings management",
       long_description=open("README.rst").read() + "\n" + open("CHANGES.rst").read(),
@@ -33,7 +33,7 @@ setup(name='Products.PloneMeeting',
       license='GPL',
       packages=find_packages('src'),
       package_dir={'': 'src'},
-      namespace_packages=['Products'],
+      namespace_packages=['plonemeeting'],
       include_package_data=True,
       zip_safe=False,
       extras_require=dict(test=['imio.helpers[test]',
