@@ -6,6 +6,7 @@
 #
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
+from App.class_init import InitializeClass
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from collections import OrderedDict
@@ -13,8 +14,6 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_group_id
-from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-from collective.datagridcolumns.SelectColumn import SelectColumn
 # P6 migration: zc.async dropped, conversion runs inline. Reimplement as background job in Stage D.
 # from collective.documentviewer.async import queueJob
 from collective.documentviewer.convert import Converter
@@ -45,30 +44,19 @@ from imio.helpers.security import fplog
 from imio.history.utils import add_event_to_wf_history
 from imio.migrator.utils import end_time
 from OFS import CopySupport
+from OFS.OrderedFolder import OrderedFolder
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
-from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
-from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import registerType
-from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
 from Products.ATContentTypes import permission as ATCTPermissions
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import remove_generated_previews
-from Products.DataGridField import DataGridField
-from Products.DataGridField.Column import Column
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
@@ -92,7 +80,6 @@ from Products.PloneMeeting.utils import configure_advice_dx_localroles_for
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
@@ -119,275 +106,107 @@ defValues = PloneMeetingConfiguration.get()
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
 
-schema = Schema((
-
-    StringField(
-        name='meetingFolderTitle',
-        default=defValues.meetingFolderTitle,
-        widget=StringField._properties['widget'](
-            size=60,
-            description="MeetingFolderTitle",
-            description_msgid="meeting_folder_title",
-            label='Meetingfoldertitle',
-            label_msgid='PloneMeeting_label_meetingFolderTitle',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-    ),
-    StringField(
-        name='functionalAdminEmail',
-        default=defValues.functionalAdminEmail,
-        widget=StringField._properties['widget'](
-            size=60,
-            description="FunctionalAdminEmail",
-            description_msgid="functional_admin_email_descr",
-            label='Functionaladminemail',
-            label_msgid='PloneMeeting_label_functionalAdminEmail',
-            i18n_domain='PloneMeeting',
-        ),
-        validators=('isEmail',),
-    ),
-    StringField(
-        name='functionalAdminName',
-        default=defValues.functionalAdminName,
-        widget=StringField._properties['widget'](
-            size=60,
-            description="FunctionalAdminName",
-            description_msgid="functional_admin_name_descr",
-            label='Functionaladminname',
-            label_msgid='PloneMeeting_label_functionalAdminName',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    BooleanField(
-        name='restrictUsers',
-        default=defValues.restrictUsers,
-        widget=BooleanField._properties['widget'](
-            description="RestrictUsers",
-            description_msgid="restrict_users_descr",
-            label='Restrictusers',
-            label_msgid='PloneMeeting_label_restrictUsers',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    TextField(
-        name='unrestrictedUsers',
-        default=defValues.unrestrictedUsers,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            description="UnrestrictedUsers",
-            description_msgid="unrestricted_users_descr",
-            label='Unrestrictedusers',
-            label_msgid='PloneMeeting_label_unrestrictedUsers',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-    ),
-    LinesField(
-        name='workingDays',
-        default=defValues.workingDays,
-        widget=MultiSelectionWidget(
-            description="WorkingDays",
-            description_msgid="working_days_descr",
-            size=7,
-            format="checkbox",
-            label='Workingdays',
-            label_msgid='PloneMeeting_label_workingDays',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-        multiValued=1,
-        vocabulary='listWeekDays',
-    ),
-    DataGridField(
-        name='holidays',
-        default=defValues.holidays,
-        widget=DataGridField._properties['widget'](
-            columns={'date': Column('Holiday date', col_description='holiday_date_col_descr'), },
-            description="Holidays",
-            description_msgid="holidays_descr",
-            label='Holidays',
-            label_msgid='PloneMeeting_label_holidays',
-            i18n_domain='PloneMeeting',
-        ),
-        allow_oddeven=True,
-        columns=('date', ),
-        allow_empty_rows=False,
-    ),
-    LinesField(
-        name='delayUnavailableEndDays',
-        default=defValues.delayUnavailableEndDays,
-        widget=MultiSelectionWidget(
-            description="DelayUnavailableEndDays",
-            description_msgid="delay_unavailable_end_days_descr",
-            size=7,
-            format="checkbox",
-            label='Delayunavailableenddays',
-            label_msgid='PloneMeeting_label_delayUnavailableEndDays',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listWeekDays',
-    ),
-    DataGridField(
-        name='configGroups',
-        widget=DataGridField._properties['widget'](
-            description="ConfigGroups",
-            description_msgid="config_groups_descr",
-            columns={
-                'row_id':
-                    Column("Config group row id",
-                           visible=False),
-                'label':
-                    Column("Config group label",
-                           col_description="Enter the label that will be displayed in the application."),
-                'full_label':
-                    Column("Config group full label",
-                           col_description="Enter the full label that will be useable if "
-                           "necessary like in produced documents."),
-            },
-            label='Configgroups',
-            label_msgid='PloneMeeting_label_configGroups',
-            i18n_domain='PloneMeeting',
-        ),
-        default=defValues.configGroups,
-        columns=('row_id', 'label', 'full_label'),
-        allow_empty_rows=False,
-    ),
-    BooleanField(
-        name='enableScanDocs',
-        default=defValues.enableScanDocs,
-        widget=BooleanField._properties['widget'](
-            description="EnableScanDocs",
-            description_msgid="enable_scan_docs_descr",
-            label='Enablescandocs',
-            label_msgid='PloneMeeting_label_enableScanDocs',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    LinesField(
-        name='deferParentReindex',
-        default=defValues.deferParentReindex,
-        widget=MultiSelectionWidget(
-            description="DeferParentReindex",
-            description_msgid="defer_parent_reindex_descr",
-            format="checkbox",
-            label='Deferparentreindex',
-            label_msgid='PloneMeeting_label_deferParentReindex',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listDeferParentReindexes',
-    ),
-    LinesField(
-        name='showExternalLinksSection',
-        default=defValues.showExternalLinksSection,
-        widget=MultiSelectionWidget(
-            description="ShowExternalLinksSection",
-            description_msgid="show_external_links_section_descr",
-            format="checkbox",
-            label='Showexternallinkssection',
-            label_msgid='PloneMeeting_label_showExternalLinksSection',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary_factory='PMEveryConfigs',
-    ),
-    DataGridField(
-        name='advisersConfig',
-        widget=DataGridField._properties['widget'](
-            description="AdvisersConfig",
-            description_msgid="advisers_config_descr",
-            columns={
-                'org_uids':
-                    MultiSelectColumn(
-                        "Adviser config org uids",
-                        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
-                                           'SortedSelectedOrganizationsElephantVocabulary'),
-                'portal_type':
-                    SelectColumn(
-                        "Adviser config portal_type",
-                        vocabulary_factory="AdvicePortalTypes"),
-                'base_wf':
-                    SelectColumn(
-                        "Adviser config base workflow",
-                        vocabulary_factory="AdviceWorkflows"),
-                'wf_adaptations':
-                    MultiSelectColumn(
-                        "Adviser config workflow adaptations",
-                        vocabulary_factory="AdviceWorkflowAdaptations"),
-                'advice_types':
-                    MultiSelectColumn(
-                        "Adviser config advice types",
-                        vocabulary_factory="ConfigAdviceTypes"),
-                'default_advice_type':
-                    SelectColumn(
-                        "Adviser config default advice type",
-                        vocabulary_factory="ConfigAdviceTypes"),
-                'show_advice_on_final_wf_transition':
-                    SelectColumn(
-                        "Adviser config show advice on final WF transition?",
-                        vocabulary="listBooleanVocabulary",
-                        col_description="Adviser config show advice on final WF transition descr",
-                        default='0'),
-            },
-            label='Advisersconfig',
-            label_msgid='PloneMeeting_label_advisersConfig',
-            i18n_domain='PloneMeeting',
-        ),
-        default=defValues.advisersConfig,
-        columns=(
-            'org_uids', 'portal_type', 'base_wf', 'wf_adaptations',
-            'advice_types', 'default_advice_type', 'show_advice_on_final_wf_transition'),
-        allow_empty_rows=False,
-    ),
-
-),
-)
-
-ToolPloneMeeting_schema = OrderedBaseFolderSchema.copy() + \
-    schema.copy()
+_TOOL_AT_TO_DX = {
+    'meetingFolderTitle': 'meeting_folder_title',
+    'functionalAdminEmail': 'functional_admin_email',
+    'functionalAdminName': 'functional_admin_name',
+    'restrictUsers': 'restrict_users',
+    'unrestrictedUsers': 'unrestricted_users',
+    'workingDays': 'working_days',
+    'holidays': 'holidays',
+    'delayUnavailableEndDays': 'delay_unavailable_end_days',
+    'configGroups': 'config_groups',
+    'deferParentReindex': 'defer_parent_reindex',
+    'showExternalLinksSection': 'show_external_links_section',
+    'advisersConfig': 'advisers_config',
+}
 
 
-class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
-    """
-    """
+class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
+    """PloneMeeting portal tool -- singleton configuration manager."""
+
     security = ClassSecurityInfo()
     implements(interfaces.IToolPloneMeeting)
 
     meta_type = 'ToolPloneMeeting'
-    _at_rename_after_creation = True
-
-    schema = ToolPloneMeeting_schema
-
-    schema = schema.copy()
-    schema["id"].widget.visible = False
-    schema["title"].widget.visible = False
+    portal_type = 'ToolPloneMeeting'
 
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
+
+    def __init__(self, id='portal_plonemeeting'):
+        super(ToolPloneMeeting, self).__init__(id)
+        self.meeting_folder_title = defValues.meetingFolderTitle
+        self.functional_admin_email = defValues.functionalAdminEmail
+        self.functional_admin_name = defValues.functionalAdminName
+        self.restrict_users = defValues.restrictUsers
+        self.unrestricted_users = defValues.unrestrictedUsers
+        self.working_days = list(defValues.workingDays)
+        self.holidays = list(defValues.holidays)
+        self.delay_unavailable_end_days = list(defValues.delayUnavailableEndDays)
+        self.config_groups = list(defValues.configGroups)
+        self.defer_parent_reindex = list(defValues.deferParentReindex)
+        self.show_external_links_section = list(defValues.showExternalLinksSection)
+        self.advisers_config = list(defValues.advisersConfig)
+
+    def __getattr__(self, name):
+        if name.startswith('get') and name[3:4].isupper():
+            field = name[3:]
+            field = field[0].lower() + field[1:]
+            dx_name = _TOOL_AT_TO_DX.get(field)
+            if dx_name:
+                return lambda *a, **kw: getattr(self, dx_name)
+        if name.startswith('set') and name[3:4].isupper():
+            field = name[3:]
+            field = field[0].lower() + field[1:]
+            dx_name = _TOOL_AT_TO_DX.get(field)
+            if dx_name:
+                custom_setter = '_set_' + dx_name
+                if hasattr(type(self), custom_setter):
+                    return getattr(self, custom_setter)
+                def _generic_setter(v, _attr=dx_name, **kw):
+                    if isinstance(v, (list, tuple)):
+                        v = [dict(row) if isinstance(row, dict) else row
+                             for row in v]
+                    setattr(self, _attr, v)
+                return _generic_setter
+        if name in _TOOL_AT_TO_DX:
+            return getattr(self, _TOOL_AT_TO_DX[name])
+        return super(ToolPloneMeeting, self).__getattr__(name)
+
+    def getField(self, name):
+        return None
 
     # Names of advice workflow adaptations, ORDER IS IMPORTANT!
     advice_wf_adaptations = ()
 
-    # tool should not appear in portal_catalog
-    def at_post_edit_script(self):
-        self.unindexObject()
-        # Configure advice portal_types and workflows
+    def indexObject(self):
+        pass
+
+    def reindexObject(self, idxs=None):
+        pass
+
+    def unindexObject(self):
+        pass
+
+    def invokeFactory(self, type_name, id, RESPONSE=None, *args, **kw):
+        pt = api.portal.get_tool('portal_types')
+        fti = pt.getTypeInfo(type_name)
+        if fti is None:
+            raise ValueError('Invalid type %s' % type_name)
+        return fti.constructInstance(self, id, *args, **kw)
+
+    def post_edit(self, is_created=False):
         self.configureAdvices()
-        # Configure documentviewer auto_convert
         self.configureAutoConvert()
-        # custom onEdit
-        self.adapted().onEdit(isCreated=False)
+        self.adapted().onEdit(isCreated=is_created)
+
+    def at_post_edit_script(self):
+        self.post_edit(is_created=False)
 
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        # Configure advice portal_types and workflows
-        self.configureAdvices()
-        # Configure documentviewer auto_convert
-        self.configureAutoConvert()
-        # custom onEdit
-        self.adapted().onEdit(isCreated=True)
+        self.post_edit(is_created=True)
 
     def configureAdvices(self):
         """ """
@@ -429,21 +248,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             configure_advice_dx_localroles_for(
                 adviser_infos['portal_type'], org_uids)
 
-    security.declareProtected(ModifyPortalContent, 'setConfigGroups')
+    security.declareProtected(ModifyPortalContent, '_set_config_groups')
 
-    def setConfigGroups(self, value, **kwargs):
+    def _set_config_groups(self, value, **kwargs):
         '''Overrides the field 'configGroups' mutator to manage
            the 'row_id' column manually.  If empty, we need to add a
            unique id into it.'''
-        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
-        # if we receive a 'dict' instead, we use v.get()
         for v in value:
-            # don't process hidden template row as input data
             if v.get('orderindex_', None) == "template_row_marker":
                 continue
             if not v.get('row_id', None):
-                v.row_id = self.generateUniqueId()
-        self.getField('configGroups').set(self, value, **kwargs)
+                v['row_id'] = self.generateUniqueId()
+        self.config_groups = list(value)
 
     security.declarePrivate('validate_holidays')
 
@@ -479,7 +295,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # check that if we removed a row, it was not in use
         dates_to_save = set([v['date'] for v in values if v['date']])
-        stored_dates = set([v['date'] for v in self.getHolidays() if v['date']])
+        stored_dates = set([v['date'] for v in self.holidays if v['date']])
 
         def _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays):
             '''Check if the p_date we want to remove was in use.
@@ -532,13 +348,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Checks if a removed configGroup was not in use.'''
         # check that if we removed a row, it was not in use by a MeetingConfig
         configGroups_to_save = set([v['row_id'] for v in values if v['row_id']])
-        stored_configGroups = set([v['row_id'] for v in self.getConfigGroups() if v['row_id']])
+        stored_configGroups = set([v['row_id'] for v in self.config_groups if v['row_id']])
         removed_configGroups = stored_configGroups.difference(configGroups_to_save)
         for configGroup in removed_configGroups:
             for cfg in self.objectValues('MeetingConfig'):
                 if cfg.getConfigGroup() == configGroup:
                     config_group_title = [
-                        v['label'] for v in self.getConfigGroups() if v['row_id'] == configGroup][0]
+                        v['label'] for v in self.config_groups if v['row_id'] == configGroup][0]
                     return translate(
                         'configGroup_removed_in_use_error',
                         domain='PloneMeeting',
@@ -560,7 +376,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # if some advice with portal_type exist, can not change
         # associated portal_type/base_wf
         to_save = set([(v['portal_type'], v['base_wf']) for v in values])
-        stored = set([(v['portal_type'], v['base_wf']) for v in self.getAdvisersConfig()])
+        stored = set([(v['portal_type'], v['base_wf']) for v in self.advisers_config])
         removed = stored.difference(to_save)
         added = to_save.difference(stored)
         catalog = api.portal.get_tool('portal_catalog')
@@ -573,11 +389,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     mapping={'portal_type': safe_unicode(portal_type),
                              'advice_url': brains[0].getURL(), },
                     context=self.REQUEST)
-
-    security.declarePublic('getCustomFields')
-
-    def getCustomFields(self, cols):
-        return getCustomSchemaFields(schema, self.schema, cols)
 
     security.declarePublic('getActiveConfigs')
 
@@ -954,7 +765,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the portal_catalog (not from the uid_catalog, because getObject()
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
-        klassName = value.getTagName()
+        klassName = getattr(value, 'meta_type', '')
         if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
             obj = value
         else:
@@ -1078,7 +889,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(getNonWorkingDayNumbers_cachekey)
     def getNonWorkingDayNumbers(self):
         '''Return non working days, aka weekends.'''
-        workingDays = self.getWorkingDays()
+        workingDays = self.working_days
         not_working_days = [day for day in PY_DATETIME_WEEKDAYS if day not in workingDays]
         return [PY_DATETIME_WEEKDAYS.index(not_working_day) for not_working_day in not_working_days]
 
@@ -1093,7 +904,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getHolidaysAs_datetime(self):
         '''Return the holidays but as datetime objects.'''
         res = []
-        for row in self.getHolidays():
+        for row in self.holidays:
             year, month, day = row['date'].split('/')
             res.append(datetime(int(year), int(month), int(day)))
         return res
@@ -1108,7 +919,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(getUnavailableWeekDaysNumbers_cachekey)
     def getUnavailableWeekDaysNumbers(self):
         '''Return unavailable days numbers, aka self.getDelayUnavailableEndDays as numbers.'''
-        delayUnavailableEndDays = self.getDelayUnavailableEndDays()
+        delayUnavailableEndDays = self.delay_unavailable_end_days
         unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
         return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
@@ -1484,7 +1295,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.getTagName() != 'ToolPloneMeeting':
+        if self.meta_type != 'ToolPloneMeeting':
             return self.context
         return self
 
@@ -1706,7 +1517,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cleanRamCache()
         cleanVocabularyCacheFor()
         cleanForeverCache()
-        notifyModifiedAndReindex(self)
+        self._p_changed = True
         logger.info('All cache was invalidated.')
 
     security.declarePublic('deleteHistoryEvent')
@@ -1727,7 +1538,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
         if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
-            holidays = self.getHolidays()
+            holidays = self.holidays
             # if user isManager and last defined holiday is in less than 60 days, display warning
             if self.isManager(cfg) and \
                (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
@@ -1763,7 +1574,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                - 'wf_adaptations': a list of workflow adaptations to apply.
         '''
         res = {}
-        for row in self.getAdvisersConfig():
+        for row in self.advisers_config:
             if group_by_org_uids:
                 res[tuple(row['org_uids'])] = {
                     k: v for k, v in row.items() if k != 'org_uids'}
@@ -1802,14 +1613,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            and list of MeetingConfigs as value."""
         data = OrderedDict()
         if not api.user.is_anonymous():
-            configGroups = self.getConfigGroups()
-            configGroups += (
+            configGroups = list(self.config_groups)
+            configGroups.append(
                 {'row_id': '',
                  'label': translate('_no_config_group_',
                                     domain='PloneMeeting',
                                     context=self.REQUEST,
                                     default='Not grouped meeting configurations'),
-                 'full_label': u''}, )
+                 'full_label': u''})
             for configGroup in configGroups:
                 if config_group and configGroup['row_id'] != config_group:
                     continue
@@ -1834,4 +1645,4 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return check_zope_admin()
 
 
-registerType(ToolPloneMeeting, PROJECTNAME)
+InitializeClass(ToolPloneMeeting)

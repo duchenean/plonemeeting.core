@@ -912,7 +912,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.functionalAdminName = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
-        self.enableScanDocs = False
         self.deferParentReindex = ['annex', 'item_reference']
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [

@@ -102,7 +102,8 @@ class ToolInitializer:
                     for adviserConfig in v:
                         adviserConfig['org_uids'] = [
                             org_id_to_uid(org_id) for org_id in adviserConfig['org_uids']]
-                exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
+                setter = getattr(self.tool, 'set%s%s' % (k[0].upper(), k[1:]))
+                setter(v)
             # contacts directory
             if self.profileData.directory_position_types:
                 self.portal.contacts.position_types = self.profileData.directory_position_types
@@ -111,7 +112,7 @@ class ToolInitializer:
                 if descr.id not in self.portal.contacts:
                     self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
             # this will especially apply advisersConfig
-            self.tool.at_post_edit_script()
+            self.tool.post_edit()
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:

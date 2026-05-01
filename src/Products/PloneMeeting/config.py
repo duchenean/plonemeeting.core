@@ -429,7 +429,6 @@ def registerClasses():
     import Products.Archetypes
     global ADD_CONTENT_PERMISSIONS
     classNames = ADD_CONTENT_PERMISSIONS.keys()
-    classNames.append('ToolPloneMeeting')
     for name in classNames:
         exec 'import Products.PloneMeeting.%s as module' % name
         klass = None  # PEP8
