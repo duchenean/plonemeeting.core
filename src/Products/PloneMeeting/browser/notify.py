@@ -1,5 +1,5 @@
-from Products.Archetypes.event import EditBegunEvent
-from Products.Archetypes.event import EditCancelledEvent
+from plone.dexterity.events import EditBegunEvent
+from plone.dexterity.events import EditCancelledEvent
 from Products.Five import BrowserView
 from zope.event import notify
 

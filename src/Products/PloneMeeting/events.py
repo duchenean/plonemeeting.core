@@ -37,7 +37,7 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.registry.interfaces import IRecordModifiedEvent
 from plone.restapi.deserializer import json_body
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -504,7 +504,7 @@ def onRegistryModified(event):
                         cfg.selectable_advisers = selectableAdvisers
                     if update_cfg:
                         # especially invalidate cache
-                        notify(ObjectEditedEvent(cfg))
+                        notify(ObjectModifiedEvent(cfg))
 
                 # add a portal_message explaining what has been done to the user
                 plone_utils = api.portal.get_tool('plone_utils')

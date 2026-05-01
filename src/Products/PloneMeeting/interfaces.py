@@ -763,3 +763,10 @@ class IToolPloneMeetingCustom(IToolPloneMeeting):
     '''If you want to propose your own implementations of tool methods,
        you must define an adapter that adapts IToolPloneMeeting to
        IToolPloneMeetingCustom.'''
+
+
+class IUtils(Interface):
+    """Replacement for Products.Archetypes.interfaces.utils.IUtils."""
+
+    def translate(vocab, value, widget=None):
+        """Translate vocabulary values via zope.i18n."""

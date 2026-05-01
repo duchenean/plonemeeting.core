@@ -532,9 +532,6 @@
       factory=".adapters.AnnexMissingTermsVocabulary" />
 
   <!-- Enable call to check IContentDeletable upon any deletion -->
-  <subscriber for="Products.Archetypes.interfaces.base.IBaseObject
-                   OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler="imio.actionspanel.events.onObjWillBeRemoved" />
   <subscriber for="plone.dexterity.interfaces.IDexterityContent
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler="imio.actionspanel.events.onObjWillBeRemoved" />

@@ -7,9 +7,6 @@ from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
 from plone.app.querystring import queryparser
 from plone.memoize import ram
-from Products.Archetypes.BaseObject import BaseObject
-from Products.Archetypes.Field import Field
-from Products.Archetypes.Field import TextField
 from Products.CMFCore.TypesTool import TypeInformation
 from Products.PloneMeeting import logger
 from Products.PlonePAS.tools.membership import MembershipTool
@@ -18,7 +15,6 @@ from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
 from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
 from time import time
-from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.i18nmessageid import Message
@@ -80,22 +76,6 @@ def userAndGroupsAwarePortalTransformsCacheKey():
 userAndGroupsAwarePortalTransformsCacheKey()
 
 
-BaseObject.__old_pm_validate = BaseObject.validate
-
-
-def validate(self, REQUEST=None, errors=None, data=None, metadata=None):
-    """Monkeypatch to log errors because sometimes, when errors occur in multiple
-       or on disabled fields, it is not visible into the UI."""
-    errors = self.__old_pm_validate(REQUEST, errors, data, metadata)
-    if errors and api.user.get_current().has_role('Manager'):
-        logger.info(errors)
-    return errors
-
-
-BaseObject.validate = validate
-logger.info("Monkey patching Products.Archetypes.BaseObject.BaseObject (validate)")
-
-
 def hasScript(s):
     """Override to keep data:image elements, turned 'data:' to 'data:text'
     """
@@ -111,49 +91,6 @@ def hasScript(s):
 
 safe_html.hasScript = hasScript
 logger.info("Monkey patching Products.PortalTransforms.transforms.safe_html (hasScript)")
-
-
-Field.__old_pm_validate_content_types = Field.validate_content_types
-
-
-def validate_content_types(self, instance, value, errors):
-    """Avoid wrong validation error when html value is detected as text/plain,
-       this may occur when having a image data:base64 (when using imagerotate)."""
-    error = Field.__old_pm_validate_content_types(self, instance, value, errors)
-    if error and "text/plain" in error:
-        if isinstance(value, StringType) and \
-           value.startswith('<p>'):
-            errors.pop(self.getName())
-            error = None
-    return error
-
-
-Field.validate_content_types = validate_content_types
-logger.info("Monkey patching Products.Archetypes.Field.Field (validate_content_types)")
-
-
-TextField.__old_pm__process_input = TextField._process_input
-
-
-def _process_input(self, value, file=None, default=None,
-                   mimetype=None, instance=None, **kwargs):
-    """Initialize new field correctly with text/html content_type."""
-    file, mimetype, filename = self.__old_pm__process_input(
-        value=value, file=file, default=default, mimetype=mimetype, instance=instance, **kwargs)
-    # this case if when a new field is initialized on an existing element
-    if not instance.checkCreationFlag() and kwargs.get('_initializing_') and 'schema' in kwargs:
-        field_name = kwargs['field'] if isinstance(kwargs['field'], str) else \
-            kwargs['field'].__name__
-        logger.info("Initializing new field \"{0}\" on existing element at {1}".format(
-            field_name, '/'.join(instance.getPhysicalPath())))
-        default_content_type = kwargs['schema'][field_name].default_content_type
-        if default_content_type:
-            file.setContentType(instance, default_content_type)
-    return file, mimetype, filename
-
-
-TextField._process_input = _process_input
-logger.info("Monkey patching Products.Archetypes.Field.TextField (_process_input)")
 
 
 def extract(self, default=interfaces.NO_VALUE):

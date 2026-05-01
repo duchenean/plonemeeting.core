@@ -49,8 +49,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
-from Products.Archetypes.atapi import DisplayList
-from Products.ATContentTypes import permission as ATCTPermissions
+from Products.PloneMeeting.compat import DisplayList
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
@@ -121,6 +120,8 @@ _TOOL_AT_TO_DX = {
     'advisersConfig': 'advisers_config',
 }
 
+_TOOL_DROPPED_FIELDS = {'enableScanDocs': False}
+
 
 class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
     """PloneMeeting portal tool -- singleton configuration manager."""
@@ -152,6 +153,8 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         if name.startswith('get') and name[3:4].isupper():
             field = name[3:]
             field = field[0].lower() + field[1:]
+            if field in _TOOL_DROPPED_FIELDS:
+                return lambda *a, **kw: _TOOL_DROPPED_FIELDS[field]
             dx_name = _TOOL_AT_TO_DX.get(field)
             if dx_name:
                 return lambda *a, **kw: getattr(self, dx_name)
@@ -690,7 +693,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
                                     ('MeetingManager', 'Manager', ), acquire=0)
         # Only Manager may change the set of allowable types in folders.
-        mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
+        mc_folder.manage_permission('Modify constrain types', ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
         # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
@@ -765,12 +768,10 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
            the portal_catalog (not from the uid_catalog, because getObject()
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
-        klassName = getattr(value, 'meta_type', '')
-        if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
-            obj = value
-        else:
-            # It is a brain
+        if hasattr(value, 'getPath'):
             obj = self.unrestrictedTraverse(value.getPath())
+        else:
+            obj = value
         return _checkPermission(View, obj)
 
     def isManager_cachekey(method, self, context=None, realManagers=False):

@@ -13,9 +13,6 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_registry_functions
-from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -54,9 +51,9 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from plone.restapi.deserializer import boolean_value
 from plone.supermodel import model
-from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import IntDisplayList
-from Products.Archetypes.event import ObjectEditedEvent
+from Products.PloneMeeting.compat import DisplayList
+from Products.PloneMeeting.compat import IntDisplayList
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -3839,7 +3836,7 @@ class MeetingConfig(Container):
     def getMaxShownListings(self, **kwargs):
         '''Overrides the field 'maxShownListings' acessor to synch
            defined value with relevant faceted criterion.'''
-        if self.checkCreationFlag():
+        if not hasattr(self, 'searches'):
             return defValues.maxShownListings
         # get the criterion
         criterion = _get_criterion(
@@ -6802,7 +6799,7 @@ class MeetingConfig(Container):
         for cfg in cfgs:
             setattr(cfg, dx_attr, value)
             if reload:
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
 
     def get_labels_vocab(
             self,

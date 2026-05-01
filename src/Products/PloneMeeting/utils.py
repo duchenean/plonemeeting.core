@@ -68,7 +68,7 @@ from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
 from plone.supermodel.utils import mergedTaggedValueDict
-from Products.Archetypes.atapi import DisplayList
+from Products.PloneMeeting.compat import DisplayList
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent

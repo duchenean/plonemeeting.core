@@ -421,23 +421,10 @@ CONFIGURABLE_FIELD_NAMES = ['groupsInChargeNotes', 'neededFollowUp', 'providedFo
 
 
 def registerClasses():
-    '''ArchGenXML generated code does not register Archetype classes at the
-       right moment since model adaptations have been implemented. This method
-       allows to perform class registration at the right moment.'''
-    from Products.Archetypes.atapi import registerType
-
-    import Products.Archetypes
-    global ADD_CONTENT_PERMISSIONS
-    classNames = ADD_CONTENT_PERMISSIONS.keys()
-    for name in classNames:
-        exec 'import Products.PloneMeeting.%s as module' % name
-        klass = None  # PEP8
-        exec 'klass = module.%s' % name
-        key = 'PloneMeeting.%s' % name
-        if key in Products.Archetypes.ATToolModule._types:
-            # Unregister the class
-            del Products.Archetypes.ATToolModule._types[key]
-        registerType(klass, PROJECTNAME)
+    """No-op stub kept for downstream profile packages (MeetingCommunes, etc.)
+    that call it after AT schema monkey-patching.  AT registration was removed
+    as part of the DX migration."""
+    pass
 
 
 class PloneMeetingError(Exception):

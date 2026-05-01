@@ -6,7 +6,7 @@ from imio.history.interfaces import IImioHistory
 from imio.history.utils import add_event_to_history
 from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.Archetypes import DisplayList
+from Products.PloneMeeting.compat import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _

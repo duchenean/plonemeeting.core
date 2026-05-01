@@ -5,7 +5,7 @@ from imio.helpers.content import get_user_fullname
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import add_event_to_history
 from plone import api
-from Products.Archetypes import DisplayList
+from Products.PloneMeeting.compat import DisplayList
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
 from zope.component import getAdapter

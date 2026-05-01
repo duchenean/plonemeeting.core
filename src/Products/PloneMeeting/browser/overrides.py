@@ -45,7 +45,8 @@ from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
-from Products.Archetypes.browser.utils import Utils
+from Products.PloneMeeting.interfaces import IUtils
+from zope.interface import implementer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
@@ -1569,7 +1570,8 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
         return tabs
 
 
-class PMUtils(Utils):
+@implementer(IUtils)
+class PMUtils(BrowserView):
     """Override the at_utils.translate method to return values on several lines,
        instead separated by ', '.
        XXX we had to override entire method but just changed some lines at the end, check the XXX."""

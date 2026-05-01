@@ -31,7 +31,6 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
-from Products.PloneMeeting.config import registerClasses
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
@@ -131,9 +130,6 @@ class ToolInitializer:
         self.data = self.profileData
         if not self.data:
             return self.noDataMessage
-        # Register classes again, after model adaptations have been performed
-        # (see comment in __init__.py)
-        registerClasses()
         # if we already have existing organizations, we do not add additional ones
         own_org = get_own_organization()
         alreadyHaveGroups = bool(own_org.objectValues())

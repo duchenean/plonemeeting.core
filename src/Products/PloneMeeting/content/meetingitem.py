@@ -1080,7 +1080,7 @@ class _ATFieldStub(object):
         return None
 
     def Vocabulary(self, content_instance=None):
-        from Products.Archetypes.utils import DisplayList
+        from Products.PloneMeeting.compat import DisplayList
         from Products.PloneMeeting.content.meetingconfig import _at_to_dx
         dx_name = _at_to_dx(self._field_name)
         schema_field = IMeetingItem.get(dx_name)
@@ -1440,7 +1440,7 @@ class MeetingItem(Container):
         field = self.getField(key)
         if field is not None:
             return field.Vocabulary(self), False
-        from Products.Archetypes.utils import DisplayList
+        from Products.PloneMeeting.compat import DisplayList
         return DisplayList(), False
 
     security.declareProtected('View', 'widget')
