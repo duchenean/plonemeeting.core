@@ -1645,9 +1645,9 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '7',
               'delay_label': ''}, ])
         # no holidays for now...
-        self.tool.setHolidays([])
+        self.tool.holidays = []
         # no unavailable ending days for now...
-        self.tool.setDelayUnavailableEndDays([])
+        self.tool.delay_unavailable_end_days = []
         # make advice giveable when item is proposed
         self.meetingConfig.item_advice_states = (self._stateMappingFor('proposed', ))
         self.meetingConfig.item_advice_edit_states = (self._stateMappingFor('proposed', ))
@@ -1666,16 +1666,16 @@ class testAdvices(PloneMeetingTestCase):
         item.update_local_roles()
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_started_on'].weekday(), 0)
         # for now, weekends are days 5 and 6, so saturday and sunday
-        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [5, 6])
+        self.assertEqual(self.tool.get_non_working_day_numbers(), [5, 6])
         # limit_date should be in 9 days, 7 days of delay + 2 days of weekends
         limit_date_9_days = item._doClearDayFrom(item.adviceIndex[self.vendors_uid]['delay_started_on'] + timedelta(9))
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'], limit_date_9_days)
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
         # now set weekends to only 'sunday'
-        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', ))
+        self.tool.working_days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']
         # the method is ram.cached, check that it is correct when changed
         self.tool.notifyModified()
-        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [6, ])
+        self.assertEqual(self.tool.get_non_working_day_numbers(), [6, ])
         item.update_local_roles()
         # this will decrease delay of one day
         self.assertEqual(limit_date_9_days - timedelta(1),
@@ -1686,12 +1686,12 @@ class testAdvices(PloneMeetingTestCase):
         # a date next day after the 'delay_started_on'
         delay_started_on = item.adviceIndex[self.vendors_uid]['delay_started_on']
         holiday_changing_delay = '%s' % (delay_started_on + timedelta(1)).strftime('%Y/%m/%d')
-        self.tool.setHolidays(({'date': '2012/05/06'},
-                               {'date': holiday_changing_delay}, ))
-        # the method getHolidaysAs_datetime is ram.cached, check that it is correct when changed
+        self.tool.holidays = [{'date': '2012/05/06'},
+                               {'date': holiday_changing_delay}]
+        # the method get_holidays_as_datetime is ram.cached, check that it is correct when changed
         self.tool.notifyModified()
         year, month, day = holiday_changing_delay.split('/')
-        self.assertEqual(self.tool.getHolidaysAs_datetime(),
+        self.assertEqual(self.tool.get_holidays_as_datetime(),
                          [datetime(2012, 5, 6), datetime(int(year), int(month), int(day)), ])
         # this should increase delay of one day, so as original limit_date_9_days
         item.update_local_roles()
@@ -1701,10 +1701,10 @@ class testAdvices(PloneMeetingTestCase):
         # now add one unavailable day for end of delay
         # for now, limit_date ends day number 2, so wednesday
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].weekday(), 2)
-        self.tool.setDelayUnavailableEndDays(('wed', ))
-        # the method getUnavailableWeekDaysNumbers is ram.cached, check that it is correct when changed
+        self.tool.delay_unavailable_end_days = ['wed']
+        # the method get_unavailable_weekday_numbers is ram.cached, check that it is correct when changed
         self.tool.notifyModified()
-        self.assertEqual(self.tool.getUnavailableWeekDaysNumbers(), [2, ])
+        self.assertEqual(self.tool.get_unavailable_weekday_numbers(), [2, ])
         item.update_local_roles()
         # this increase limit_date of one day, aka next available day
         self.assertEqual(limit_date_9_days + timedelta(1),
@@ -1717,9 +1717,9 @@ class testAdvices(PloneMeetingTestCase):
         # test that the advice may still be added the last day
         # to avoid that current day (aka last day) is a weekend or holiday or unavailable day
         # or so, we just remove everything that increase/decrease delay
-        self.tool.setDelayUnavailableEndDays([])
-        self.tool.setHolidays([])
-        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
+        self.tool.delay_unavailable_end_days = []
+        self.tool.holidays = []
+        self.tool.working_days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         self.tool.notifyModified()
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(7)
@@ -1747,10 +1747,10 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': ''}, ])
         # no holidays...
-        self.tool.setHolidays([])
+        self.tool.holidays = []
         # every days are working days
-        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
-        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [])
+        self.tool.working_days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        self.assertEqual(self.tool.get_non_working_day_numbers(), [])
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.vendors_uid), )

@@ -994,7 +994,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
         # make message shows
-        self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%y/%m/%d')}])
+        self.tool.holidays = [{'date': (DateTime() + 59).strftime('%y/%m/%d')}]
         self.assertTrue(self.tool.showHolidaysWarning(self.meetingConfig))
         # not shown if passing something else than a MeetingConfig
         self.assertFalse(self.tool.showHolidaysWarning(self.portal))
@@ -1005,7 +1005,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # not shown if last defined holiday is in more than 60 days
         self.changeUser('pmManager')
-        self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
+        self.tool.holidays = [{'date': (DateTime() + 61).strftime('%Y/%m/%d')}]
         self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
     def test_pm_UserIsAmong(self):
@@ -1054,7 +1054,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            can not be removed."""
         # create 3 configGroups and make cfg use the second one
         cfg = self.meetingConfig
-        self.tool.setConfigGroups(
+        self.tool._set_config_groups(
             (
                 {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
                 {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
@@ -1332,7 +1332,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         # configure a holday for tomorrow
         tomorrow = (date.today() + timedelta(days=1)).strftime('%Y/%m/%d')
-        self.tool.setHolidays(({'date': tomorrow}, ))
+        self.tool.holidays = [{'date': tomorrow}]
         self.changeUser("pmManager")
         item = self.create('MeetingItem')
         # delay not started so holiday may be removed
@@ -1372,15 +1372,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
-        self.tool.setAdvisersConfig(
-            ({'advice_types': ['positive',
-                               'positive_with_remarks'],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive_with_remarks',
-              'org_uids': [self.vendors_uid],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []}, ))
+        self.tool.advisers_config = [
+            {'advice_types': ['positive',
+                              'positive_with_remarks'],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive_with_remarks',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         self.tool.at_post_edit_script()
         # create item and ask 2 advices
         self.changeUser('pmCreator1')
@@ -1470,14 +1470,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
               'show_advice_on_final_wf_transition': '1',
               'wf_adaptations': []},)))
         # NOT USED, change
-        self.tool.setAdvisersConfig(
-            ({'advice_types': [],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive',
-              'org_uids': [],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []},))
+        self.tool.advisers_config = [
+            {'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         duplicate_workflow('meetingadvice_workflow', 'meetingadvicecustom_workflow')
         self.failIf(self.tool.validate_advisersConfig(
             ({'advice_types': [],
@@ -1489,7 +1489,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
               'wf_adaptations': []},)))
         # NOT USED, remove
         self.failIf(self.tool.validate_advisersConfig(()))
-        self.tool.setAdvisersConfig(())
+        self.tool.advisers_config = []
 
         # USED, add
         self.changeUser('pmCreator1')
@@ -1519,7 +1519,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
              'wf_adaptations': []},)
         self.assertEqual(self.tool.validate_advisersConfig(values), msg)
         # USED, change
-        self.tool.setAdvisersConfig(values)
+        self.tool.advisers_config = [dict(v) for v in values]
         values[0]['base_wf'] = 'meetingadvicecustom_workflow'
         self.assertEqual(self.tool.validate_advisersConfig(values), msg)
 

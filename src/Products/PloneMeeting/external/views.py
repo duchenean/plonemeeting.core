@@ -65,4 +65,4 @@ class ExternalView(BrowserView):
 
     def show_section(self):
         """Display the "External linked elements" on the item view?"""
-        return self.cfg.getId() in self.tool.getShowExternalLinksSection()
+        return self.cfg.getId() in self.tool.show_external_links_section

@@ -36,7 +36,7 @@ class Migrate_To_4102(Migrator):
     def _fixBadHolidayValue(self):
         """A bad value was historically added '2017/2/25', turn it to '2017/12/25'."""
         logger.info("Fix wrong value in ToolPloneMeeting.holidays...")
-        storedHolidays = self.tool.getHolidays()
+        storedHolidays = self.tool.holidays
         holidays = []
         for holiday in storedHolidays:
             if holiday['date'] == '2017/2/25':
@@ -44,7 +44,7 @@ class Migrate_To_4102(Migrator):
                 logger.info('Wrong value "2017/2/25" was fixed!')
             else:
                 holidays.append(holiday)
-        self.tool.setHolidays(holidays)
+        self.tool.holidays = holidays
         logger.info('Done.')
 
     def run(self):

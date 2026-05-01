@@ -7712,7 +7712,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
         """Item reference is set when item is inserted into a meeting."""
-        self.tool.setDeferParentReindex(())
+        self.tool.defer_parent_reindex = []
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -7819,7 +7819,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
-        self.tool.setDeferParentReindex(())
+        self.tool.defer_parent_reindex = []
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -7979,7 +7979,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceFoundInItemSearchableText(self):
         """ """
-        self.tool.setDeferParentReindex(())
+        self.tool.defer_parent_reindex = []
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -8015,7 +8015,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
         # reindex may be deferred when updating item reference
-        self.tool.setDeferParentReindex(('item_reference'))
+        self.tool.defer_parent_reindex = ['item_reference']
         item1.item_reference = ''
         item1.reindexObject()
         meeting.update_item_references()

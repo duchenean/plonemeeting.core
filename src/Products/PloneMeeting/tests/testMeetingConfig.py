@@ -1636,7 +1636,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
     def test_pm_LinkedPloneGroupsTitleWhenUsingConfigGroups(self):
         '''When cfg is in a configGroup, the title of created Plone groups is prepended with configGroup title.'''
-        self.tool.setConfigGroups(
+        self.tool._set_config_groups(
             (
                 {'label': 'ConfigGroup1', 'row_id': 'unique_id_1', 'full_label': 'Config Group 1'},
                 {'label': 'ConfigGroup2', 'row_id': 'unique_id_2', 'full_label': 'Config Group 2'},

@@ -7024,9 +7024,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         holidays = weekends = unavailable_weekdays = ()
         if adviceInfos.get('is_delay_calendar_days', False) is False:
-            holidays = tool.getHolidaysAs_datetime()
-            weekends = tool.getNonWorkingDayNumbers()
-            unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+            holidays = tool.get_holidays_as_datetime()
+            weekends = tool.get_non_working_day_numbers()
+            unavailable_weekdays = tool.get_unavailable_weekday_numbers()
         limit_date = workday(delay_started_on,
                              delay,
                              holidays=holidays,
@@ -8393,7 +8393,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             idxs.append('annexes_index')
         elif related_to == 'item_reference':
             pass
-        if check_deferred and related_to in tool.getDeferParentReindex():
+        if check_deferred and related_to in tool.defer_parent_reindex:
             # mark item reindex deferred so it can be updated at right moment
             item = self.getSelf()
             setattr(item, REINDEX_NEEDED_MARKER, True)

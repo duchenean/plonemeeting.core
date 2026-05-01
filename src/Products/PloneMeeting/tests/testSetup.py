@@ -180,7 +180,7 @@ class testSetup(PloneMeetingTestCase):
         # and import_data again to check
         self.changeUser('admin')
         self.assertFalse(self.tool.restrictUsers)
-        self.tool.setRestrictUsers(True)
+        self.tool.restrict_users = True
         # make sure restrictUsers is set in the 'testing' profile import_data
         profile_names = self._currentSetupProfileNames()
         profile_name = [p_name for p_name in profile_names if p_name.endswith(':testing')][0]

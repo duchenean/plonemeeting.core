@@ -746,7 +746,7 @@ class testViews(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', title="Classic item1 title")
         item2 = self.create('MeetingItem', title="Classic item2 title")
         item3 = self.create('MeetingItem', title="Classic item3 title")
-        self.tool.setDeferParentReindex(['annex'])
+        self.tool.defer_parent_reindex = ['annex']
         self.addAnnex(item1, annexTitle="Special annex1 title")
         self.addAnnex(item2, annexTitle="Special annex2 title")
         self.addAnnex(item3, annexTitle="Special annex3 title")
@@ -2477,7 +2477,7 @@ class testViews(PloneMeetingTestCase):
         """The CatalogNavigationTabs.topLevelTabs is overrided to manage groupConfigs."""
         # configure configGroups, 2 configGroups, one will contain meetingConfig
         # the other is empty, and meetingConfig2 is not in a configGroup
-        self.tool.setConfigGroups(
+        self.tool._set_config_groups(
             ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
         )
         cfg = self.meetingConfig
@@ -2525,7 +2525,7 @@ class testViews(PloneMeetingTestCase):
         """The GlobalSectionsViewlet.selectedTabs is overrided to manage groupConfigs."""
         # configure configGroups, 2 configGroups, one will contain meetingConfig
         # the other is empty, and meetingConfig2 is not in a configGroup
-        self.tool.setConfigGroups(
+        self.tool._set_config_groups(
             ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
         )
         cfg = self.meetingConfig
@@ -3871,14 +3871,14 @@ class testViews(PloneMeetingTestCase):
         # the default advice portal_type "meetingadvice"
         # setup dummy tool.advisersConfig, make vendors advisers not using
         # advice portal_type "meetingadvice" and so not able to use the action
-        self.tool.setAdvisersConfig(
-            ({'advice_types': [],
+        self.tool.advisers_config = [
+            {'advice_types': [],
              'base_wf': 'meetingadvice_workflow',
              'default_advice_type': 'positive',
              'org_uids': [self.vendors_uid],
              'portal_type': 'dummymeetingadvice',
              'show_advice_on_final_wf_transition': '1',
-             'wf_adaptations': []},))
+             'wf_adaptations': []}]
         self.changeUser('pmAdviser1')
         searches_items = self.getMeetingFolder().searches_items
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')

@@ -1319,7 +1319,7 @@ class AdviceTypesVocabulary(object):
             res[advice_type] = translate(
                 advice_type, domain='PloneMeeting', context=context.REQUEST)
         # ToolPloneMeeting.advisersConfig.advice_types
-        for row in tool.getAdvisersConfig():
+        for row in tool.advisers_config:
             for advice_type in row['advice_types']:
                 res[advice_type] = translate(
                     advice_type, domain='PloneMeeting', context=context.REQUEST)

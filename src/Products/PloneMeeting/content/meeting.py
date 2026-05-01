@@ -2258,7 +2258,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         if related_to == 'annex':
             idxs = ['SearchableText']
-        if check_deferred and related_to in tool.getDeferParentReindex():
+        if check_deferred and related_to in tool.defer_parent_reindex:
             # mark meeting reindex deferred so it can be updated at right moment
             meeting = self.getSelf()
             setattr(meeting, REINDEX_NEEDED_MARKER, True)

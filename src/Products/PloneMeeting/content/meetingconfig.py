@@ -3904,7 +3904,7 @@ class MeetingConfig(Container):
         res = self.config_group
         if full:
             tool = api.portal.get_tool('portal_plonemeeting')
-            configGroups = tool.getConfigGroups()
+            configGroups = tool.config_groups
             res = [configGroup for configGroup in configGroups
                    if configGroup['row_id'] == self.getConfigGroup()]
             res = res and res[0] or {}
@@ -7408,7 +7408,7 @@ class MeetingConfig(Container):
                 translate('no_config_group',
                           domain='PloneMeeting',
                           context=self.REQUEST))]
-        for configGroup in tool.getConfigGroups():
+        for configGroup in tool.config_groups:
             res.append(
                 (configGroup['row_id'],
                  safe_unicode(configGroup['label'])))

@@ -627,9 +627,9 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         portal.getProperty('email_from_name'),
         safe_unicode(portal.getProperty('email_from_address')))
     fromAddress = adminFromAddress
-    if tool.getFunctionalAdminEmail():
-        fromAddress = _getEmailAddress(tool.getFunctionalAdminName(),
-                                       tool.getFunctionalAdminEmail())
+    if tool.functional_admin_email:
+        fromAddress = _getEmailAddress(tool.functional_admin_name,
+                                       tool.functional_admin_email)
     if not recipients:
         recipients = [adminFromAddress]
 

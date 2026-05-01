@@ -254,7 +254,7 @@ class testUtils(PloneMeetingTestCase):
              'label': 'ConfigGroup3',
              'full_label': 'Config group 3'},
         )
-        self.tool.setConfigGroups(config_groups)
+        self.tool._set_config_groups(config_groups)
         cfg = self.meetingConfig
         # "test" mailMode will return computed elements
         cfg.mail_mode = 'test'
@@ -279,7 +279,7 @@ class testUtils(PloneMeetingTestCase):
                          u'Config group 3 - %s' % safe_unicode(cfg.Title()))
         # if "full_label" is empty, it is not preprended
         config_groups[-1]['full_label'] = ''
-        self.tool.setConfigGroups(config_groups)
+        self.tool._set_config_groups(config_groups)
         obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         self.assertEqual(translation_mapping['meetingConfigTitle'],

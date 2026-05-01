@@ -499,13 +499,13 @@ class MeetingFacetedView(BaseMeetingFacetedView):
         '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
            must not be shown to some users: users that do not have role
            MeetingManager and are not listed in a specific list.'''
-        restrictMode = self.tool.getRestrictUsers()
+        restrictMode = self.tool.restrict_users
         res = True
         if restrictMode:
             if not self.is_manager:
                 # Check if the user is in specific list
                 if self.member.getId() not in [
-                        u.strip() for u in self.tool.getUnrestrictedUsers().split('\n')]:
+                        u.strip() for u in self.tool.unrestricted_users.split('\n')]:
                     res = False
         return res
 

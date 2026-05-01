@@ -333,9 +333,9 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
                                 return item.absolute_url()
 
         removed_dates = stored_dates.difference(dates_to_save)
-        holidays = self.getHolidaysAs_datetime()
-        weekends = self.getNonWorkingDayNumbers()
-        unavailable_weekdays = self.getUnavailableWeekDaysNumbers()
+        holidays = self.get_holidays_as_datetime()
+        weekends = self.get_non_working_day_numbers()
+        unavailable_weekdays = self.get_unavailable_weekday_numbers()
         for date in removed_dates:
             an_item_url = _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays)
             if an_item_url:
@@ -638,7 +638,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         if not hasattr(aq_base(home_folder), ROOT_FOLDER):
             # Create the "My meetings" folder
             home_folder.invokeFactory('Folder', ROOT_FOLDER,
-                                      title=self.getMeetingFolderTitle())
+                                      title=self.meeting_folder_title)
             rootFolder = getattr(home_folder, ROOT_FOLDER)
             rootFolder.setConstrainTypesMode(1)
             rootFolder.setLocallyAllowedTypes(['Folder'])
@@ -879,29 +879,29 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
                               context=self.REQUEST))
         return res
 
-    def getNonWorkingDayNumbers_cachekey(method, self):
-        '''cachekey method for self.getNonWorkingDayNumbers.'''
+    def get_non_working_day_numbers_cachekey(method, self):
+        '''cachekey method for self.get_non_working_day_numbers.'''
         # we only recompute if the tool was modified
         return (self.modified())
 
-    security.declarePublic('getNonWorkingDayNumbers')
+    security.declarePublic('get_non_working_day_numbers')
 
-    @ram.cache(getNonWorkingDayNumbers_cachekey)
-    def getNonWorkingDayNumbers(self):
+    @ram.cache(get_non_working_day_numbers_cachekey)
+    def get_non_working_day_numbers(self):
         '''Return non working days, aka weekends.'''
         workingDays = self.working_days
         not_working_days = [day for day in PY_DATETIME_WEEKDAYS if day not in workingDays]
         return [PY_DATETIME_WEEKDAYS.index(not_working_day) for not_working_day in not_working_days]
 
-    def getHolidaysAs_datetime_cachekey(method, self):
-        '''cachekey method for self.getHolidaysAs_datetime.'''
+    def get_holidays_as_datetime_cachekey(method, self):
+        '''cachekey method for self.get_holidays_as_datetime.'''
         # we only recompute if the tool was modified
         return (self.modified())
 
-    security.declarePublic('getHolidaysAs_datetime')
+    security.declarePublic('get_holidays_as_datetime')
 
-    @ram.cache(getHolidaysAs_datetime_cachekey)
-    def getHolidaysAs_datetime(self):
+    @ram.cache(get_holidays_as_datetime_cachekey)
+    def get_holidays_as_datetime(self):
         '''Return the holidays but as datetime objects.'''
         res = []
         for row in self.holidays:
@@ -909,16 +909,16 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
             res.append(datetime(int(year), int(month), int(day)))
         return res
 
-    def getUnavailableWeekDaysNumbers_cachekey(method, self):
-        '''cachekey method for self.getUnavailableWeekDaysNumbers.'''
+    def get_unavailable_weekday_numbers_cachekey(method, self):
+        '''cachekey method for self.get_unavailable_weekday_numbers.'''
         # we only recompute if the tool was modified
         return (self.modified())
 
-    security.declarePublic('getUnavailableWeekDaysNumbers')
+    security.declarePublic('get_unavailable_weekday_numbers')
 
-    @ram.cache(getUnavailableWeekDaysNumbers_cachekey)
-    def getUnavailableWeekDaysNumbers(self):
-        '''Return unavailable days numbers, aka self.getDelayUnavailableEndDays as numbers.'''
+    @ram.cache(get_unavailable_weekday_numbers_cachekey)
+    def get_unavailable_weekday_numbers(self):
+        '''Return unavailable days numbers from self.delay_unavailable_end_days.'''
         delayUnavailableEndDays = self.delay_unavailable_end_days
         unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
         return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
