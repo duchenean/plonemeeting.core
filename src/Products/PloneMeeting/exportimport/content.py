@@ -286,7 +286,7 @@ class ToolInitializer:
             output = import_contacts(self.portal, path=self.profilePath)
             logger.info(output)
             if IDexterityContent.providedBy(cfg):
-                vocab = get_vocab(cfg, u'Products.PloneMeeting.vocabularies.orderedcontacts_vocabulary')
+                vocab = get_vocab(cfg, u'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
                 cfg.ordered_contacts = list(vocab.by_value.keys())
             else:
                 selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()

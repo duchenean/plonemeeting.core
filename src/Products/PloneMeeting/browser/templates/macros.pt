@@ -55,7 +55,7 @@
    tal:define="field python: context.getField(fieldName);
                isRich python: field.widget.getName() == 'RichWidget';
                isOptional field/optional|python:False;
-               isUsed python: isOptional and fieldName in usedAttrs or not isOptional;"
+               isUsed python: isOptional and (fieldName in usedAttrs or field.dx_name in usedAttrs) or not isOptional;"
    tal:condition="python: isUsed and member.has_permission(field.read_permission, context)">
   <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>
 </metal:field>
@@ -850,7 +850,7 @@ The name is form.button.cancel because it correspond to the overlay close select
 <metal:displayBudgetInfos define-macro="displayBudgetInfos" i18n:domain="PloneMeeting">
 <tal:field define="fieldName python: 'budgetInfos';
                    ajaxEdit python:True;
-                   usedAttrs python: ('budgetInfos', );
+                   usedAttrs python: ('budget_infos', );
                    member context/@@plone_portal_state/member;
                    portal_url context/@@plone_portal_state/portal_url">
    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -1036,7 +1036,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 </metal:linkedItems>
 
 <metal:otherMeetingConfigsClonable define-macro="otherMeetingConfigsClonable" i18n:domain="PloneMeeting">
-    <fieldset tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.meeting_configs_to_clone_to and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
+    <fieldset tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.meeting_configs_to_clone_to and ('other_meeting_configs_clonable_to_emergency' in usedAttrs or 'other_meeting_configs_clonable_to_privacy' in usedAttrs)"
           tal:attributes="class python: showOtherMeetingConfigsClonableToSpecialFields and 'item-send-to-other-mc-multiple-fields item-send-to-other-mc' or 'item-send-to-other-mc'">
         <legend i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo">Other meeting configs clonable to</legend>
         <div class="other-mc-clonable-to-base-fields">

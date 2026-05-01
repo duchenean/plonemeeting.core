@@ -3395,12 +3395,13 @@ class testViews(PloneMeetingTestCase):
                         pm_folder.searches_decisions.restrictedTraverse('base_view')())
         # but not on item
         item = self.create("MeetingItem")
-        self.assertTrue(u"<title>o1 &mdash; Plone site</title>" in
+        portal_title = safe_unicode(self.portal.Title()) or u'Plone site'
+        self.assertTrue(u"<title>o1 &mdash; %s</title>" % portal_title in
                         item.restrictedTraverse('base_view')())
         # and not on meeting
         self.changeUser('pmManager')
         meeting = self.create("Meeting", date=datetime(2025, 3, 20))
-        self.assertTrue(u"<title>20 march 2025 &mdash; Plone site</title>" in
+        self.assertTrue(u"<title>20 march 2025 &mdash; %s</title>" % portal_title in
                         meeting.restrictedTraverse('@@meeting_view')())
         # but also in config
         self.assertTrue(u"<title>%s - Items" % cfg_title in

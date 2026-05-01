@@ -1732,8 +1732,8 @@ class MeetingItem(Container):
                 # XXX check on datetime to be removed after Meeting migration to DX
                 if meeting and isinstance(meeting.date, datetime):
                     tool = api.portal.get_tool('portal_plonemeeting')
-                    title = "{0} ({1})".format(
-                        title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+                    title = u"{0} ({1})".format(
+                        title, tool.format_date(meeting.date, with_hour=True))
         if isinstance(title, unicode):
             title = title.encode('utf-8')
         return title
