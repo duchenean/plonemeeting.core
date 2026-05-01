@@ -58,7 +58,8 @@ class testSetup(PloneMeetingTestCase):
             if mymeetings:
                 for cfg_folder in mymeetings.objectValues():
                     meetings = meetings + list(object_values(cfg_folder, 'Meeting'))
-                    items = items + list(object_values(cfg_folder, 'MeetingItem'))
+                    items = items + list(object_values(
+                        cfg_folder, ['MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring']))
         # delete items first because deleting a meeting delete included items...
         for obj in items + meetings:
             parent = obj.aq_inner.aq_parent

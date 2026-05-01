@@ -7473,7 +7473,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for po_infos in cfg.power_observers:
             if item_state in po_infos['item_states'] and \
                _evaluateExpression(self,
-                                   expression=po_infos['item_access_on'],
+                                   expression=po_infos.get('item_access_on', ''),
                                    extra_expr_ctx=extra_expr_ctx):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId,

@@ -2274,7 +2274,7 @@ class Meeting(Container):
         for po_infos in cfg.power_observers:
             if meeting_state in po_infos['meeting_states'] and \
                _evaluateExpression(self,
-                                   expression=po_infos['meeting_access_on'],
+                                   expression=po_infos.get('meeting_access_on', ''),
                                    extra_expr_ctx=extra_expr_ctx):
                 power_observers_group_id = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(power_observers_group_id,
