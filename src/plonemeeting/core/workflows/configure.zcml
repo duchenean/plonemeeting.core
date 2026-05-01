@@ -1,0 +1,25 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:five="http://namespaces.zope.org/five"
+           xmlns:i18n="http://namespaces.zope.org/i18n"
+           xmlns:plone="http://namespaces.plone.org/plone"
+           xmlns:zcml="http://namespaces.zope.org/zcml"
+           i18n_domain="PloneMeeting">
+
+  <!-- advice -->
+  <adapter for="plonemeeting.core.content.advice.IMeetingAdvice"
+           factory=".advice.MeetingAdviceWorkflowConditions"
+           provides="plonemeeting.core.interfaces.IMeetingAdviceWorkflowConditions" />
+  <adapter for="plonemeeting.core.content.advice.IMeetingAdvice"
+           factory=".advice.MeetingAdviceWorkflowActions"
+           provides="plonemeeting.core.interfaces.IMeetingAdviceWorkflowActions" />
+
+  <!-- meeting -->
+  <adapter for="plonemeeting.core.content.meeting.IMeeting"
+           factory=".meeting.MeetingWorkflowConditions"
+           provides="plonemeeting.core.interfaces.IMeetingWorkflowConditions" />
+  <adapter for="plonemeeting.core.content.meeting.IMeeting"
+           factory=".meeting.MeetingWorkflowActions"
+           provides="plonemeeting.core.interfaces.IMeetingWorkflowActions" />
+
+</configure>

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<metadata>
+  <version>test</version>
+  <dependencies>
+    <dependency>profile-plonemeeting.core:default</dependency>
+  </dependencies>
+</metadata>

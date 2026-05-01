@@ -1,0 +1,73 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:grok="http://namespaces.zope.org/grok"
+    i18n_domain="plonemeeting.core">
+
+    <!-- We need to grok here for plone.directives to work...
+         We put this in this configure.zcml because it is removed
+         from main configure.zcml by archgenxml... -->
+    <include package="five.grok" />
+    <grok:grok package="." />
+
+    <!-- Vocabularies -->
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".advice.AdviceGroupVocabulary"
+      name="plonemeeting.core.content.advice.advice_group_vocabulary" />
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".advice.AdviceTypeVocabulary"
+      name="plonemeeting.core.content.advice.advice_type_vocabulary" />
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".category.CategoriesOfOtherMCsVocabulary"
+      name="plonemeeting.core.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
+    <utility name="plonemeeting.core.content.meeting.places_vocabulary"
+             component=".meeting.PlacesVocabularyFactory" />
+    <utility name="plonemeeting.core.content.item_annex_content_category.other_mc_correspondences_vocabulary"
+             component=".content_category.OtherMCCorrespondencesVocabularyFactory" />
+
+    <!-- Schema policies -->
+    <utility factory=".meeting.MeetingSchemaPolicy"
+             name="schema_policy_meeting" />
+    <utility factory=".advice.MeetingAdviceSchemaPolicy"
+             name="schema_policy_meetingadvice" />
+    <utility factory=".category.MeetingCategorySchemaPolicy"
+             name="schema_policy_meetingcategory" />
+    <utility factory=".directory.PMDirectorySchemaPolicy"
+             name="schema_policy_pm_directory" />
+    <utility factory=".held_position.PMHeldPositionSchemaPolicy"
+             name="schema_policy_pm_held_position" />
+    <utility factory=".organization.PMOrganizationSchemaPolicy"
+             name="schema_policy_pm_organization" />
+    <utility factory=".person.PMPersonSchemaPolicy"
+             name="schema_policy_pm_person" />
+    <utility factory=".content_category.ItemAnnexContentCategorySchemaPolicy"
+             name="schema_policy_item_annex_content_category" />
+    <utility factory=".content_category.ItemAnnexContentSubcategorySchemaPolicy"
+             name="schema_policy_item_annex_content_subcategory" />
+    <utility factory=".content_category.PMContentCategorySchemaPolicy"
+             name="schema_policy_pm_content_category" />
+    <utility factory=".content_category.PMContentSubcategorySchemaPolicy"
+             name="schema_policy_pm_content_subcategory" />
+    <utility factory=".meetingconfig.MeetingConfigSchemaPolicy"
+             name="schema_policy_meetingconfig" />
+    <utility factory=".meetingitem.MeetingItemSchemaPolicy"
+             name="schema_policy_meetingitem" />
+
+    <!-- MeetingConfig DX class interface declarations -->
+    <class class=".meetingconfig.MeetingConfig">
+        <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
+        <implements interface="ftw.labels.interfaces.ILabelRoot" />
+    </class>
+
+    <!-- Meeting behaves like a PACT ICollection -->
+    <adapter for="plonemeeting.core.content.meeting.IMeeting"
+             factory=".meeting.MeetingCollection"
+             provides="plone.app.contenttypes.behaviors.collection.ICollection" />
+
+    <!-- collective.dexteritytextindexer extender -->
+    <adapter factory=".meeting.MeetingSearchableTextExtender"
+             name="MeetingSearchableTextExtender" />
+
+</configure>

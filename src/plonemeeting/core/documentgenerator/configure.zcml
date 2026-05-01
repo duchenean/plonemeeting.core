@@ -1,0 +1,21 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:five="http://namespaces.zope.org/five"
+           xmlns:i18n="http://namespaces.zope.org/i18n"
+           i18n_domain="PloneMeeting">
+
+    <adapter for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate
+                  plonemeeting.core.interfaces.IMeetingContent"
+             factory="plonemeeting.core.documentgenerator.condition.PMConfigurablePODTemplateCondition" />
+    <adapter for="collective.eeafaceted.dashboard.content.pod_template.IDashboardPODTemplate
+                  Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+             factory="plonemeeting.core.documentgenerator.condition.PMDashboardPODTemplateCondition" />
+
+    <adapter for="plonemeeting.core.content.meetingitem._ATFieldStub
+                  plonemeeting.core.content.meetingitem._ATFieldWidgetStub
+                  plonemeeting.core.interfaces.IMeetingItem"
+             provides="collective.documentgenerator.interfaces.IFieldRendererForDocument"
+             factory="plonemeeting.core.documentgenerator.renderer.ATFieldStubRenderer"
+             permission="zope2.View" />
+
+</configure>

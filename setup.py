@@ -4,7 +4,7 @@ from setuptools import setup
 
 version = '6.0.0.dev0'
 
-setup(name='plonemeeting.portal',
+setup(name='plonemeeting.core',
       version=version,
       description="Official meetings management",
       long_description=open("README.rst").read() + "\n" + open("CHANGES.rst").read(),
@@ -41,7 +41,8 @@ setup(name='plonemeeting.portal',
                                 'plone.app.testing',
                                 'profilehooks',
                                 'plone.app.robotframework',
-                                'Products.CMFPlacefulWorkflow'],
+                                'Products.CMFPlacefulWorkflow',
+                                'python-magic'],
                           templates=['Genshi', ],
                           # temp backward compat
                           amqp=[]),
@@ -84,6 +85,7 @@ setup(name='plonemeeting.portal',
           'Products.CPUtils',
           'Products.DataGridField',
           'Products.PasswordStrength',
+          'PyPDF2',
           # 'Products.cron4plone',  # P6 migration: cron4plone dropped, schedule via Plone clock-server
           ],
       entry_points={},

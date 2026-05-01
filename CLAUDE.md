@@ -1,14 +1,14 @@
-# CLAUDE.md — Products.PloneMeeting
+# CLAUDE.md — plonemeeting.core
 
 ## What is this project?
 
-Products.PloneMeeting is a Plone-based application for managing official meetings (deliberations) in Belgian local authorities. It handles the full lifecycle: creating agenda items, submitting them for review, building meeting agendas, recording decisions, managing advices from organizations, voting, and generating official documents.
+`plonemeeting.core` (formerly `Products.PloneMeeting`) is a Plone-based application for managing official meetings (deliberations) in Belgian local authorities. It handles the full lifecycle: creating agenda items, submitting them for review, building meeting agendas, recording decisions, managing advices from organizations, voting, and generating official documents.
 
 It is part of the **iMio** ecosystem — a suite of open-source tools for Belgian municipalities — and is commercially known as **iA.Delib**.
 
 ## Tech stack
 
-- **Python 2.7** on **Plone 4.3** (Zope 2)
+- **Python 2.7** on **Plone 4.3** (Zope 2) — migrating to **Python 3 / Plone 6**
 - Content types: mix of legacy **Archetypes** and modern **Dexterity** (see migration status below)
 - Build system: **zc.buildout** (extends `buildout.pm/communes-dev.cfg` from IMIO)
 - Templates: **TAL/TALES** page templates (`.pt`)
@@ -50,7 +50,7 @@ The long-term goal is to **migrate to Plone 6**. As part of this effort, all Arc
 ## Repository layout
 
 ```
-src/Products/PloneMeeting/
+src/plonemeeting/core/
   MeetingConfig.py        # Meeting type configuration (Archetypes, ~8k lines)
   MeetingItem.py          # Agenda item (Archetypes, ~8k lines — migration to DX pending)
   Meeting.py              # Meeting object (Dexterity, ~2k lines)
@@ -79,7 +79,6 @@ src/Products/PloneMeeting/
   documentgenerator/      # POD template generation support
   faceted_conf/           # Faceted navigation XML configs
   ftw_labels/             # Label management integration
-  ckeditor/               # CKEditor plugin customizations
   tests/                  # Test suite (20+ test modules)
   model/                  # UML model and adaptations
 ```
@@ -106,10 +105,10 @@ bin/instance fg           # Run Plone in foreground
 ## Running tests
 
 ```bash
-# From the buildout root (pm42_dev/)
-bin/test -s Products.PloneMeeting                    # All tests
-bin/test -s Products.PloneMeeting -t testMeetingItem # Single test module
-bin/test -s Products.PloneMeeting -t test_method_name # Single test method
+# From the buildout root (pm_next/)
+bin/testmc --layer='!.*Robot.*'                       # All tests (skip robot)
+bin/testmc -t testMeetingItem --layer='!.*Robot.*'    # Single test module
+bin/testmc -t test_method_name --layer='!.*Robot.*'   # Single test method
 ```
 
 Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeetingTestCase` (`tests/PloneMeetingTestCase.py`). The test profile (`PM_TESTING_PROFILE_FUNCTIONAL`) sets up a full Plone site with sample meeting configurations.
@@ -123,7 +122,7 @@ Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeeting
 - **Complexity**: max cyclomatic complexity 15 (`flake8`)
 - **Naming**: `PascalCase` for classes, `snake_case` for functions, `UPPER_SNAKE_CASE` for constants. Private methods prefixed with `_`
 - **Security**: `AccessControl.ClassSecurityInfo` declarations on class methods
-- **i18n**: `from Products.PloneMeeting.config import PMMessageFactory as _` — wrap translatable strings with `_()`
+- **i18n**: `from plonemeeting.core.config import PMMessageFactory as _` — wrap translatable strings with `_()`
 
 ## Commit message style
 
