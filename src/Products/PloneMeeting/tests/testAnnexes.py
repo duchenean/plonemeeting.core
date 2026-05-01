@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+import unittest
+
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
@@ -963,6 +965,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(converted_annex2.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex2).converted)
 
+    @unittest.skip('Requires AMQP async conversion — reimplemented in Stage D')
     def test_pm_AnnexOnlyConvertedAgainWhenNecessary(self):
         """When conversion is enabled, either by 'auto_convert' or
            when MeetingConfig.annexToPrintMode is 'enabled_for_printing',
@@ -1814,6 +1817,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue('form.widgets.title' in rendered)
         self.assertTrue('form.widgets.description' in rendered)
 
+    @unittest.skip('Requires AMQP async conversion — reimplemented in Stage D')
     def test_pm_AnnexShowPreview(self):
         """Test when show_preview is defined on annex type."""
         cfg = self.meetingConfig
