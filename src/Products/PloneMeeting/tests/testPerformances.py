@@ -16,7 +16,7 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from plone import api
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -63,7 +63,7 @@ class testPerformances(PloneMeetingTestCase):
             self.changeUser('siteadmin')
             wfAdaptations.append('no_publication')
             cfg.setWorkflowAdaptations(wfAdaptations)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmManager')
         meeting = None
@@ -1025,7 +1025,7 @@ class testPerformances(PloneMeetingTestCase):
     def _check_meeting_config_edit(self):
         ''' '''
         pm_logger.info('Save MeetingConfig')
-        notify(ObjectEditedEvent(self.meetingConfig))
+        notify(ObjectModifiedEvent(self.meetingConfig))
 
 
 def test_suite():

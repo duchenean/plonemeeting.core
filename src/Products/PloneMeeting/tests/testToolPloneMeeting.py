@@ -27,7 +27,7 @@ from plone import api
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 from plone.testing.z2 import Browser
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -152,7 +152,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg.getId())
         # if we change default config, it works
         cfg2.is_default = True
-        notify(ObjectEditedEvent(cfg2))
+        notify(ObjectModifiedEvent(cfg2))
         self.assertTrue(not cfg.is_default)
         self.assertTrue(cfg2.is_default)
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())
@@ -1056,9 +1056,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.tool._set_config_groups(
             (
-                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
-                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
-                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+                {'label': 'ConfigGroup1', 'full_label': u'', 'row_id': 'unique_id_1'},
+                {'label': 'ConfigGroup2', 'full_label': u'', 'row_id': 'unique_id_2'},
+                {'label': 'ConfigGroup3', 'full_label': u'', 'row_id': 'unique_id_3'},
             )
         )
 

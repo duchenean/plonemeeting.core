@@ -8,7 +8,7 @@ from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
 from plone.dexterity.utils import createContentInContainer
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
@@ -475,7 +475,7 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['enable_editors'] = "1"
         cfg.setCommittees(cfg_committees)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self._addPrincipalToGroup(
             'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
 
@@ -498,7 +498,7 @@ class PloneMeetingTestingHelpers(object):
         if enable_extra_suffixes:
             itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _updateItemValidationLevel(self, cfg, level=None, enable=True, **kwargs):
@@ -513,7 +513,7 @@ class PloneMeetingTestingHelpers(object):
                     if k in kwargs:
                         itemValLevel[k] = kwargs[k]
         cfg.setItemWFValidationLevels(itemValLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
@@ -598,7 +598,7 @@ class PloneMeetingTestingHelpers(object):
         # useful when test executed with custom profile
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
     def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
         """Setup labels only editable when item editable."""

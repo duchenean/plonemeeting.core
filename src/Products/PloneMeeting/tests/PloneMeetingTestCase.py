@@ -32,7 +32,6 @@ from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
 from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.browser.meeting import get_default_attendees
@@ -359,7 +358,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
                     attrs.update({'proposing_group': proposingGroupUids[0]})
-        obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
+        result = folder.invokeFactory(contentType, **attrs)
+        obj = result if not isinstance(result, basestring) else getattr(folder, result)
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
         elif objectType == 'MeetingItem':
@@ -737,12 +737,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg = self.meetingConfig
         if not keep_existing:
             cfg.setWorkflowAdaptations(())
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         else:
             wfas = tuple(set(tuple(wfas) + tuple(cfg.wf_adaptations)))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _deactivate_wfas(self, wfas, cfg=None):
@@ -756,7 +756,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         wfas = [wfa for wfa in cfg.wf_adaptations
                 if wfa not in wfas]
         cfg.setWorkflowAdaptations(wfas)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _activate_config(self,
@@ -781,7 +781,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
             self.changeUser(currentUser)
 
     def _enableAutoConvert(self, enable=True):
@@ -838,7 +838,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
             self.changeUser(currentUser)
         else:
             cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
@@ -871,12 +871,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if enable and action not in cfg.enabled_item_actions:
                 actions = list(cfg.enabled_item_actions) + [action]
                 cfg.enabled_item_actions = actions
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
             elif not enable and action in cfg.enabled_item_actions:
                 actions = list(cfg.enabled_item_actions)
                 actions.remove(action)
                 cfg.enabled_item_actions = actions
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
 
     def _disableObj(self, obj, notify_event=True):
         """ """

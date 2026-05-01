@@ -28,7 +28,6 @@ from plone import api
 from plone.app.testing import logout
 from plone.dexterity.utils import createContentInContainer
 from plone.indexer.wrapper import IndexableObjectWrapper
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -603,7 +602,7 @@ class testAnnexes(PloneMeetingTestCase):
             # every users of a Plone subgroup profileSuffix will have access
             for org in (self.developers, self.vendors):
                 cfg.meeting_annex_confidential_visible_for = (profileSuffix,)
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
                 update_all_categorized_elements(meeting)
                 group_suffix = profileSuffix.replace(SUFFIXPROFILEPREFIX, '')
                 # get a user from the right 'developers/vendors' subgroup
@@ -1168,7 +1167,7 @@ class testAnnexes(PloneMeetingTestCase):
            'only_creator_may_delete' not in wfAdaptations:
             wfAdaptations = list(wfAdaptations) + ['only_creator_may_delete']
             cfg.setWorkflowAdaptations(wfAdaptations)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.decision = richtextval('<p>Decision</p>')

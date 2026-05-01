@@ -28,7 +28,6 @@ from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from plone.dexterity.interfaces import IDexterityContent
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -794,7 +793,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                      'adviser_group': 'Vendors'},
             context=self.portal.REQUEST)
         # we need to invalidate ram.cache of _findLinkedRowsFor
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(cfg.validate_customAdvisers(customAdvisers), isolated_row_msg)
         customAdvisers[1]['is_linked_to_previous_row'] = '1'
 
@@ -1268,7 +1267,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         otherColor = ITEM_ICON_COLORS[0]
         otherColorIconName = "MeetingItem{0}.png".format(ITEM_ICON_COLORS[0].capitalize())
         cfg.item_icon_color = otherColor
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # portal_type was updated
         self.assertTrue(itemType.icon_expr.endswith(otherColorIconName))
         self.assertTrue(itemType.icon_expr_object)
@@ -1628,7 +1627,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # update MeetingConfig title and check again
         cfgTitle = 'New cfg title'
         cfg.setTitle(cfgTitle)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # Plone groups title have been updated
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
@@ -1653,7 +1652,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # use a configGroup and check
         cfg.config_group = 'unique_id_1'
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(cfg.getConfigGroup(full=True),
                          {'label': 'ConfigGroup1', 'row_id': 'unique_id_1', 'full_label': 'Config Group 1'})
         # now linked Plone groups contain the configGroup title
@@ -1663,7 +1662,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # remove configGroup, and check
         cfg.config_group = ''
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
             self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
@@ -1682,10 +1681,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         cfg.setWorkflowAdaptations(())
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         cfg2 = self.meetingConfig2
         cfg2.setWorkflowAdaptations(())
-        notify(ObjectEditedEvent(cfg2))
+        notify(ObjectModifiedEvent(cfg2))
         cfg3 = self.create('MeetingConfig', workflowAdaptations=[])
 
         # test with normal value
@@ -1731,7 +1730,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
             cfg3.wf_adaptations = ['return_to_proposing_group']
-            notify(ObjectEditedEvent(cfg3))
+            notify(ObjectModifiedEvent(cfg3))
             cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
@@ -1877,7 +1876,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                 templates = [template for template in container.objectValues()
                              if template.portal_type == portal_type]
                 if templates:
-                    self.assertRaises(Unauthorized, notify, (ObjectEditedEvent(templates[0])))
+                    self.assertRaises(Unauthorized, notify, (ObjectModifiedEvent(templates[0])))
                 else:
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
@@ -1898,7 +1897,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                 templates = [template for template in container.objectValues()
                              if template.portal_type == portal_type]
                 if templates:
-                    notify(ObjectEditedEvent(templates[0]))
+                    notify(ObjectModifiedEvent(templates[0]))
                 else:
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
@@ -2516,7 +2515,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertIsNone(api.group.get(plone_group_id))
         committees[0]['enable_editors'] = "1"
         cfg.setCommittees(committees)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # a Plone group is created
         group = api.group.get(plone_group_id)
         self.assertTrue(group)
@@ -2723,7 +2722,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # empty value '' is ignored
         self.changeUser('siteadmin')
         cfg.setUsingGroups([''])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         # still no access as only '' was given
         self.assertTrue(self.hasPermission(View, meeting))
@@ -2731,14 +2730,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now with correct values
         self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertFalse(self.hasPermission(View, meeting))
         self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         # give access to developers
         self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, self.developers_uid))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertEqual(
@@ -2747,7 +2746,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # empty value '' is ignored
         self.changeUser('siteadmin')
         cfg.setUsingGroups([''])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
@@ -2780,7 +2779,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # enable usingGroups
         self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # developers did not receive the email
         recipients, subject, body = sendMailIfRelevant(
             meeting,

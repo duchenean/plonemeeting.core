@@ -41,7 +41,6 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
 from Products import PloneMeeting as products_plonemeeting
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -237,7 +236,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         cfg.item_fields_to_keep_config_sorting_for = ('proposing_group', )
         # invalidate vocabularies caching
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.vendors_uid, self.endUsers_uid])
 
@@ -523,7 +522,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if not activated in the config, it is not sendable anymore
         self.changeUser('admin')
         cfg.setMeetingConfigsToCloneTo(())
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # field still shown because not empty
@@ -536,7 +535,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(
             ({'meeting_config': otherMeetingConfigId,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertTrue(item.showClonableToOtherMCs())
         item.other_meeting_configs_clonable_to = (otherMeetingConfigId,)
         self.changeUser('pmManager')
@@ -645,7 +644,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # but if we remove the self.meetingConfig.meetingConfigsToCloneTos, then the action is remove too
         cfg.setMeetingConfigsToCloneTo([])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # ... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
@@ -653,7 +652,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfg2.getId(),
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # but we do not use portal_actionicons
@@ -1829,7 +1828,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceStates(('validated', ))
         cfg.item_advice_edit_states = ('validated', )
         cfg.item_advice_view_states = ('validated', )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1919,7 +1918,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.item_advice_edit_states = ('itemcreated', )
         cfg.item_advice_view_states = ('itemcreated', )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2542,7 +2541,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'refused' not in cfg.wf_adaptations:
             cfg.setWorkflowAdaptations(('refused', ))
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self._setPowerObserverStates(states=(
             'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
         self._setPowerObserverStates(field_name='meeting_states',
@@ -3394,21 +3393,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # and the other way round then activate both and continue
         cfg.used_meeting_attributes = ('signatures', )
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # only itemSignatures
         self.assertIsNone(formSignatures.update())
         self.assertRaises(Unauthorized, formAssembly.update)
         # only itemAssembly
         cfg.used_meeting_attributes = ('assembly', )
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertIsNone(formAssembly.update())
         self.assertRaises(Unauthorized, formSignatures.update)
         # if fields not used but filled (like when switching from assembly to attendees)
         # then is it still possible to edit it
         cfg.used_meeting_attributes = ()
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         meeting.assembly = richtextval('Meeting assembly')
         meeting.assembly_absents = richtextval('Meeting assembly absents')
         meeting.assembly_excused = richtextval('Meeting assembly excused')
@@ -3418,7 +3417,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now when fields enabled, current user must be at least MeetingManager to use this
         cfg.used_meeting_attributes = ('assembly', 'signatures')
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formAssembly._doApplyItemAssembly)
@@ -3643,7 +3642,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.decision = richtextval(self.decisionText)
         cfg.used_meeting_attributes = ('assembly', 'signatures')
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertFalse(item.mayQuickEditItemAssembly())
         self.assertFalse(item.mayQuickEditItemSignatures())
         self.validateItem(item)
@@ -3668,7 +3667,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # this can be the case when switching from assembly to attendees
         cfg.used_meeting_attributes = ()
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         _checkOnlyEditableByManagers(item)
         # empty fields
         meeting.assembly = richtextval('')
@@ -3679,7 +3678,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # change itemAssembly/itemSignatures
         cfg.used_meeting_attributes = ('assembly', 'signatures')
         # Meeting.attribute_is_used is ram.cached
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         item.item_assembly = 'New assembly'
         item.item_signatures = 'New signatures'
         _checkOnlyEditableByManagers(item)
@@ -3925,7 +3924,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(vocab_values, ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # remove developers_reviewers from selectableCopyGroups in the meetingConfig
         cfg.selectable_copy_groups = (self.vendors_reviewers, )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # still in the vocabulary because selected on the item
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         vocab_values = [term.title for term in vocab_factory(item)._terms]
@@ -4190,7 +4189,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys, [self.developers_uid])
         cfg.selectable_advisers = [self.developers_uid, self.vendors_uid]
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # now select the 'developers' as optionalAdvisers for the item
         item.optional_advisers = (self.developers_uid, )
         # still the complete vocabulary
@@ -4227,7 +4226,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertFalse('{0}__rowid__unique_id_123'.format(self.developers_uid) in vocab_factory(item))
         self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid) in vocab_factory(item))
         # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
@@ -4245,7 +4244,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # while using MeetingConfig.selectableAdviserUsers
         cfg.selectable_advisers = (self.vendors_uid, self.developers_uid)
         cfg.selectable_adviser_users = (self.developers_uid, )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         vocab_keys = [term.token for term in vocab_factory(item, include_selected=False)._terms]
         # __userid__ available for developers but not for vendors
         self.assertEqual(
@@ -4368,7 +4367,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
@@ -4381,7 +4380,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
@@ -4394,7 +4393,7 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[1]['for_item_created_until'] = ''
         customAdvisers[0]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
@@ -4405,7 +4404,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # but the customAdviser is simply not taken into account
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
@@ -4675,7 +4674,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'hide_decisions_when_under_writing' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmManager')
         # create 1 meeting with items so we can play the workflow
@@ -4795,7 +4794,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'no_publication' not in wfAdaptations:
             wfAdaptations.append('no_publication')
             cfg.setWorkflowAdaptations(wfAdaptations)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.decideMeeting(meeting)
@@ -5172,7 +5171,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.transitions_to_confirm = (firstTrToConfirm, )
         actions_panel._transitions = None
         beforeMCEdit_rendered_actions_panel = actions_panel()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # browser/overrides.py:BaseActionsPanelView._transitionsToConfirm is memoized
         self.cleanMemoize()
         afterMCEdit_rendered_actions_panel = actions_panel()
@@ -5226,7 +5225,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
             states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
         cfg.setItemWFValidationLevels(itemWFValLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         # create item
         self.changeUser('pmCreator1')
@@ -8276,7 +8275,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemWFValidationLevels = cfg.getItemWFValidationLevels()
         itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))

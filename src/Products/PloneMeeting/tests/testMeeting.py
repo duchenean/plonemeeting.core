@@ -21,7 +21,6 @@ from os import path
 from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
 from Products import PloneMeeting as products_plonemeeting
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -2344,7 +2343,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # define meetingPresentItemWhenNoCurrentMeetingStates to ('created', )
         cfg.meeting_present_item_when_no_current_meeting_states = ('created', )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.cleanMemoize()
         # meeting is found because it is 'created'
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
@@ -2371,7 +2370,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # make frozen meetings accept items
         cfg.meeting_present_item_when_no_current_meeting_states = ('created', 'frozen', )
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # preferred meeting is preferred if available
@@ -2384,7 +2383,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # except if no meetingPresentItemWhenNoCurrentMeetingStates
         cfg.meeting_present_item_when_no_current_meeting_states = ()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
@@ -3192,9 +3191,9 @@ class testMeetingType(PloneMeetingTestCase):
             return
 
         cfg.setWorkflowAdaptations(())
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         cfg2.setWorkflowAdaptations(())
-        notify(ObjectEditedEvent(cfg2))
+        notify(ObjectModifiedEvent(cfg2))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -3246,7 +3245,7 @@ class testMeetingType(PloneMeetingTestCase):
         # connect 'published' state to 'decided'
         meeting_wf = self.wfTool.get('meeting_workflow')
         meeting_wf.states.deleteStates(['frozen'])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['closed', 'created', 'decided', 'published'])
 

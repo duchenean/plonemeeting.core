@@ -27,7 +27,6 @@ def next_scan_id(file_portal_types=None):
        Original implementation lives in imio.zamqp.core.utils."""
     return DEFAULT_SCAN_ID
 from plone.dexterity.utils import createContentInContainer
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -131,7 +130,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in itemWF.states)
         # activate
         self._activate_wfas(('return_to_proposing_group', ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         itemWF = cfg.getItemWorkflow(True)
         self.assertTrue('returned_to_proposing_group' in itemWF.states)
 
@@ -195,7 +194,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in originalWF.states)
         self.assertFalse('returned_to_proposing_group' in cfg2ItemWF.states)
         # test again if saving cfg2
-        notify(ObjectEditedEvent(cfg2))
+        notify(ObjectModifiedEvent(cfg2))
         originalWF = self.wfTool.get(cfg.getItemWorkflow())
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
@@ -1080,7 +1079,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_workflowAdaptations((MEETING_REMOVE_MOG_WFA, )), msg)
         # can not be removed, define MeetingConfig.usingGroups, it will be added automatically
         cfg.setUsingGroups((self.vendors_uid, ))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg)
 
@@ -3015,7 +3014,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.item_advice_view_states = ('itemcreated',)
         if 'postpone_next_meeting' not in cfg.wf_adaptations:
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
@@ -3074,7 +3073,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         if 'postpone_next_meeting' not in cfg.wf_adaptations:
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
 
         item = self.create('MeetingItem', decision=self.decisionText)
         meeting = self.create('Meeting')

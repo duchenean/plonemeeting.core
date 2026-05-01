@@ -28,7 +28,7 @@ from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
 from Products import PloneMeeting as products_plonemeeting
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -1309,7 +1309,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'),)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.optional_advisers = (self.developers_uid, self.vendors_uid)
@@ -2478,7 +2478,7 @@ class testViews(PloneMeetingTestCase):
         # configure configGroups, 2 configGroups, one will contain meetingConfig
         # the other is empty, and meetingConfig2 is not in a configGroup
         self.tool._set_config_groups(
-            ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
+            ({'label': 'ConfigGroup1', 'full_label': u'Config Group 1', 'row_id': 'unique_id_1'},)
         )
         cfg = self.meetingConfig
         cfg2Id = self.meetingConfig2.getId()
@@ -2526,7 +2526,7 @@ class testViews(PloneMeetingTestCase):
         # configure configGroups, 2 configGroups, one will contain meetingConfig
         # the other is empty, and meetingConfig2 is not in a configGroup
         self.tool._set_config_groups(
-            ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
+            ({'label': 'ConfigGroup1', 'full_label': u'Config Group 1', 'row_id': 'unique_id_1'},)
         )
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
@@ -2648,7 +2648,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'),)
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'),)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         item = self.create('MeetingItem')
         item._update_after_edit()
