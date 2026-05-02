@@ -443,7 +443,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         view = self.portal.restrictedTraverse('plonemeeting_javascript_variables.js')
         # calling the view will produce a unicode string containing javascript...
-        self.assertTrue(isinstance(view(), unicode))
+        self.assertTrue(isinstance(view(), six.text_type))
 
     def test_pm_ChangeListTypeView(self):
         '''Test the item-change-listtype view and relevant methods in MeetingItem.'''

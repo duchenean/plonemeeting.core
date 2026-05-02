@@ -356,7 +356,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'Meeting' and attrs.get('date', None) is None:
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
-            if 'proposing_group' not in attrs.keys():
+            if 'proposing_group' not in attrs:
                 cleanRamCacheFor('plonemeeting.core.ToolPloneMeeting._get_org_uids_for_user')
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
@@ -388,7 +388,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     if dx_name in obj.__dict__:
                         del obj.__dict__[dx_name]
                     continue
-                if dx_name in _DX_RICH_FIELDS and isinstance(value, (str, unicode)):
+                if dx_name in _DX_RICH_FIELDS and isinstance(value, six.string_types):
                     setattr(obj, dx_name, richtextval(value))
                 else:
                     setattr(obj, dx_name, value)
@@ -437,7 +437,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             for field_name, widget in add_form.form_instance.w.items():
                 if widget.value and \
                    not getattr(obj, field_name) and \
-                   isinstance(widget.value, (str, unicode)):
+                   isinstance(widget.value, six.string_types):
                     setattr(obj, field_name, widget.field.fromUnicode(widget.value))
 
         # make sure we do not have permission check cache problems...

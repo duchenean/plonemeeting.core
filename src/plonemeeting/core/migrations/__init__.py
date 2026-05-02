@@ -41,6 +41,7 @@ from zope.i18n import translate
 import itertools
 import logging
 import os
+import six
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -368,7 +369,7 @@ class Migrator(BaseMigrator):
             # make sure we do not mix unicode and utf-8
             fixed_output = []
             for line in output:
-                if isinstance(line, unicode):
+                if isinstance(line, six.text_type):
                     line = line.encode('utf8')
                 fixed_output.append(line)
             logger.info('\n'.join(fixed_output))
@@ -694,7 +695,7 @@ class Migrator(BaseMigrator):
 
     def run(self):
         '''Must be overridden. This method does the migration job.'''
-        raise 'You should have overridden me darling.'''
+        raise NotImplementedError('You should have overridden me darling.')
 
     def finish(self):
         '''At the end of the migration, you can call this method to log its

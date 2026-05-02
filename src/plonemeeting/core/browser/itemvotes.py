@@ -61,11 +61,11 @@ def _build_voting_groups(context, caching=True):
                     res[group_id] = {'title': org.title, 'uids': []}
             res[group_id]['uids'].append(voter.UID())
         # only keep PLONEGROUP_ORG if any other value than 'all'
-        if res.keys() == ['all', 'others']:
+        if list(res.keys()) == ['all', 'others']:
             res.pop('others')
         else:
             # reorder so PLONEGROUP_ORG is at the end
-            ordered = res.keys()
+            ordered = list(res.keys())
             ordered += [ordered.pop(1)]
             res = OrderedDict((k, res[k]) for k in ordered)
         # caching

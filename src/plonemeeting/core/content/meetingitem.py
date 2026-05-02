@@ -193,8 +193,9 @@ from zope.schema.interfaces import IVocabularyFactory
 import html
 import itertools
 import logging
-import transaction
+import operator
 import six
+import transaction
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -1050,11 +1051,11 @@ class _ATFieldStub(object):
         value = getattr(obj, dx_name, None)
         if hasattr(value, 'output'):
             raw = value.output if value else u''
-        elif self._is_rich and isinstance(value, unicode):
+        elif self._is_rich and isinstance(value, six.text_type):
             raw = value
         else:
             return value
-        if isinstance(raw, unicode):
+        if isinstance(raw, six.text_type):
             raw = raw.encode('utf-8')
         return raw
 
@@ -1613,7 +1614,7 @@ class MeetingItem(Container):
         data = []
         title = self.Title()
         if title:
-            if isinstance(title, unicode):
+            if isinstance(title, six.text_type):
                 title = title.encode('utf-8')
             data.append(title)
         transforms = api.portal.get_tool('portal_transforms')
@@ -1633,11 +1634,11 @@ class MeetingItem(Container):
             elif isinstance(value, (list, tuple)):
                 for v in value:
                     if v:
-                        if isinstance(v, unicode):
+                        if isinstance(v, six.text_type):
                             v = v.encode('utf-8')
                         data.append(v)
             else:
-                if isinstance(value, unicode):
+                if isinstance(value, six.text_type):
                     value = value.encode('utf-8')
                 data.append(str(value))
         return ' '.join(data)
@@ -1738,7 +1739,7 @@ class MeetingItem(Container):
                         title = title.decode('utf-8')
                     title = u"{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True))
-        if isinstance(title, unicode):
+        if isinstance(title, six.text_type):
             title = title.encode('utf-8')
         return title
 
@@ -1746,7 +1747,7 @@ class MeetingItem(Container):
         desc = self.description
         if isinstance(desc, RichTextValue):
             return safe_encode(desc.output_relative_to(self) or u'')
-        if isinstance(desc, unicode):
+        if isinstance(desc, six.text_type):
             return desc.encode('utf-8')
         return desc or ''
 
@@ -2741,7 +2742,7 @@ class MeetingItem(Container):
                 item2_meeting_date = item2_infos['meeting_date']
                 if item1_meeting_date and item2_meeting_date:
                     # both items have a meeting, compare meeting dates
-                    return cmp(item2_meeting_date, item1_meeting_date)
+                    return (item2_meeting_date > item1_meeting_date) - (item2_meeting_date < item1_meeting_date)
                 elif item1_meeting_date and not item2_meeting_date:
                     # only item1 has a Meeting, it will be displayed after
                     return 1
@@ -2750,7 +2751,7 @@ class MeetingItem(Container):
                     return -1
                 else:
                     # no meeting at all, sort by item creation date
-                    return cmp(item1_created, item2_created)
+                    return (item1_created > item2_created) - (item1_created < item2_created)
 
             # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
@@ -4227,7 +4228,7 @@ class MeetingItem(Container):
         signatories.update(item_signatories)
 
         if the_objects:
-            uids = signatories.values()
+            uids = list(signatories.values())
             signatories_objs = meeting._get_contacts(uids=uids, the_objects=the_objects)
             reversed_signatories = {v: k for k, v in signatories.items()}
             signatories = {reversed_signatories[signatory.UID()]: signatory
@@ -4781,7 +4782,7 @@ class MeetingItem(Container):
         res = float(0)
         divisor = 1
         for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
+            res += operator.truediv(float(pre_order), divisor)
             # we may manage up to 1000 different values
             divisor *= 1000
         return res
@@ -5995,7 +5996,7 @@ class MeetingItem(Container):
 
         if ordered and data:
             # sort by adviser name
-            data_as_list = data.items()
+            data_as_list = list(data.items())
             data_as_list.sort(key=lambda x: x[1]['name'])
             data = OrderedDict(data_as_list)
         return data
@@ -7182,7 +7183,7 @@ class MeetingItem(Container):
         for key, val in form_data.items():
             dx_name = _at_to_dx(key)
             if dx_name in schema:
-                if key in _RICH_TEXT_FIELDS and isinstance(val, (str, unicode)):
+                if key in _RICH_TEXT_FIELDS and isinstance(val, six.string_types):
                     val = RichTextValue(val, 'text/html', 'text/x-html-safe')
                 setattr(self, dx_name, val)
             elif dx_name != key:

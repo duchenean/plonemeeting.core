@@ -1308,8 +1308,8 @@ class Meeting(Container):
         item_excused = self.get_item_excused(by_persons=by_persons)
         item_signatories = self.get_item_signatories(by_signatories=by_persons)
         if only_keys:
-            redefined_item_attendees = item_non_attendees.keys() + \
-                item_absents.keys() + item_excused.keys() + item_signatories.keys()
+            redefined_item_attendees = list(item_non_attendees.keys()) + \
+                list(item_absents.keys()) + list(item_excused.keys()) + list(item_signatories.keys())
         else:
             redefined_item_attendees = item_non_attendees, item_absents, \
                 item_excused, item_signatories
@@ -1321,7 +1321,7 @@ class Meeting(Container):
         ordered_contacts = getattr(self, 'ordered_contacts', OrderedDict())
         if contact_type:
             # if we have uids, we keep it's order
-            uids = uids or ordered_contacts.keys()
+            uids = uids or list(ordered_contacts.keys())
             for uid in uids:
                 if ordered_contacts[uid][contact_type]:
                     res.append(uid)

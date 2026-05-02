@@ -6139,7 +6139,7 @@ class MeetingConfig(Container):
             states.reverse()
 
             # group suffix to state
-            tuples = zip(suffixes, states)
+            tuples = list(zip(suffixes, states))
 
             res = OrderedDict()
             # a reviewer level could interact at different states
@@ -6154,7 +6154,7 @@ class MeetingConfig(Container):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.get_orgs_for_user(suffixes=self.reviewersFor().keys()))
+        return bool(tool.get_orgs_for_user(suffixes=list(self.reviewersFor().keys())))
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''

@@ -64,6 +64,8 @@ from zope.i18n import translate
 import cgi
 import json
 import lxml
+import operator
+import six
 
 
 SEVERAL_SAME_BARCODE_ERROR = \
@@ -414,14 +416,14 @@ class ObjectGoToView(BrowserView):
             # use index position so element 20 index is 19 and is < 20
             item_pos = tuple(item_uids).index(context_uid)
             items_by_page = cfg.max_shown_meeting_items
-            page_num = float(item_pos) / items_by_page
+            page_num = operator.truediv(float(item_pos), items_by_page)
             # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
             # if item_pos on last page, then we remove 20% of batch size to the item_post
             real_item_pos = item_pos + 1
             # over this, the 20% are not used
             tot_num_items = len(item_uids)
-            tot_num_of_pages = int(tot_num_items / items_by_page)
+            tot_num_of_pages = tot_num_items // items_by_page
             treshold = (tot_num_of_pages * items_by_page) + items_by_page * 0.2
             if tot_num_items <= treshold and \
                 real_item_pos > tot_num_of_pages * items_by_page and \
@@ -1239,7 +1241,7 @@ class BaseDGHV(object):
                                    for brain in brains]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
-                        pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
+                        pattern_key = list(filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys()))[0]
                         contact_value += out_count_patterns.get(pattern_key).format(cluster)
                     if include_in_count and len(not_present_item_uids) > 0:
                         numbers = [item.getItemNumber(for_display=False)
@@ -1247,7 +1249,7 @@ class BaseDGHV(object):
                                    if item.UID() not in not_present_item_uids]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
-                        pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
+                        pattern_key = list(filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys()))[0]
                         contact_value += in_count_patterns.get(pattern_key).format(cluster)
 
                 if unbreakable_contact_value:
@@ -1582,10 +1584,10 @@ class BaseDGHV(object):
 
                 if attr != signature_format[-1] \
                         and separator is not None \
-                        and isinstance(signature_lines[line], unicode):
+                        and isinstance(signature_lines[line], six.text_type):
                     # if not last line of signatory
                     signature_lines[line] += separator
-                elif ender is not None and isinstance(signature_lines[line], unicode):  # it is the last line
+                elif ender is not None and isinstance(signature_lines[line], six.text_type):  # it is the last line
                     signature_lines[line] += ender
 
                 line += 1
@@ -1689,10 +1691,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             nb_present = float(attendance['present'])
             nb_contexts = float(len(attendance['contexts']))
             if nb_contexts > 0:
-                value = (nb_present / nb_contexts) * 100
+                value = operator.truediv(nb_present, nb_contexts) * 100
             else:
                 value = 0
-            attendance['proportion'] = round(value, 2)
+            attendance['proportion'] = int(value * 100) / 100.0
 
     def get_meeting_assembly_stats(self, brains):
         """
@@ -1751,7 +1753,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                 absents = meeting.get_absents(True)
                 _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
 
-        res = attendances.values()
+        res = list(attendances.values())
         self._compute_attendances_proportion(res)
         return res
 
@@ -1827,7 +1829,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                                        absents,
                                        item_absents)
 
-            meeting_data['attendances'] = attendances.values()
+            meeting_data['attendances'] = list(attendances.values())
             self._compute_attendances_proportion(meeting_data['attendances'])
             res.append(meeting_data)
 
@@ -2085,7 +2087,7 @@ def print_votes(item,
                        not secret and \
                        (include_voters is True or vote_value in include_voters) and \
                        (include_voters_percent_treshold == 1 or
-                            100 * vote_count / total_voters <= include_voters_percent_treshold):
+                            100 * vote_count // total_voters <= include_voters_percent_treshold):
                         value += _render_voters(vote_value, voters, meeting)
                     values.append(value)
 

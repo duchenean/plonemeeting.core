@@ -18,7 +18,7 @@ def _to_integer(number):
       - 202 is 200;
       - 305 is 300.
     """
-    return number / 100 * 100
+    return number // 100 * 100
 
 
 def _is_integer(number):

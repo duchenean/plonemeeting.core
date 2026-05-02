@@ -294,7 +294,7 @@ class testPerformances(PloneMeetingTestCase):
         # test with the last created meeting
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at half of existing meetings
-        meetingAtHalf = meetings[int(number_of_meetings / 2)]
+        meetingAtHalf = meetings[number_of_meetings // 2]
         self.closeMeeting(meetingAtHalf)
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at 90% of created meetings that is the most obvious usecase

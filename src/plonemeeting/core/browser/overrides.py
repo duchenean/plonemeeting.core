@@ -1617,7 +1617,7 @@ class PMUtils(BrowserView):
             if not v:
                 continue
             original = v
-            if isinstance(v, unicode):
+            if isinstance(v, six.text_type):
                 v = v.encode('utf-8')
             # Get the value with key v from the vocabulary,
             # falling back to the original input value.
@@ -1625,7 +1625,7 @@ class PMUtils(BrowserView):
             if not isinstance(vocab_value, six.string_types):
                 # May be an integer.
                 vocab_value = str(vocab_value)
-            elif not isinstance(vocab_value, unicode):
+            elif not isinstance(vocab_value, six.text_type):
                 # avoid UnicodeDecodeError if value contains special chars
                 vocab_value = six.text_type(vocab_value, 'utf-8')
             # translate explicitly

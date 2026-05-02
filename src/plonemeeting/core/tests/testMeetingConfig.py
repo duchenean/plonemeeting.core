@@ -1793,22 +1793,22 @@ class testMeetingConfig(PloneMeetingTestCase):
         original_cfg_modified = cfg.modified()
 
         # edit a POD template
-        pod_template = [pod_template for pod_template in cfg.podtemplates.objectValues()
-                        if pod_template.portal_type == 'ConfigurablePODTemplate'][0]
+        pod_template = [pt for pt in cfg.podtemplates.objectValues()
+                        if pt.portal_type == 'ConfigurablePODTemplate'][0]
         notify(ObjectModifiedEvent(pod_template))
         pod_template_cfg_modified = cfg.modified()
         self.assertNotEqual(original_cfg_modified, pod_template_cfg_modified)
 
         # edit a POD style template
-        style_template = [style_template for style_template in cfg.podtemplates.objectValues()
-                          if style_template.portal_type == 'StyleTemplate'][0]
+        style_template = [st for st in cfg.podtemplates.objectValues()
+                          if st.portal_type == 'StyleTemplate'][0]
         notify(ObjectModifiedEvent(style_template))
         style_template_cfg_modified = cfg.modified()
         self.assertNotEqual(pod_template_cfg_modified, style_template_cfg_modified)
 
         # edit a Dashboard POD template
-        dashboard_template = [dashboard_template for dashboard_template in cfg.podtemplates.objectValues()
-                              if dashboard_template.portal_type == 'DashboardPODTemplate'][0]
+        dashboard_template = [dt for dt in cfg.podtemplates.objectValues()
+                              if dt.portal_type == 'DashboardPODTemplate'][0]
         notify(ObjectModifiedEvent(dashboard_template))
         dashboard_template_cfg_modified = cfg.modified()
         self.assertNotEqual(style_template_cfg_modified, dashboard_template_cfg_modified)

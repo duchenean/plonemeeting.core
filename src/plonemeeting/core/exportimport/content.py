@@ -883,7 +883,7 @@ class ToolInitializer:
         """If a binary (odt, icon, photo, ...) is not found in current profile,
            try to get it from plonemeeting.core.profiles.testing."""
         try:
-            f = file(path, 'rb')
+            f = open(path, 'rb')
         except IOError:
             logger.warn(
                 'Could not get binary at "{0}", trying to get it from the testing profile...'.format(path))
@@ -897,7 +897,7 @@ class ToolInitializer:
                 'profiles/testing',
                 file_folder,
                 filename)
-            f = file(pm_path, 'rb')
+            f = open(pm_path, 'rb')
         data = f.read()
         f.close()
         return data

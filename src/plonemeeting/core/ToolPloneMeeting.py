@@ -95,6 +95,7 @@ from zope.interface import implements
 
 from . import interfaces
 import OFS.Moniker
+import six
 import time
 
 
@@ -1353,7 +1354,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
         # fmt can not be unicode
-        if isinstance(fmt, unicode):
+        if isinstance(fmt, six.text_type):
             fmt = fmt.encode('utf-8')
         res = safe_unicode(date.strftime(fmt))
         # Finally, prefix the date with p_prefix when required
@@ -1637,7 +1638,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
                 data[(configGroup['row_id'], configGroup['label'], configGroup['full_label'])] = res
 
         if as_items:
-            return data.items()
+            return list(data.items())
         else:
             return data
 

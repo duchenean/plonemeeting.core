@@ -3573,23 +3573,23 @@ class testMeetingItem(PloneMeetingTestCase):
         # redefined or not, values are all unicode
         # in DX, values are unicode, in AT it is str...
         # redefined
-        self.assertTrue(isinstance(lateItem1.getItemAssembly(), unicode))
-        self.assertTrue(isinstance(lateItem1.getItemAssemblyAbsents(), unicode))
-        self.assertTrue(isinstance(lateItem1.getItemAssemblyExcused(), unicode))
-        self.assertTrue(isinstance(lateItem1.getItemAssemblyGuests(), unicode))
-        self.assertTrue(isinstance(lateItem1.getItemSignatures(), unicode))
+        self.assertTrue(isinstance(lateItem1.getItemAssembly(), six.text_type))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyAbsents(), six.text_type))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyExcused(), six.text_type))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyGuests(), six.text_type))
+        self.assertTrue(isinstance(lateItem1.getItemSignatures(), six.text_type))
         # not redefined
-        self.assertTrue(isinstance(lateItem2.getItemAssembly(), unicode))
-        self.assertTrue(isinstance(lateItem2.getItemAssemblyAbsents(), unicode))
-        self.assertTrue(isinstance(lateItem2.getItemAssemblyExcused(), unicode))
-        self.assertTrue(isinstance(lateItem2.getItemAssemblyGuests(), unicode))
-        self.assertTrue(isinstance(lateItem2.getItemSignatures(), unicode))
+        self.assertTrue(isinstance(lateItem2.getItemAssembly(), six.text_type))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyAbsents(), six.text_type))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyExcused(), six.text_type))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyGuests(), six.text_type))
+        self.assertTrue(isinstance(lateItem2.getItemSignatures(), six.text_type))
         # directly from meeting
-        self.assertTrue(isinstance(meeting.get_assembly(), unicode))
-        self.assertTrue(isinstance(meeting.get_assembly_absents(), unicode))
-        self.assertTrue(isinstance(meeting.get_assembly_excused(), unicode))
-        self.assertTrue(isinstance(meeting.get_assembly_guests(), unicode))
-        self.assertTrue(isinstance(meeting.get_signatures(), unicode))
+        self.assertTrue(isinstance(meeting.get_assembly(), six.text_type))
+        self.assertTrue(isinstance(meeting.get_assembly_absents(), six.text_type))
+        self.assertTrue(isinstance(meeting.get_assembly_excused(), six.text_type))
+        self.assertTrue(isinstance(meeting.get_assembly_guests(), six.text_type))
+        self.assertTrue(isinstance(meeting.get_signatures(), six.text_type))
 
         # Apply an empty value will fall back to meeting's value
         self.assertTrue(formAssembly.context.getItemAssembly(real=True))

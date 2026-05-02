@@ -3,7 +3,7 @@
 from __future__ import absolute_import, print_function
 
 from Acquisition import aq_base
-from cPickle import dumps
+from six.moves.cPickle import dumps
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
@@ -21,6 +21,8 @@ from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.i18nmessageid import Message
 from zope.ramcache.ram import Storage
+
+import six
 
 
 def _patched_equal(context, row):
@@ -109,7 +111,7 @@ def extract(self, default=interfaces.NO_VALUE):
         for token in value:
             # XXX begin do not encode to utf-8 for MasterSelectWidget
             # as we use unicode values or validation fails with "field required"
-            if isinstance(token, unicode) and not self.__class__.__name__ == 'MasterSelectWidget':
+            if isinstance(token, six.text_type) and not self.__class__.__name__ == 'MasterSelectWidget':
                 token = token.encode('utf-8')
             # XXX end
             if token == self.noValueToken:

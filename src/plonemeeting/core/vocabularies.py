@@ -687,7 +687,7 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
             objs = uuidsToObjects(uids, ordered=True, unrestricted=True)
             # build a new vocab to avoid changing value of original terms
             terms = []
-            for term, obj in itertools.izip(vocab._terms, objs):
+            for term, obj in zip(vocab._terms, objs):
                 terms.append(SimpleTerm(obj, term.token, term.title))
             vocab = SimpleVocabulary(terms)
             cache[key] = vocab
@@ -3526,7 +3526,7 @@ def _dl_to_vocabulary(display_list):
         label = display_list.getValue(value)
         if not isinstance(value, six.string_types):
             token = str(value)
-        elif isinstance(value, unicode):
+        elif isinstance(value, six.text_type):
             token = value.encode('utf-8')
         else:
             token = value
@@ -4522,7 +4522,7 @@ class ItemTagsVocabulary(object):
             tag = tag.strip()
             if not tag:
                 continue
-            token = tag.encode('utf-8') if isinstance(tag, unicode) else tag
+            token = tag.encode('utf-8') if isinstance(tag, six.text_type) else tag
             terms.append(SimpleTerm(value=tag, token=token, title=tag))
         return SimpleVocabulary(terms)
 
@@ -4619,7 +4619,7 @@ class ItemMeetingTransitionsVocabulary(object):
         cfg_dl = cfg.listMeetingTransitions()
         for value in cfg_dl:
             label = cfg_dl.getValue(value)
-            token = value.encode('utf-8') if isinstance(value, unicode) else value
+            token = value.encode('utf-8') if isinstance(value, six.text_type) else value
             terms.append(SimpleTerm(value=value, token=token, title=label))
         return SimpleVocabulary(terms)
 

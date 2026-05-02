@@ -19,6 +19,7 @@ from zope.lifecycleevent import modified
 import copy
 import os
 import phonenumbers
+import six
 
 
 try:
@@ -31,7 +32,7 @@ def safe_encode(value, encoding='utf-8'):
     """
         Converts a value to encoding, even if it is already encoded.
     """
-    if isinstance(value, unicode):
+    if isinstance(value, six.text_type):
         return value.encode(encoding)
     return value
 
@@ -69,7 +70,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
 
     def digit(phone):
         # filter with str.isdigit or unicode.isdigit
-        return filter(type(phone).isdigit, phone)
+        return ''.join(filter(type(phone).isdigit, phone))
 
     def is_zip(zipc, line, typ, country):
         ozipc = zipc
@@ -271,9 +272,9 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             gender = data[3]
             birthday = data[5] or None
         except AssertionError as ex:
-            errors.append("!! PERS: problem line %d: %s" % (i, safe_encode(ex.message)))
+            errors.append("!! PERS: problem line %d: %s" % (i, safe_encode(str(ex))))
         except Exception as ex:
-            errors.append("!! PERS: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(ex.message)))
+            errors.append("!! PERS: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(str(ex))))
         if not id or id in persons:
             errors.append("!! PERS: problem line %d, invalid id: %s" % (i, id))
         if uid in uids:
@@ -388,9 +389,9 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             upa = data[7] and int(data[7]) or ''
             zipc = safe_unicode(is_zip(data[11], i, 'HP', data[19]))
         except AssertionError as ex:
-            errors.append("!! HP: problem line %d: %s" % (i, safe_encode(ex.message)))
+            errors.append("!! HP: problem line %d: %s" % (i, safe_encode(str(ex))))
         except Exception as ex:
-            errors.append("!! HP: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(ex.message)))
+            errors.append("!! HP: problem line %d, '%s': %s" % (i, '|'.join(data), safe_encode(str(ex))))
         if not id or id in hps:
             errors.append("!! HP: problem line %d, invalid id: %s" % (i, id))
         if not pid:

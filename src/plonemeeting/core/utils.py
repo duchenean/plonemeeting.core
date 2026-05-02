@@ -140,8 +140,8 @@ import re
 import socket
 import unicodedata
 import unidecode
-import urlparse
 import six
+from six.moves.urllib.parse import urlparse
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -241,7 +241,7 @@ def _referer_to_path(request):
     """ """
     # We are changing the state of an element. We must then check the referer
     refererUrl = request.get('HTTP_REFERER')
-    referer = urlparse.urlparse(refererUrl)[2]
+    referer = urlparse(refererUrl)[2]
     if referer.endswith('/view') or \
        referer.endswith('/@@meeting_available_items_view') or \
        referer.endswith('/edit') or \
@@ -367,7 +367,7 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         value = getattr(obj, dx_name, None)
     if isinstance(value, RichTextValue):
         raw = value.output if value else u''
-        if isinstance(raw, unicode):
+        if isinstance(raw, six.text_type):
             raw = raw.encode('utf-8')
         return xhtmlContentIsEmpty(raw)
     elif isinstance(value, bool) or value is None:
@@ -396,7 +396,7 @@ def field_is_empty(widget, column=None):
         value = get_datagridfield_column_value(widget.value, column)
     else:
         value = widget.value
-    if isinstance(value, (str, unicode)):
+    if isinstance(value, six.string_types):
         value = value.strip()
     is_empty = True
     if value:
@@ -434,7 +434,7 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
     if attachments:
         msg = MIMEMultipart()
-        if isinstance(body, unicode):
+        if isinstance(body, six.text_type):
             body = body.encode('utf-8')
         msg.attach(MIMEText(body))
         body = msg
@@ -523,7 +523,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if mapping:
         # we need every mappings to be unicode
         for elt in mapping:
-            if not isinstance(mapping[elt], unicode):
+            if not isinstance(mapping[elt], six.text_type):
                 mapping[elt] = safe_unicode(mapping[elt])
         translation_mapping = mapping
     else:
@@ -895,7 +895,7 @@ def _get_field_value(obj, name):
     value = getattr(obj, dx_name, None)
     if isinstance(value, RichTextValue):
         result = value.output_relative_to(obj) or value.raw or u''
-        return safe_encode(result) if isinstance(result, unicode) else result
+        return safe_encode(result) if isinstance(result, six.text_type) else result
     return value
 
 
@@ -1768,7 +1768,7 @@ def _storedItemNumber_to_itemNumber(number, forceShowDecimal=True):
        - 222 --> 2.22;
        If p_forceShowDecimal is True, we will return a decimal, no matter it is '0'.
        """
-    firstPart = int(number / 100)
+    firstPart = number // 100
     secondPart = number % 100
     if secondPart or forceShowDecimal:
         return '{0}.{1}'.format(firstPart, secondPart)
@@ -2227,7 +2227,7 @@ def validate_item_assembly_value(value):
     if len(opening_pos) != len(closing_pos):
         return False
     # check succession
-    res = zip(opening_pos, closing_pos)
+    res = list(zip(opening_pos, closing_pos))
     # zip() will return a list of tuple and sum() will turn this into a list
     res = sum(res, ())
     if not sorted(res) == list(res):

@@ -26,6 +26,7 @@ from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
 
+import six
 import transaction
 
 
@@ -1200,13 +1201,13 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(cfg.votes_result_tal_expr, '')
         self.assertEqual(item.getVotesResult(), '')
         self.assertEqual(item.getVotesResult(real=True), '')
-        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         cfg.votes_result_tal_expr = (
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
         # not computed when not in a meeting
         self.assertEqual(item.getVotesResult(), '')
-        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         self.assertEqual(item.getVotesResult(real=True), '')
 
         # get in meeting

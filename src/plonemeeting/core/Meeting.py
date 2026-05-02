@@ -851,8 +851,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         itemExcused = self.get_item_excused(by_persons=by_persons)
         itemSignatories = self.get_item_signatories(by_signatories=by_persons)
         if only_keys:
-            redefined_item_attendees = itemNonAttendees.keys() + \
-                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+            redefined_item_attendees = list(itemNonAttendees.keys()) + \
+                list(itemAbsents.keys()) + list(itemExcused.keys()) + list(itemSignatories.keys())
         else:
             redefined_item_attendees = itemNonAttendees, itemAbsents, \
                 itemExcused, itemSignatories
@@ -1061,7 +1061,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
             # keep correct order that was lost by catalog query
             def getKey(item):
-                return self.orderedContacts.keys().index(item.UID())
+                return list(self.orderedContacts.keys()).index(item.UID())
             res = sorted(res, key=getKey)
         return tuple(res)
 

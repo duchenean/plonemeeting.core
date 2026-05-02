@@ -174,6 +174,7 @@ from zope.schema.interfaces import IVocabularyFactory
 import html
 import itertools
 import logging
+import operator
 import six
 
 
@@ -3251,7 +3252,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 item2_meeting_date = item2_infos['meeting_date']
                 if item1_meeting_date and item2_meeting_date:
                     # both items have a meeting, compare meeting dates
-                    return cmp(item2_meeting_date, item1_meeting_date)
+                    return (item2_meeting_date > item1_meeting_date) - (item2_meeting_date < item1_meeting_date)
                 elif item1_meeting_date and not item2_meeting_date:
                     # only item1 has a Meeting, it will be displayed after
                     return 1
@@ -3260,7 +3261,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return -1
                 else:
                     # no meeting at all, sort by item creation date
-                    return cmp(item1_created, item2_created)
+                    return (item1_created > item2_created) - (item1_created < item2_created)
 
             # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
@@ -4670,7 +4671,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         signatories.update(item_signatories)
 
         if the_objects:
-            uids = signatories.values()
+            uids = list(signatories.values())
             signatories_objs = meeting._get_contacts(uids=uids, the_objects=the_objects)
             reversed_signatories = {v: k for k, v in signatories.items()}
             signatories = {reversed_signatories[signatory.UID()]: signatory
@@ -5215,7 +5216,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = float(0)
         divisor = 1
         for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
+            res += operator.truediv(float(pre_order), divisor)
             # we may manage up to 1000 different values
             divisor *= 1000
         return res
@@ -6424,7 +6425,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if ordered and data:
             # sort by adviser name
-            data_as_list = data.items()
+            data_as_list = list(data.items())
             data_as_list.sort(key=lambda x: x[1]['name'])
             data = OrderedDict(data_as_list)
         return data
