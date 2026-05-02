@@ -201,10 +201,13 @@ logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")
 def Title(self):
     """Same code as dexterity's fti (DexterityFTI) for AT fti."""
     if self.title and self.i18n_domain:
-        try:
-            return Message(self.title.decode('utf8'), self.i18n_domain)
-        except UnicodeDecodeError:
-            return Message(self.title.decode('latin-1'), self.i18n_domain)
+        title = self.title
+        if isinstance(title, bytes):
+            try:
+                title = title.decode('utf8')
+            except UnicodeDecodeError:
+                title = title.decode('latin-1')
+        return Message(title, self.i18n_domain)
     else:
         return self.title or self.getId()
 

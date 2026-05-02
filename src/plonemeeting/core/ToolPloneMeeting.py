@@ -207,7 +207,8 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
     def post_edit(self, is_created=False):
         self.configureAdvices()
         self.configureAutoConvert()
-        self.adapted().onEdit(isCreated=is_created)
+        if hasattr(self, 'getTagName'):
+            self.adapted().onEdit(isCreated=is_created)
 
     def at_post_edit_script(self):
         self.post_edit(is_created=False)

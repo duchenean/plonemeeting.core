@@ -14,14 +14,16 @@ from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from plonemeeting.core.validators import PloneGroupSettingsFunctionsValidator
 from plonemeeting.core.validators import PloneGroupSettingsOrganizationsValidator
-from Products.validation import validation
 from zope.i18n import translate
 from zope.interface import Invalid
+
+import unittest
 
 
 class testValidators(PloneMeetingTestCase):
     '''Tests the validators.'''
 
+    @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorWorking(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            Here we are testing that working cases are actually working..."""
@@ -82,6 +84,7 @@ class testValidators(PloneMeetingTestCase):
         ]
         self.failIf(v(certified))
 
+    @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorFailsIfNotOrdered(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures are not ordered by signature number.'''
@@ -107,6 +110,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           order_error_msg)
 
+    @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorFailsIfBothDatesNotProvided(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures both dates are not provided.'''
@@ -137,6 +141,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           both_error_msg)
 
+    @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorFailsIfWrongDateFormat(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures use wrong format for dates.'''
@@ -209,6 +214,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           invalid_dates_error_msg2)
 
+    @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorFailIfUsingDuplicatedEntries(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if 2 entries use exactly same signatureNumber/date_from/date_to.'''

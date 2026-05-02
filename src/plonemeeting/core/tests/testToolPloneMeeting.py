@@ -42,7 +42,7 @@ from plonemeeting.core.utils import duplicate_workflow
 from plonemeeting.core.utils import get_annexes
 from zope.event import notify
 from zope.i18n import translate
-from zope.testing.testrunner.find import find_test_files
+from zope.testrunner.find import find_test_files
 
 import os
 import transaction

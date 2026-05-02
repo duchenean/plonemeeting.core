@@ -202,7 +202,8 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.getTagName()]['method']
+    tag_name = getattr(obj, 'getTagName', lambda: obj.portal_type)()
+    interfaceMethod = adaptables[tag_name]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
@@ -219,7 +220,8 @@ def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
     res = obj
-    theInterface = adaptables[obj.getTagName()]['interface']
+    tag_name = getattr(obj, 'getTagName', lambda: obj.portal_type)()
+    theInterface = adaptables[tag_name]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -323,15 +325,9 @@ def cleanMemoize(portal, prefixes=[]):
 def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     '''This will create the PloneGroup that corresponds to me
        and p_groupSuffix, if group already exists, it will just update it's title.'''
-    properties = api.portal.get_tool('portal_properties')
-    enc = properties.site_properties.getProperty('default_charset')
-    groupTitle = u'%s (%s)' % (
+    groupTitle = '%s (%s)' % (
         safe_unicode(groupTitle),
         translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
-    # a default Plone group title is NOT unicode.  If a Plone group title is
-    # edited TTW, his title is no more unicode if it was previously...
-    # make sure we behave like Plone...
-    groupTitle = groupTitle.encode(enc)
     portal_groups = api.portal.get_tool('portal_groups')
     wasCreated = portal_groups.addGroup(groupId, title=groupTitle)
     if not wasCreated:
@@ -2496,10 +2492,10 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
         getter = "/" in org_info and own_org.unrestrictedTraverse or own_org.get
         if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
-            org = getter(org_path.encode('utf-8'))
+            org = getter(org_path)
             return get_plone_group_id(org.UID(), suffix)
         else:
-            org = getter(org_info.encode('utf-8'))
+            org = getter(org_info)
             if org:
                 return org.UID()
     except Exception as exc:

@@ -12,7 +12,7 @@ from collective.contact.plonegroup.utils import get_plone_group
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
-from plone.app.controlpanel.events import ConfigurationChangedEvent
+from Products.CMFPlone.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode

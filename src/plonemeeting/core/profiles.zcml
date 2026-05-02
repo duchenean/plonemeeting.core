@@ -20,6 +20,47 @@
       provides="Products.GenericSetup.interfaces.EXTENSION"
       for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
 
+  <!-- Import steps (registered via ZCML for Plone 6 compat) -->
+  <genericsetup:importStep
+      name="PloneMeeting-Hide-Tools-From-Navigation"
+      title="Hide Custom tools from Navigation for PloneMeeting"
+      description="Hides custom tools from navigation tree for PloneMeeting"
+      handler="plonemeeting.core.setuphandlers.setupHideToolsFromNavigation">
+    <depends name="toolset" />
+  </genericsetup:importStep>
+
+  <genericsetup:importStep
+      name="PloneMeeting-Setup-Catalog-Multiplex"
+      title="setup catalog multiplex for PloneMeeting"
+      description="setup catalog multiplex for PloneMeeting"
+      handler="plonemeeting.core.setuphandlers.setupCatalogMultiplex">
+    <depends name="toolset" />
+  </genericsetup:importStep>
+
+  <genericsetup:importStep
+      name="PloneMeeting-Install-Imio-Webspellchecker"
+      title="install imio.webspellchecker"
+      description="install imio.webspellchecker"
+      handler="plonemeeting.core.setuphandlers.installWebspellchecker">
+    <depends name="toolset" />
+  </genericsetup:importStep>
+
+  <genericsetup:importStep
+      name="PloneMeeting-postInstall"
+      title="manual coded post-install for PloneMeeting"
+      description="Manual coded post-install for PloneMeeting"
+      handler="plonemeeting.core.setuphandlers.postInstall">
+    <depends name="toolset" />
+    <depends name="workflow" />
+    <depends name="plone.app.registry" />
+  </genericsetup:importStep>
+
+  <genericsetup:importStep
+      name="initializetool-PloneMeeting"
+      title="Initialize portal_plonemeeting folders."
+      description="Initialize portal_plonemeeting folders"
+      handler="plonemeeting.core.exportimport.content.initializeTool" />
+
   <genericsetup:upgradeStep
       title="Go to PloneMeeting 4.1"
       description=""

@@ -27,7 +27,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
-from Products.Five import zcml
+from Zope2.App.zcml import load_config as _load_zcml_config
 from plonemeeting.core.adapters import CAN_NOT_DELETE_MEETING_ERROR
 from plonemeeting.core.browser.meeting import get_default_attendees
 from plonemeeting.core.config import DEFAULT_LIST_TYPES
@@ -38,7 +38,7 @@ from plonemeeting.core.content.meeting import assembly_constraint
 from plonemeeting.core.content.meeting import default_committees
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import PLACE_OTHER
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
+from plonemeeting.core.config import POWEROBSERVERPREFIX
 from plonemeeting.core.content.meetingitem import MeetingItem
 from plonemeeting.core.tests.PloneMeetingTestCase import DefaultData
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -3163,7 +3163,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
 
         # load subscriber and.update_local_roles
-        zcml.load_config('tests/events.zcml', products_plonemeeting)
+        _load_zcml_config('tests/events.zcml', products_plonemeeting)
         meeting.update_local_roles()
         # pmCreator2 may edit now
         self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
@@ -3176,8 +3176,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
         self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
 
-        # cleanUp zmcl.load_config because it impact other tests
-        zcml.cleanUp()
+        from zope.testing.cleanup import cleanUp
+        cleanUp()
 
     def test_pm_Get_states_before(self):
         """This should return states before a given state.

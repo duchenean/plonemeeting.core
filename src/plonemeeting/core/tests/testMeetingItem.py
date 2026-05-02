@@ -47,7 +47,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
-from Products.Five import zcml
+from Zope2.App.zcml import load_config as _load_zcml_config
 from plonemeeting.core.browser.itemassembly import item_assembly_default
 from plonemeeting.core.browser.itemassembly import validate_item_assembly
 from plonemeeting.core.browser.itemsignatures import item_signatures_default
@@ -84,7 +84,7 @@ from plonemeeting.core.utils import getFieldVersion
 from plonemeeting.core.utils import getTransitionToReachState
 from plonemeeting.core.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from plonemeeting.core.utils import set_field_from_ajax
-from Products.PluginIndexes.common.UnIndex import _marker
+from Products.PluginIndexes.unindex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
@@ -7190,7 +7190,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.catalog(UID=item.UID()))
 
         # load subscriber and.update_local_roles
-        zcml.load_config('tests/events.zcml', products_plonemeeting)
+        _load_zcml_config('tests/events.zcml', products_plonemeeting)
         item.update_local_roles()
         # pmCreator2 has access now
         self.assertTrue('pmCreator2' in item.__ac_local_roles__)
@@ -7205,8 +7205,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.catalog(UID=item.UID()))
 
-        # cleanUp zmcl.load_config because it impact other tests
-        zcml.cleanUp()
+        from zope.testing.cleanup import cleanUp
+        cleanUp()
 
     def test_pm_DisplayOtherMeetingConfigsClonableTo(self):
         """Test how otherMeetingConfigsClonableTo are displayed on the item view,

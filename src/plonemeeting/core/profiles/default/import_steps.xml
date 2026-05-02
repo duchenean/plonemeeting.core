@@ -6,7 +6,7 @@
     handler="plonemeeting.core.setuphandlers.setupHideToolsFromNavigation"
     title="Hide Custom tools from Navigation for PloneMeeting"
     version="2015-06-19T11:03:34.404620">
-   <dependency step="PloneMeeting-QI-dependencies"/>
+   <dependency step="toolset"/>
    Hides custom tools from navigation tree for PloneMeeting
  </import-step>
 
@@ -33,7 +33,7 @@
     handler="plonemeeting.core.setuphandlers.postInstall"
     title="manual coded post-install for PloneMeeting"
     version="2015-06-19T11:03:34.404620">
-   <dependency step="PloneMeeting-QI-dependencies"/>
+   <dependency step="toolset"/>
    manual coded post-install for PloneMeeting
  </import-step>
 

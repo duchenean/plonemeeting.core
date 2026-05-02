@@ -687,11 +687,13 @@ class ToolInitializer:
                     # contacts
                     collections_container = container
                 for coll_id in pt.dashboard_collections_ids:
-                    for folder in collections_container.objectValues('ATFolder'):
+                    collection = None
+                    for folder in collections_container.objectValues():
                         if coll_id in folder.objectIds():
                             collection = getattr(folder, coll_id)
                             break
-                    res.append(collection.UID())
+                    if collection is not None:
+                        res.append(collection.UID())
                 data['dashboard_collections'] = res
             for sub_template in data['merge_templates']:
                 sub_template['template'] = dest_folder.get(sub_template['template']).UID()

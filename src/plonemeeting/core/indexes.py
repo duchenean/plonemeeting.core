@@ -500,7 +500,10 @@ def indexAdvisers(obj):
 def get_full_title(obj):
     '''By default we hide the "My organization" level, but not in the indexed
        value as it is used in the contact widget.'''
-    return obj.get_full_title(force_separator=True)
+    try:
+        return obj.get_full_title(force_separator=True)
+    except TypeError:
+        return obj.get_full_title()
 
 
 @indexer(IMeetingItem)

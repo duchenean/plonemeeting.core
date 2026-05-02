@@ -37,7 +37,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
-from Products.Five import zcml
+from Zope2.App.zcml import load_config as _load_zcml_config
 # P6 migration: AMQP integration to be reimplemented in Stage D.
 # from plonemeeting.core.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from plonemeeting.core.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -477,7 +477,7 @@ class testViews(PloneMeetingTestCase):
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
-        zcml.load_config('tests/events.zcml', products_plonemeeting)
+        _load_zcml_config('tests/events.zcml', products_plonemeeting)
         self.assertEqual(item.Title(), 'Item title')
         view('normal')
         self.assertEqual(item.Title(), 'late - normal')
@@ -492,8 +492,8 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
-        # cleanUp zmcl.load_config because it impact other tests
-        zcml.cleanUp()
+        from zope.testing.cleanup import cleanUp
+        cleanUp()
 
     def test_pm_UpdateDelayAwareAdvices(self):
         '''

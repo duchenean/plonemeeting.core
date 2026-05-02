@@ -1614,8 +1614,8 @@ class MeetingItem(Container):
         data = []
         title = self.Title()
         if title:
-            if isinstance(title, six.text_type):
-                title = title.encode('utf-8')
+            if isinstance(title, bytes):
+                title = title.decode('utf-8', errors='replace')
             data.append(title)
         transforms = api.portal.get_tool('portal_transforms')
         for attr_name in self._searchable_fields:
@@ -1623,23 +1623,25 @@ class MeetingItem(Container):
             if not value:
                 continue
             if isinstance(value, RichTextValue):
-                raw = value.raw or u''
+                raw = value.raw or ''
                 if raw:
                     stream = transforms.convertTo(
                         'text/plain', safe_encode(raw),
                         mimetype='text/html')
                     text = stream.getData() if stream else ''
+                    if isinstance(text, bytes):
+                        text = text.decode('utf-8', errors='replace')
                     if text:
                         data.append(text)
             elif isinstance(value, (list, tuple)):
                 for v in value:
                     if v:
-                        if isinstance(v, six.text_type):
-                            v = v.encode('utf-8')
-                        data.append(v)
+                        if isinstance(v, bytes):
+                            v = v.decode('utf-8', errors='replace')
+                        data.append(str(v))
             else:
-                if isinstance(value, six.text_type):
-                    value = value.encode('utf-8')
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8', errors='replace')
                 data.append(str(value))
         return ' '.join(data)
 

@@ -3339,9 +3339,9 @@ class WorkflowAdaptationsVocabulary(object):
         context = _resolve_dgf_context(context)
         if context is None:
             return SimpleVocabulary([])
-        from plonemeeting.core.MeetingConfig import MeetingConfig as ATMeetingConfig
+        from plonemeeting.core.config import WF_ADAPTATIONS
         terms = []
-        for adaptation in ATMeetingConfig.wfAdaptations:
+        for adaptation in WF_ADAPTATIONS:
             # generate a WFA by MeetingConfig.powerObservers in addition to the base one
             if adaptation == 'hide_decisions_when_under_writing':
                 tool = api.portal.get_tool('portal_plonemeeting')

@@ -40,8 +40,8 @@ from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from plonemeeting.core.config import MEETINGMANAGERS_GROUP_SUFFIX
 from plonemeeting.core.content.content_category import other_mc_correspondences_constraint
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import SUFFIXPROFILEPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import SUFFIXPROFILEPREFIX
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from plonemeeting.core.tests.PloneMeetingTestCase import pm_logger
 from plonemeeting.core.utils import get_annexes

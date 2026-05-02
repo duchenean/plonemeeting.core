@@ -211,11 +211,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
-        # log current test module and method name
-        test_num = self._resultForDoCleanups.testsRun
-        test_total = self._resultForDoCleanups.count
-        pm_logger.info('Executing [{0}/{1}] {2}:{3}'.format(
-            test_num, test_total, self.__class__.__name__, self._testMethodName))
+        pm_logger.info('Executing {0}:{1}'.format(
+            self.__class__.__name__, self._testMethodName))
         # necessary for MeetingItem.MeetingItemWorkflowConditions._check_required_data
         self.request.set('imio.actionspanel_portal_cachekey', True)
 

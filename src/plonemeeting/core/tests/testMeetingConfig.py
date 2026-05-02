@@ -52,7 +52,7 @@ from plonemeeting.core.config import WriteHarmlessConfig
 from plonemeeting.core.content.meeting import default_committees
 from plonemeeting.core.events import _itemAnnexTypes
 from plonemeeting.core.interfaces import IConfigElement
-from plonemeeting.core.MeetingConfig import DUPLICATE_SHORT_NAME
+from plonemeeting.core.config import DUPLICATE_SHORT_NAME
 from plonemeeting.core.tests.PloneMeetingTestCase import DefaultData
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from plonemeeting.core.tests.PloneMeetingTestCase import pm_logger

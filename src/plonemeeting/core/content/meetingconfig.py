@@ -4764,9 +4764,9 @@ class MeetingConfig(Container):
                 return msg
 
         # dependecies, some adaptations will complete already select ones
-        from plonemeeting.core.MeetingConfig import MeetingConfig as ATMeetingConfig
+        from plonemeeting.core.config import WF_ADAPTATIONS
         dependencies = {
-            'waiting_advices': [v for v in ATMeetingConfig.wfAdaptations
+            'waiting_advices': [v for v in WF_ADAPTATIONS
                                 if v.startswith('waiting_advices_')],
             'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
             'waiting_advices_given_advices_required_to_validate':
@@ -5432,18 +5432,15 @@ class MeetingConfig(Container):
         '''Registers, into portal_types, specific item and meeting types
            corresponding to this meeting config.'''
         i = -1
-        portal_factory = api.portal.get_tool('portal_factory')
-        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
+        portal_factory = getattr(api.portal.get(), 'portal_factory', None)
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys() if portal_factory else []
         factoryTypesToRegister = []
-        site_properties = api.portal.get_tool('portal_properties').site_properties
+        site_properties = getattr(
+            getattr(api.portal.get(), 'portal_properties', None), 'site_properties', None)
         portal_types = api.portal.get_tool('portal_types')
         for metaTypeName in self.metaTypes:
             i += 1
             portalTypeName = '%s%s' % (metaTypeName, self.short_name)
-            # If the portal type corresponding to the meta type is
-            # registered in portal_factory (in the model:
-            # use_portal_factory=True), we must also register the new
-            # portal_type we are currently creating.
             if metaTypeName in registeredFactoryTypes and \
                portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
@@ -5476,33 +5473,31 @@ class MeetingConfig(Container):
                     portalType.filter_content_types = dxBaseFTI.filter_content_types
                     portalType.allowed_content_types = dxBaseFTI.allowed_content_types
 
-                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
-                    # Update the typesUseViewActionInListings property of site_properties
-                    # so MeetingItem types are in it, this is usefull when managing item templates
-                    # in the MeetingConfig because folders there have the 'folder_contents' layout
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring') and site_properties:
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
                         site_properties.typesUseViewActionInListings = \
                             site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self._updatePortalTypes()
-        # Update the factory tool with the list of types to register
-        portal_factory.manage_setPortalFactoryTypes(
-            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
+        if portal_factory:
+            portal_factory.manage_setPortalFactoryTypes(
+                listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
         # Perform workflow adaptations
         _performWorkflowAdaptations(self)
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
         typesTool = api.portal.get_tool('portal_types')
-        props = api.portal.get_tool('portal_properties').site_properties
+        props = getattr(
+            getattr(api.portal.get(), 'portal_properties', None), 'site_properties', None)
         wfTool = api.portal.get_tool('portal_workflow')
         for metaTypeName in self.metaTypes:
             portalTypeName = '%s%s' % (metaTypeName, self.short_name)
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
             portalType.title = "{0} {1}".format(
-                translate(metaTypeName, domain='plone', context=getRequest()).encode('utf-8'),
+                translate(metaTypeName, domain='plone', context=getRequest()),
                 self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
@@ -5544,7 +5539,7 @@ class MeetingConfig(Container):
                         i = i + 1
                     pghandler.finish()
                 # do not search item templates and recurring items
-                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring') and props:
                     nsTypes = props.getProperty('types_not_searched')
                     if portal_type not in nsTypes:
                         if not nsTypes:
@@ -5947,7 +5942,7 @@ class MeetingConfig(Container):
                 navPortlet = navigation.Assignment(bottomLevel=0,
                                                    topLevel=0,
                                                    includeTop=True,
-                                                   root='/portal_plonemeeting/%s/itemtemplates' % self.getId())
+                                                   root_uid=folder.UID())
                 nameChooser = INameChooser(portletAssignmentMapping)
                 name = nameChooser.chooseName(None, navPortlet)
                 portletAssignmentMapping[name] = navPortlet
@@ -6347,7 +6342,8 @@ class MeetingConfig(Container):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.getTagName() != 'MeetingConfig':
+        tag_name = getattr(self, 'getTagName', lambda: self.portal_type)()
+        if tag_name != 'MeetingConfig':
             return self.context
         return self
 
