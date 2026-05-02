@@ -22,7 +22,7 @@ from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
@@ -379,8 +379,8 @@ class Migrator(BaseMigrator):
         from Products.PloneMeeting.profiles import PloneMeetingConfiguration
         defaultPMConfig = PloneMeetingConfiguration('', '', '')
         defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
-        currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
-        storedHolidays = list(self.tool.getHolidays())
+        currentHolidays = [holiday['date'] for holiday in self.tool.holidays]
+        storedHolidays = list(self.tool.holidays)
         highestStoredHoliday = DateTime(storedHolidays[-1]['date'])
         for defaultHoliday in defaultHolidays:
             # update if not there and if higher that highest stored holiday
@@ -388,7 +388,7 @@ class Migrator(BaseMigrator):
                DateTime(defaultHoliday) > highestStoredHoliday:
                 storedHolidays.append({'date': defaultHoliday})
                 logger.info('Adding {0} to holidays'.format(defaultHoliday))
-        self.tool.setHolidays(storedHolidays)
+        self.tool.holidays = storedHolidays
         logger.info('Done.')
 
     def addNewSearches(self):
@@ -553,7 +553,7 @@ class Migrator(BaseMigrator):
         logger.info("Reloading every MeetingConfigs (full={0})...".format(repr(full)))
         for cfg in self.tool.objectValues('MeetingConfig'):
             if full:
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
             else:
                 cfg.registerPortalTypes()
         logger.info('Done.')

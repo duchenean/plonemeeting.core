@@ -16,7 +16,7 @@ from imio.helpers.content import richtextval
 from plone import api
 from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
@@ -342,7 +342,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid,))
+        item1.optional_advisers = (self.developers_uid,)
         self.proposeItem(item1)
         # give an advice
         self.changeUser('pmAdviser1')
@@ -365,7 +365,7 @@ class testSearches(PloneMeetingTestCase):
         # it will be returned for pmManager but not for pmAdviser1
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers((self.vendors_uid,))
+        item2.optional_advisers = (self.vendors_uid,)
         self.proposeItem(item2)
         self.changeUser('pmManager')
         createContentInContainer(item2,
@@ -437,7 +437,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid,))
+        item1.optional_advisers = (self.developers_uid,)
         self.proposeItem(item1)
         # give a non delay-aware advice
         self.changeUser('pmAdviser1')
@@ -463,7 +463,7 @@ class testSearches(PloneMeetingTestCase):
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
+        item2.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid),)
         self.proposeItem(item2)
         self.changeUser('pmAdviser1')
         createContentInContainer(item2,
@@ -484,7 +484,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
@@ -511,7 +511,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failIf(collection.results())
@@ -530,7 +530,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         # configure an auto copyGroup, vendors_reviewers will be set
         # as auto copyGroup for every items
@@ -549,7 +549,7 @@ class testSearches(PloneMeetingTestCase):
     def test_pm_show_copy_groups_search(self):
         """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         self.assertEqual(list(cfg.selectable_copy_groups),
                          [self.developers_reviewers, self.vendors_reviewers])
         self.changeUser('pmCreator1')
@@ -557,7 +557,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(cfg.show_copy_groups_search())
         # not shown if copyGroups not used
-        self._enableField('copyGroups', enable=False)
+        self._enableField('copy_groups', enable=False)
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_copy_groups_search())
         self.changeUser('pmReviewer2')
@@ -569,7 +569,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
@@ -597,7 +597,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(collection.results())
         # takenOverBy is set back to '' on each transition
         self.proposeItem(item)
-        self.assertTrue(not item.getTakenOverBy())
+        self.assertTrue(not item.taken_over_by)
         self.failIf(collection.results())
 
         # query is not cached (this was the case before and there was a bug
@@ -673,12 +673,12 @@ class testSearches(PloneMeetingTestCase):
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
-        self._enableField('copyGroups')
+        self._enableField('copy_groups')
         review_states = reviewers[reviewers.keys()[0]]
         if 'prereviewers' in reviewers:
             review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
-        item.setCopyGroups((self.vendors_reviewers, ))
+        item.copy_groups = (self.vendors_reviewers, )
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item
@@ -902,7 +902,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         # normally this search is not available to users that are not able to correct items
         # nevertheless, if a user is not able to edit items to correct, the special
@@ -974,7 +974,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         # first test the generated query
         self.changeUser('pmManager')
@@ -1133,7 +1133,7 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
@@ -1269,15 +1269,15 @@ class testSearches(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(len(collection.results()), 1)
         # ask advices
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item.optional_advisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), )
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 0)
-        item.setOptionalAdvisers(())
+        item.optional_advisers = ()
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 1)
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         item.reindexObject(idxs=['indexAdvisers'])
         self.assertEqual(len(collection.results()), 0)

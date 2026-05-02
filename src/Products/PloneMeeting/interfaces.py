@@ -2,10 +2,13 @@
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
+from collective.z3cform.datagridfield import DictRow
 from collective.z3cform.datagridfield.interfaces import IDataGridFieldLayer
 from ftw.labels.interfaces import ILabelSupport
 from imio.actionspanel.interfaces import IActionsPanelLayer
 from plone.dexterity.interfaces import IDexterityContent
+from Products.PloneMeeting.config import PMMessageFactory as _
+from zope import schema
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
 
@@ -153,9 +156,129 @@ class IMeetingContentBatchActionsMarker(IBatchActionsMarker):
     """Marker interfaces to register batch actions for every MeetingContents."""
 
 
+class IHolidayRowSchema(Interface):
+    date = schema.TextLine(title=_(u'Holiday date'), required=False)
+
+
+class IConfigGroupRowSchema(Interface):
+    row_id = schema.TextLine(title=_(u'Row id'), required=False)
+    label = schema.TextLine(title=_(u'Config group label'), required=False)
+    full_label = schema.TextLine(title=_(u'Config group full label'), required=False)
+
+
+class IAdvisersConfigRowSchema(Interface):
+    org_uids = schema.List(
+        title=_(u'Adviser config org uids'),
+        value_type=schema.Choice(
+            vocabulary=u'collective.contact.plonegroup.browser.settings.'
+                       u'SortedSelectedOrganizationsElephantVocabulary'),
+        required=False,
+    )
+    portal_type = schema.Choice(
+        title=_(u'Adviser config portal type'),
+        vocabulary=u'AdvicePortalTypes',
+        required=False,
+    )
+    base_wf = schema.Choice(
+        title=_(u'Adviser config base workflow'),
+        vocabulary=u'AdviceWorkflows',
+        required=False,
+    )
+    wf_adaptations = schema.List(
+        title=_(u'Adviser config workflow adaptations'),
+        value_type=schema.Choice(vocabulary=u'AdviceWorkflowAdaptations'),
+        required=False,
+    )
+    advice_types = schema.List(
+        title=_(u'Adviser config advice types'),
+        value_type=schema.Choice(vocabulary=u'ConfigAdviceTypes'),
+        required=False,
+    )
+    default_advice_type = schema.Choice(
+        title=_(u'Adviser config default advice type'),
+        vocabulary=u'ConfigAdviceTypes',
+        required=False,
+    )
+    show_advice_on_final_wf_transition = schema.Choice(
+        title=_(u'Adviser config show advice on final WF transition'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+
 class IToolPloneMeeting(Interface):
-    """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
-    """
+    """Schema interface for ToolPloneMeeting."""
+
+    meeting_folder_title = schema.TextLine(
+        title=_(u'MeetingFolderTitle'),
+        required=True,
+    )
+
+    functional_admin_email = schema.TextLine(
+        title=_(u'FunctionalAdminEmail'),
+        required=False,
+    )
+
+    functional_admin_name = schema.TextLine(
+        title=_(u'FunctionalAdminName'),
+        required=False,
+    )
+
+    restrict_users = schema.Bool(
+        title=_(u'RestrictUsers'),
+        required=False,
+        default=False,
+    )
+
+    unrestricted_users = schema.Text(
+        title=_(u'UnrestrictedUsers'),
+        required=False,
+    )
+
+    working_days = schema.List(
+        title=_(u'WorkingDays'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.weekdays_vocabulary'),
+        required=True,
+    )
+
+    holidays = schema.List(
+        title=_(u'Holidays'),
+        value_type=DictRow(schema=IHolidayRowSchema),
+        required=False,
+    )
+
+    delay_unavailable_end_days = schema.List(
+        title=_(u'DelayUnavailableEndDays'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.weekdays_vocabulary'),
+        required=False,
+    )
+
+    config_groups = schema.List(
+        title=_(u'ConfigGroups'),
+        value_type=DictRow(schema=IConfigGroupRowSchema),
+        required=False,
+    )
+
+    defer_parent_reindex = schema.List(
+        title=_(u'DeferParentReindex'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.defer_parent_reindex_vocabulary'),
+        required=False,
+    )
+
+    show_external_links_section = schema.List(
+        title=_(u'ShowExternalLinksSection'),
+        value_type=schema.Choice(vocabulary=u'PMEveryConfigs'),
+        required=False,
+    )
+
+    advisers_config = schema.List(
+        title=_(u'AdvisersConfig'),
+        value_type=DictRow(schema=IAdvisersConfigRowSchema),
+        required=False,
+    )
 
 
 class IMeetingCategory(IConfigElement):
@@ -640,3 +763,10 @@ class IToolPloneMeetingCustom(IToolPloneMeeting):
     '''If you want to propose your own implementations of tool methods,
        you must define an adapter that adapts IToolPloneMeeting to
        IToolPloneMeetingCustom.'''
+
+
+class IUtils(Interface):
+    """Replacement for Products.Archetypes.interfaces.utils.IUtils."""
+
+    def translate(vocab, value, widget=None):
+        """Translate vocabulary values via zope.i18n."""

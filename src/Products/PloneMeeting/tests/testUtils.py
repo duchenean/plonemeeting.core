@@ -73,7 +73,7 @@ class testUtils(PloneMeetingTestCase):
         # item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = (self.vendors_uid, )
         item._update_after_edit()
         new_value = "<p>My item description.</p>"
         self.assertEqual(item.Description(), "")
@@ -254,7 +254,7 @@ class testUtils(PloneMeetingTestCase):
              'label': 'ConfigGroup3',
              'full_label': 'Config group 3'},
         )
-        self.tool.setConfigGroups(config_groups)
+        self.tool._set_config_groups(config_groups)
         cfg = self.meetingConfig
         # "test" mailMode will return computed elements
         cfg.mail_mode = 'test'
@@ -279,7 +279,7 @@ class testUtils(PloneMeetingTestCase):
                          u'Config group 3 - %s' % safe_unicode(cfg.Title()))
         # if "full_label" is empty, it is not preprended
         config_groups[-1]['full_label'] = ''
-        self.tool.setConfigGroups(config_groups)
+        self.tool._set_config_groups(config_groups)
         obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         self.assertEqual(translation_mapping['meetingConfigTitle'],
@@ -348,12 +348,12 @@ class testUtils(PloneMeetingTestCase):
 
         # link to image using resolveuid
         text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
-        item.setDescription(text)
+        item.description = richtextval(text)
         self.assertEqual(item.objectIds(), ['dot.gif'])
         transformAllRichTextFields(item)
-        self.assertEqual(item.getRawDescription(), text)
+        self.assertEqual(item.description.raw, text)
         transformAllRichTextFields(item, onlyField="description")
-        self.assertEqual(item.getRawDescription(), text)
+        self.assertEqual(item.description.raw, text)
 
         # Meeting DX
         self.changeUser('pmManager')

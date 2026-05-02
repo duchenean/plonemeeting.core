@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from imio.helpers.setup import load_type_from_package
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -90,7 +90,7 @@ class Migrate_To_4211(Migrator):
         # first update MeetingItem base portal_type
         load_type_from_package('MeetingItem', 'Products.PloneMeeting:default')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
             # migrate the MeetingConfig.enableItemDuplication attribute
             if base_hasattr(cfg, 'enableItemDuplication'):
                 if cfg.enableItemDuplication:

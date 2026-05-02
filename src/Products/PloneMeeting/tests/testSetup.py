@@ -58,7 +58,8 @@ class testSetup(PloneMeetingTestCase):
             if mymeetings:
                 for cfg_folder in mymeetings.objectValues():
                     meetings = meetings + list(object_values(cfg_folder, 'Meeting'))
-                    items = items + list(object_values(cfg_folder, 'MeetingItem'))
+                    items = items + list(object_values(
+                        cfg_folder, ['MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring']))
         # delete items first because deleting a meeting delete included items...
         for obj in items + meetings:
             parent = obj.aq_inner.aq_parent
@@ -180,7 +181,7 @@ class testSetup(PloneMeetingTestCase):
         # and import_data again to check
         self.changeUser('admin')
         self.assertFalse(self.tool.restrictUsers)
-        self.tool.setRestrictUsers(True)
+        self.tool.restrict_users = True
         # make sure restrictUsers is set in the 'testing' profile import_data
         profile_names = self._currentSetupProfileNames()
         profile_name = [p_name for p_name in profile_names if p_name.endswith(':testing')][0]

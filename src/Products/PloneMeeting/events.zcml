@@ -11,8 +11,8 @@
                    OFS.interfaces.IObjectWillBeAddedEvent"
               handler=".events.onItemWillBeAdded" />
 
-  <subscriber for=".interfaces.IMeetingItem
-                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+  <subscriber for=".content.meetingitem.IMeetingItem
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onItemInitialized" />
 
   <subscriber for=".interfaces.IMeetingItem
@@ -64,11 +64,11 @@
               handler=".events.onConfigBeforeTransition" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   Products.Archetypes.interfaces.IEditBegunEvent"
+                   plone.dexterity.events.EditBegunEvent"
               handler=".events.onItemEditBegun" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   Products.Archetypes.interfaces.IEditCancelledEvent"
+                   plone.dexterity.events.EditCancelledEvent"
               handler=".events.onItemEditCancelled" />
 
   <subscriber for=".content.meeting.IMeeting
@@ -99,15 +99,6 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
-  <subscriber for=".interfaces.IMeetingConfig
-                   Products.Archetypes.interfaces.IObjectInitializedEvent"
-              handler=".events.onConfigInitialized" />
-
-  <subscriber for=".interfaces.IMeetingConfig
-                   Products.Archetypes.interfaces.IObjectEditedEvent"
-              handler=".events.onConfigEdited" />
-
-  <!-- DX MeetingConfig lifecycle events -->
   <subscriber for=".content.meetingconfig.IMeetingConfig
                    zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onConfigInitialized" />
@@ -164,7 +155,7 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onConfigOrPloneElementRemoved" />
 
-  <subscriber for="Products.ATContentTypes.interfaces.IATBTreeFolder
+  <subscriber for="*
                    Products.CMFPlone.interfaces.IReorderedEvent"
               handler=".events.onFolderReordered" />
 

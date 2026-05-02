@@ -32,7 +32,6 @@ from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
 from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.browser.meeting import get_default_attendees
@@ -354,24 +353,50 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'Meeting' and attrs.get('date', None) is None:
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
-            if 'proposingGroup' not in attrs.keys():
+            if 'proposing_group' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._get_org_uids_for_user')
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
-                    attrs.update({'proposingGroup': proposingGroupUids[0]})
-        obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
+                    attrs.update({'proposing_group': proposingGroupUids[0]})
+        result = folder.invokeFactory(contentType, **attrs)
+        obj = result if not isinstance(result, basestring) else getattr(folder, result)
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
         elif objectType == 'MeetingItem':
-            # optionalAdvisers are not set (???) by invokeFactory...
-            if 'optionalAdvisers' in attrs:
-                obj.setOptionalAdvisers(attrs['optionalAdvisers'])
-            # rich text fields are not set (???) by invokeFactory...
-            rich_fields = ['motivation', 'decision', 'decisionSuite', 'decisionEnd', 'votesResult']
-            for rich_field in rich_fields:
-                if rich_field in attrs:
-                    field = obj.getField(rich_field)
-                    field.set(obj, attrs[rich_field])
+            from Products.PloneMeeting.content.meetingconfig import _at_to_dx
+            from Products.PloneMeeting.utils import get_dx_schema
+            from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+            from plone.supermodel.utils import mergedTaggedValueDict
+            _DX_RICH_FIELDS = {
+                'motivation', 'decision', 'decision_suite', 'decision_end',
+                'votes_result', 'description',
+            }
+            schema = get_dx_schema(obj)
+            write_perms = mergedTaggedValueDict(schema, WRITE_PERMISSIONS_KEY)
+            sm = getSecurityManager()
+            for at_name, value in attrs.items():
+                if at_name == 'id':
+                    continue
+                dx_name = _at_to_dx(at_name)
+                perm = write_perms.get(dx_name)
+                if perm and not sm.checkPermission(perm, obj):
+                    # MeetingItem.__setattr__ auto-remaps camelCase kwargs
+                    # from __init__ to snake_case; delete both forms.
+                    if dx_name in obj.__dict__:
+                        del obj.__dict__[dx_name]
+                    continue
+                if dx_name in _DX_RICH_FIELDS and isinstance(value, (str, unicode)):
+                    setattr(obj, dx_name, richtextval(value))
+                else:
+                    setattr(obj, dx_name, value)
+            # Remove dangling camelCase attrs set by DexterityContent.__init__
+            # (only needed when __setattr__ did NOT remap them).
+            for at_name in attrs:
+                if at_name == 'id':
+                    continue
+                dx_name = _at_to_dx(at_name)
+                if dx_name != at_name and at_name in obj.__dict__:
+                    del obj.__dict__[at_name]
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.used_item_attributes and \
@@ -712,12 +737,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg = self.meetingConfig
         if not keep_existing:
             cfg.setWorkflowAdaptations(())
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         else:
             wfas = tuple(set(tuple(wfas) + tuple(cfg.wf_adaptations)))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _deactivate_wfas(self, wfas, cfg=None):
@@ -731,7 +756,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         wfas = [wfa for wfa in cfg.wf_adaptations
                 if wfa not in wfas]
         cfg.setWorkflowAdaptations(wfas)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _activate_config(self,
@@ -756,7 +781,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
             self.changeUser(currentUser)
 
     def _enableAutoConvert(self, enable=True):
@@ -813,10 +838,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
             self.changeUser(currentUser)
         else:
-            cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+            cleanRamCacheFor('Products.PloneMeeting.content.meetingitem.attribute_is_used')
             cleanRamCacheFor('Products.PloneMeeting.content.meeting.attribute_is_used')
 
     def _enable_annex_config(self,
@@ -846,12 +871,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if enable and action not in cfg.enabled_item_actions:
                 actions = list(cfg.enabled_item_actions) + [action]
                 cfg.enabled_item_actions = actions
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
             elif not enable and action in cfg.enabled_item_actions:
                 actions = list(cfg.enabled_item_actions)
                 actions.remove(action)
                 cfg.enabled_item_actions = actions
-                notify(ObjectEditedEvent(cfg))
+                notify(ObjectModifiedEvent(cfg))
 
     def _disableObj(self, obj, notify_event=True):
         """ """

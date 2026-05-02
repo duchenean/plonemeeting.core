@@ -45,7 +45,8 @@ from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
-from Products.Archetypes.browser.utils import Utils
+from Products.PloneMeeting.interfaces import IUtils
+from zope.interface import implementer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
@@ -1094,9 +1095,12 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.portal_type in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate'] and \
            not check_zope_admin():
             return False
-        return _checkPermission(ModifyPortalContent, self.context) and \
-            (not self.context.portal_type == 'MeetingConfig' or
-             self.context.Schema().editableFields(self.context.Schema()))
+        if not _checkPermission(ModifyPortalContent, self.context):
+            return False
+        schema_method = getattr(aq_base(self.context), 'Schema', None)
+        if schema_method is not None:
+            return bool(self.context.Schema().editableFields(self.context.Schema()))
+        return True
 
     def renderLinkedPloneGroups(self):
         """
@@ -1566,7 +1570,8 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
         return tabs
 
 
-class PMUtils(Utils):
+@implementer(IUtils)
+class PMUtils(BrowserView):
     """Override the at_utils.translate method to return values on several lines,
        instead separated by ', '.
        XXX we had to override entire method but just changed some lines at the end, check the XXX."""

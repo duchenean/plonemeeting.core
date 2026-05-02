@@ -2,7 +2,7 @@
 
 from imio.helpers.setup import load_type_from_package
 from persistent.mapping import PersistentMapping
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.migrations import logger
@@ -21,7 +21,7 @@ class Migrate_To_4204(Migrator):
         load_type_from_package('MeetingItemTemplate', 'Products.PloneMeeting:default')
         load_type_from_package('MeetingItemRecurring', 'Products.PloneMeeting:default')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
         logger.info('Done.')
 
     def _initMeetingsItemAttendeesOrder(self):

@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <object name="portal_types"
         meta_type="Plone Types Tool">
- <object name="MeetingItem"
-         meta_type="Factory-based Type Information with dynamic views"/>
+ <!-- migrate MeetingItem portal_type (AT to DX), remove it and add it just under -->
+ <object name="MeetingItem" meta_type="Factory-based Type Information with dynamic views" remove="True"/>
+ <object name="MeetingItem" meta_type="Dexterity FTI"/>
  <object name="ToolPloneMeeting"
          meta_type="Factory-based Type Information with dynamic views"/>
  <!-- migrate MeetingConfig portal_type (AT to DX), remove it and add it just under -->
@@ -11,10 +12,11 @@
  <object name="Plone Site"
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="meetingadvice" meta_type="Dexterity FTI"/>
- <object name="MeetingItemTemplate"
-         meta_type="Factory-based Type Information with dynamic views"/>
- <object name="MeetingItemRecurring"
-         meta_type="Factory-based Type Information with dynamic views"/>
+ <!-- migrate MeetingItemTemplate / MeetingItemRecurring (AT subtypes -> DX) -->
+ <object name="MeetingItemTemplate" meta_type="Factory-based Type Information with dynamic views" remove="True"/>
+ <object name="MeetingItemTemplate" meta_type="Dexterity FTI"/>
+ <object name="MeetingItemRecurring" meta_type="Factory-based Type Information with dynamic views" remove="True"/>
+ <object name="MeetingItemRecurring" meta_type="Dexterity FTI"/>
  <object name="ConfigurablePODTemplate" meta_type="Dexterity FTI"/>
  <object name="DashboardPODTemplate" meta_type="Dexterity FTI"/>
  <object name="annex" meta_type="Dexterity FTI"/>

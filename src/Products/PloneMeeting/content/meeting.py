@@ -1823,21 +1823,21 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         is_late = not force_normal and item.wfConditions().isLateFor(self)
         if is_late:
-            item.setListType(item.adapted().getListTypeLateValue(self))
+            item.list_type = item.adapted().getListTypeLateValue(self)
             to_discuss_value = cfg.to_discuss_late_default
         else:
-            item.setListType(item.adapted().getListTypeNormalValue(self))
+            item.list_type = item.adapted().getListTypeNormalValue(self)
             to_discuss_value = cfg.to_discuss_default
         items = self.get_items(ordered=True, unrestricted=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.to_discuss_set_on_item_insert:
-            item.setToDiscuss(to_discuss_value)
+            item.to_discuss = to_discuss_value
         # At what place must we insert the item in the list ?
         insert_methods = cfg.inserting_methods_on_add_item
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insert_at_the_end = False
-        if insert_methods[0]['insertingMethod'] != 'at_the_end':
+        if insert_methods[0]['inserting_method'] != 'at_the_end':
             # We must insert it according to category or proposing group order
             # (at the end of the items belonging to the same category or
             # proposing group). We will insert the p_item just before the first
@@ -1875,7 +1875,7 @@ class Meeting(Container):
             else:
                 insert_at_the_end = True
 
-        if insert_methods[0]['insertingMethod'] == 'at_the_end' or insert_at_the_end:
+        if insert_methods[0]['inserting_method'] == 'at_the_end' or insert_at_the_end:
             # insert it as next integer number
             if items:
                 item.setItemNumber(_to_integer(items[-1].getItemNumber()) + 100)
@@ -1900,7 +1900,7 @@ class Meeting(Container):
         # and reindex linkedMeeting indexes that is used by update_item_references using getItems
         lowest_item_number = 0
         for item in items_to_update:
-            item_number = item.getRawItemNumber()
+            item_number = item.item_number
             if not lowest_item_number or item_number < lowest_item_number:
                 lowest_item_number = item_number
             item.reindexObject(idxs=['getItemNumber',
@@ -1927,8 +1927,8 @@ class Meeting(Container):
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it
-            if item.getListType() == 'late':
-                item.setListType('normal')
+            if item.list_type == 'late':
+                item.list_type = 'normal'
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list
@@ -1945,9 +1945,11 @@ class Meeting(Container):
         self._invalidate_insert_order_cache_for(item)
 
         # make sure item assembly/signatures related fields are emptied
-        for field in item.Schema().filterFields(isMetadata=False):
-            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
-                field.set(item, '')
+        item.item_assembly = u''
+        item.item_assembly_excused = u''
+        item.item_assembly_absents = u''
+        item.item_assembly_guests = u''
+        item.item_signatures = u''
 
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),
@@ -2256,7 +2258,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         if related_to == 'annex':
             idxs = ['SearchableText']
-        if check_deferred and related_to in tool.getDeferParentReindex():
+        if check_deferred and related_to in tool.defer_parent_reindex:
             # mark meeting reindex deferred so it can be updated at right moment
             meeting = self.getSelf()
             setattr(meeting, REINDEX_NEEDED_MARKER, True)
@@ -2272,7 +2274,7 @@ class Meeting(Container):
         for po_infos in cfg.power_observers:
             if meeting_state in po_infos['meeting_states'] and \
                _evaluateExpression(self,
-                                   expression=po_infos['meeting_access_on'],
+                                   expression=po_infos.get('meeting_access_on', ''),
                                    extra_expr_ctx=extra_expr_ctx):
                 power_observers_group_id = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(power_observers_group_id,
@@ -2370,7 +2372,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for item in cfg.getRecurringItems():
-            if item.getMeetingTransitionInsertingMe() == transition:
+            if item.meeting_transition_inserting_me == transition:
                 rec_items.append(item)
         if rec_items:
             self.add_recurring_items(rec_items)

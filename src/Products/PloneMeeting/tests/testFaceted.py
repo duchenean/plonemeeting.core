@@ -11,7 +11,6 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.event import notify
@@ -455,13 +454,13 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(cfg.groups_hidden_in_dashboard_filter, [])
         # remove extra organizations from profiles
         cfg.groups_hidden_in_dashboard_filter = self._orgs_to_exclude_from_filter()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         # now define values in MeetingConfig.groupsHiddenInDashboardFilter
         cfg.groups_hidden_in_dashboard_filter = (self.vendors_uid, ) + self._orgs_to_exclude_from_filter()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'End users (Inactive)'])
@@ -579,12 +578,12 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(len(vocab(pmFolder)), 4)
 
         cfg.users_hidden_in_dashboard_filter = ('pmCreator1',)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # cache was cleaned and pmCreator is not in the list anymore
         self.assertEqual(len(vocab(pmFolder)), 3)
 
         cfg.users_hidden_in_dashboard_filter = ()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # cache was cleaned and pmCreator is back in the list
         self.assertEqual(len(vocab(pmFolder)), 4)
 
@@ -634,7 +633,7 @@ class testFaceted(PloneMeetingTestCase):
         new_org = self.create('organization', title='New organization', acronym='N.G.')
         new_org_uid = new_org.UID()
         cfg.selectable_advisers = list(cfg.selectable_advisers) + [new_org_uid]
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # cache was cleaned
         self.assertEqual(len(vocab(pmFolder)), 7)
         # edit an organization
@@ -663,7 +662,7 @@ class testFaceted(PloneMeetingTestCase):
                                'delay': '11',
                                'delay_label': 'New delay'})
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
         self.assertTrue('delay_row_id__unique_id_999' in vocab(pmFolder).by_token)
         # delay is displayed in customAdviser title
@@ -671,28 +670,28 @@ class testFaceted(PloneMeetingTestCase):
         # edit a customAdviser
         customAdvisers[-1]['delay'] = '12'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # remove a customAdviser
         customAdvisers = customAdvisers[:-1]
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 6)
         # power advisers are taken into account by the vocabulary
         cfg.setPowerAdvisersGroups([self.endUsers_uid])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
         # inactive term, displayed in term title
         # make a not really expired term, a 'for_item_created_until' in the future
         self.assertEqual(customAdvisers[-1]['row_id'], 'unique_id_789')
         customAdvisers[-1]['for_item_created_until'] = '2099/01/01'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
                          u'Vendors - 20 day(s)')
         customAdvisers[-1]['for_item_created_until'] = '2009/01/01'
         cfg.setCustomAdvisers(customAdvisers)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
                          u'Vendors - 20 day(s) (Inactive)')
 
@@ -797,7 +796,7 @@ class testFaceted(PloneMeetingTestCase):
                           'negative',
                           'not_given',
                           'positive'])
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         # cache invalidated
         self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
                          ['asked_again',
@@ -806,16 +805,16 @@ class testFaceted(PloneMeetingTestCase):
                           'not_given',
                           'positive'])
         # ToolPloneMeeting.advisersConfig.advice_types
-        self.tool.setAdvisersConfig(
-            ({'advice_types': ['positive_with_remarks'],
-              'base_wf': 'meetingadvice_workflow',
-              'default_advice_type': 'positive_with_remarks',
-              'org_uids': [self.vendors_uid],
-              'portal_type': 'meetingadvice',
-              'show_advice_on_final_wf_transition': '1',
-              'wf_adaptations': []}, ))
+        self.tool.advisers_config = [
+            {'advice_types': ['positive_with_remarks'],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive_with_remarks',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []}]
         self.tool.at_post_edit_script()
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
                          ['asked_again',
                           'considered_not_given_hidden_during_redaction',
@@ -967,8 +966,8 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.selectable_copy_groups = (self.vendors_reviewers, self.developers_reviewers)
         cfg.selectable_restricted_copy_groups = (self.vendors_reviewers, )
-        self._enableField('copyGroups')
-        self._enableField('restrictedCopyGroups')
+        self._enableField('copy_groups')
+        self._enableField('restricted_copy_groups')
         self.changeUser('pmManager')
         self.assertEqual(
             get_vocab_values(cfg, "Products.PloneMeeting.vocabularies.copygroupsvocabulary"),

@@ -132,26 +132,9 @@ def setupHideToolsFromNavigation(context):
 
 
 def setupCatalogMultiplex(context):
-    """ Configure CatalogMultiplex.
-
-    explicit add classes (meta_types) be indexed in catalogs (white)
-    or removed from indexing in a catalog (black)
-    """
-    if isNotPloneMeetingProfile(context):
-        return
-
-    atool = api.portal.get_tool('archetype_tool')
-    catalogmap = {}
-    catalogmap['ToolPloneMeeting'] = {}
-    catalogmap['ToolPloneMeeting']['black'] = ['portal_catalog']
-    for meta_type in catalogmap:
-        submap = catalogmap[meta_type]
-        current_catalogs = set([c.id for c in atool.getCatalogsByType(meta_type)])
-        if 'black' in submap:
-            for catalog in submap['black']:
-                if catalog in current_catalogs:
-                    current_catalogs.remove(catalog)
-        atool.setCatalogsByType(meta_type, list(current_catalogs))
+    """No-op -- ToolPloneMeeting is no longer an AT type, so catalog
+    blacklisting via archetype_tool is not needed."""
+    pass
 
 
 def postInstall(context):
@@ -181,8 +164,14 @@ def postInstall(context):
         wft.doActionFor(site.Members, 'retract')
 
     # Make sure portal_plonemeeting permissions are correct regarding used WF
-    tool_wf = wft.getWorkflowsFor(tool)[0]
-    tool_wf.updateRoleMappingsFor(tool)
+    chain = wft.getChainFor('ToolPloneMeeting')
+    if not chain:
+        chain = wft.getChainFor(tool)
+    for wf_id in chain:
+        wf = wft.getWorkflowById(wf_id)
+        if wf:
+            wf.updateRoleMappingsFor(tool)
+            break
 
     # Make "Unauthorized" exceptions appear in the error log.
     site.error_log.setProperties(

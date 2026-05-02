@@ -72,7 +72,7 @@
     </tal:field>
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
-    <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
+    <fieldset tal:condition="python: 'budget_infos' in usedAttrs">
       <legend i18n:translate="">Budget</legend>
         <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
         <div id="hideBudgetInfosIfNotBudgetRelated">

@@ -8,7 +8,6 @@
 from imio.helpers.cache import cleanRamCacheFor
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletRenderer
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.browser import portlet_plonemeeting
 from Products.PloneMeeting.browser import portlet_todo
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -57,7 +56,7 @@ class testPortlets(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', 'itemtemplates'])
         itemTemplate = self.create('MeetingItemTemplate')
-        itemTemplate.setTemplateUsingGroups(('developers', ))
+        itemTemplate.template_using_groups = ('developers', )
         itemTemplate.reindexObject(idxs=['templateUsingGroups', ])
         # pmCreator1 is member of 'developers'
         self.changeUser('pmCreator1')
@@ -71,7 +70,7 @@ class testPortlets(PloneMeetingTestCase):
         itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
         # clean ram.cache even if cache is still correct because the same for every users
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.assertTrue(itemsCategory.hasTemplateItems())
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
@@ -96,7 +95,7 @@ class testPortlets(PloneMeetingTestCase):
         self.assertEqual(itemsCategory._get_default_item_template_UID(), empty_item_template_uid)
         # restrict it to developers
         self.changeUser('siteadmin')
-        empty_item_template.setTemplateUsingGroups([self.developers_uid])
+        empty_item_template.template_using_groups = [self.developers_uid]
         empty_item_template.reindexObject(idxs=['templateUsingGroups', ])
         # available for pmCreator1 that is member of developers
         self.changeUser('pmCreator1')

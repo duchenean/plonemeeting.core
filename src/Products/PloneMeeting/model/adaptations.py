@@ -897,15 +897,15 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
-            from Products.PloneMeeting.MeetingItem import MeetingItem
+            from Products.PloneMeeting.content.meetingitem import IMeetingItem
+            from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+            from plone.supermodel.utils import mergedTaggedValueDict
             edit_permissions = [ModifyPortalContent, DeleteObjects]
-            for field in MeetingItem.schema.fields():
-                # in some case we protect edit with "View" permission because
-                # we manage access manually, ignore these edit permissions
-                if field.write_permission and \
-                   field.write_permission not in edit_permissions and \
-                   field.write_permission not in (View, AccessContentsInformation):
-                    edit_permissions.append(field.write_permission)
+            write_perms = mergedTaggedValueDict(IMeetingItem, WRITE_PERMISSIONS_KEY)
+            for perm in write_perms.values():
+                if perm and perm not in edit_permissions and \
+                   perm not in (View, AccessContentsInformation):
+                    edit_permissions.append(perm)
             new_state_id_pattern = '{0}_waiting_advices'
             # try to get meetingConfig id in WAITING_ADVICES_FROM_STATES
             # if not found, look for a "*" that is applied to every meetingConfigs

@@ -14,8 +14,9 @@ from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import richtextval
 from plone import api
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -62,7 +63,7 @@ class testPerformances(PloneMeetingTestCase):
             self.changeUser('siteadmin')
             wfAdaptations.append('no_publication')
             cfg.setWorkflowAdaptations(wfAdaptations)
-            notify(ObjectEditedEvent(cfg))
+            notify(ObjectModifiedEvent(cfg))
 
         self.changeUser('pmManager')
         meeting = None
@@ -87,7 +88,7 @@ class testPerformances(PloneMeetingTestCase):
             # create the item
             data['title'] = 'Item number %d' % i
             item = self.create('MeetingItem', **data)
-            item.setDecision('<p>A decision</p>')
+            item.decision = richtextval('<p>A decision</p>')
             # add annexes
             if number_of_annexes:
                 for j in range(number_of_annexes):
@@ -176,23 +177,23 @@ class testPerformances(PloneMeetingTestCase):
         '''Helper method that actually compute every items itemReference for p_meeting.'''
         # set back every items reference to '' so the entire process including reindex of SearchableText is done
         for item in meeting.get_items():
-            item.setItemReference('')
+            item.item_reference = ''
         meeting.update_item_references(start_number=start_number)
 
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
         '''While presenting items, these items are inserted in a given order.
-           In this test, as every items use same 'proposingGroup', same 'privacy'
-           and same 'listType' every items are evaluated each time and
+           In this test, as every items use same 'proposing_group', same 'privacy'
+           and same 'list_type' every items are evaluated each time and
            every new is finally added at the end of the meeting.
            We present 50 by 50 items successively in same meeting'''
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.' % (50, 0))
         # use 'complex' inserting method
-        self.meetingConfig.inserting_methods_on_add_item = ({'insertingMethod': 'on_list_type',
-                                                          'reverse': '0'},
-                                                         {'insertingMethod': 'on_privacy',
-                                                          'reverse': '0'},
-                                                         {'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'},)
+        self.meetingConfig.inserting_methods_on_add_item = [{'inserting_method': 'on_list_type',
+                                                           'reverse': '0'},
+                                                          {'inserting_method': 'on_privacy',
+                                                           'reverse': '0'},
+                                                          {'inserting_method': 'on_proposing_groups',
+                                                           'reverse': '0'}]
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, as_uids=False)
         # called when no item in the meeting
         self._presentSeveralItems(items)
@@ -218,12 +219,12 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Freezing a meeting containing %d items and sending %d items to another MC.' % (50, 25))
         cfg = self.meetingConfig
         self._enableField('category', enable=False)
-        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
-                                           'reverse': '0'}, )
+        cfg.inserting_methods_on_add_item = [{'inserting_method': 'on_proposing_groups',
+                                            'reverse': '0'}]
         cfg2 = self.meetingConfig2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, )
+        cfg2.inserting_methods_on_add_item = [{'inserting_method': 'on_proposing_groups',
+                                             'reverse': '0'}]
         cfg2Id = cfg2.getId()
         # make items sent to config2 automatically presented in the next meeting
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
@@ -233,7 +234,7 @@ class testPerformances(PloneMeetingTestCase):
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True, as_uids=False)
         # make 25 items sendable to another MC
         for item in items[0:25]:
-            item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+            item.other_meeting_configs_clonable_to = (self.meetingConfig2.getId(), )
             item.reindexObject(idxs=['sentToInfos', ])
 
         # create meeting in cfg2 in which items will be presented
@@ -284,7 +285,7 @@ class testPerformances(PloneMeetingTestCase):
             for j in range(number_of_items):
                 data['title'] = 'Item number %d' % j
                 item = self.create('MeetingItem', **data)
-                item.setDecision('<p>A decision</p>')
+                item.decision = richtextval('<p>A decision</p>')
                 # present the item
                 self.presentItem(item)
         # now we have number_of_meetings meetings containing number_of_items items
@@ -511,7 +512,6 @@ class testPerformances(PloneMeetingTestCase):
                                  title='Category %d' % i)
             if withUsingGroups:
                 catObj.setUsingGroups(('developers', ))
-            catObj._at_creation_flag = False
             catObj.at_post_create_script()
 
     def test_pm_GetCategoriesCaching(self):
@@ -1025,7 +1025,7 @@ class testPerformances(PloneMeetingTestCase):
     def _check_meeting_config_edit(self):
         ''' '''
         pm_logger.info('Save MeetingConfig')
-        notify(ObjectEditedEvent(self.meetingConfig))
+        notify(ObjectModifiedEvent(self.meetingConfig))
 
 
 def test_suite():

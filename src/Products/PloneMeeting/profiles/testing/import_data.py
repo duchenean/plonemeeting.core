@@ -296,7 +296,7 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
                          itemAnnex, previewAnnex, previewHideDownloadAnnex,
                          decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
-meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
+meetingPma.usedItemAttributes = ('description', 'to_discuss', 'item_tags', 'item_is_signed',)
 meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_absents',
                                     'assembly_guests', 'signatures', 'place',)
 meetingPma.maxShownListings = '100'
@@ -446,7 +446,7 @@ meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = (
-    'description', 'toDiscuss', 'associatedGroups', 'itemIsSigned', 'category', 'copyGroups')
+    'description', 'to_discuss', 'associated_groups', 'item_is_signed', 'category', 'copy_groups')
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )

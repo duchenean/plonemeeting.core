@@ -8,7 +8,7 @@ from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
 from plone.dexterity.utils import createContentInContainer
-from Products.Archetypes.event import ObjectEditedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
@@ -132,46 +132,46 @@ class PloneMeetingTestingHelpers(object):
         # id=item-1
         item1 = self.create('MeetingItem', title='Item 1')
         _set_proposing_group(item1, self.vendors)
-        item1.setAssociatedGroups((self.developers_uid,))
-        item1.setPrivacy('public')
-        item1.setPollType('secret_separated')
+        item1.associated_groups = (self.developers_uid,)
+        item1.privacy = 'public'
+        item1.poll_type = 'secret_separated'
         item1.setCategory('research')
         item1.setClassifier('classifier3')
         item1.reindexObject()
         # id=item-2
         item2 = self.create('MeetingItem', title='Item 2')
         _set_proposing_group(item2, self.developers)
-        item2.setPrivacy('public')
-        item2.setPollType('no_vote')
+        item2.privacy = 'public'
+        item2.poll_type = 'no_vote'
         item2.setCategory('development')
         item2.setClassifier('classifier2')
         item2.reindexObject()
         # id=item-3
         item3 = self.create('MeetingItem', title='Item 3')
         _set_proposing_group(item3, self.vendors)
-        item3.setPrivacy('secret')
-        item3.setPollType('freehand')
+        item3.privacy = 'secret'
+        item3.poll_type = 'freehand'
         item3.setCategory('development')
         item3.setClassifier('classifier2')
         item3.reindexObject()
         # id=item-4
         item4 = self.create('MeetingItem', title='Item 4')
         _set_proposing_group(item4, self.developers)
-        item4.setPrivacy('secret')
-        item4.setPollType('freehand')
+        item4.privacy = 'secret'
+        item4.poll_type = 'freehand'
         item4.setCategory('events')
         item4.setClassifier('classifier1')
         item4.reindexObject()
         # id=item-5
         item5 = self.create('MeetingItem', title='Item 5')
         _set_proposing_group(item5, self.vendors)
-        item5.setPrivacy('public')
-        item5.setPollType('secret')
+        item5.privacy = 'public'
+        item5.poll_type = 'secret'
         item5.setCategory('events')
         item5.setClassifier('classifier1')
         item5.reindexObject()
         for item in (item1, item2, item3, item4, item5):
-            item.setDecision('<p>A decision</p>')
+            item.decision = richtextval('<p>A decision</p>')
             self.presentItem(item)
         return meeting
 
@@ -452,7 +452,7 @@ class PloneMeetingTestingHelpers(object):
         cfg.item_advice_edit_states = (item_initial_state,)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers((self.vendors_uid, ))
+        item.optional_advisers = [self.vendors_uid]
         item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
@@ -467,7 +467,7 @@ class PloneMeetingTestingHelpers(object):
         """As group in charge is an adaptable method, it may be setup differently."""
         if not groups:
             groups = [self.vendors_uid]
-        item.setGroupsInCharge(groups)
+        item.groups_in_charge = list(groups)
         item.update_local_roles()
 
     def _setUpCommitteeEditor(self, cfg):
@@ -475,13 +475,13 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['enable_editors'] = "1"
         cfg.setCommittees(cfg_committees)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self._addPrincipalToGroup(
             'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
-        item.setGroupsInCharge([])
+        item.groups_in_charge = []
 
     def _select_organization(self, org_uid, remove=False):
         """Select organization in ORGANIZATIONS_REGISTRY."""
@@ -498,7 +498,7 @@ class PloneMeetingTestingHelpers(object):
         if enable_extra_suffixes:
             itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _updateItemValidationLevel(self, cfg, level=None, enable=True, **kwargs):
@@ -513,7 +513,7 @@ class PloneMeetingTestingHelpers(object):
                     if k in kwargs:
                         itemValLevel[k] = kwargs[k]
         cfg.setItemWFValidationLevels(itemValLevels)
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
         self.changeUser(currentUser)
 
     def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
@@ -537,7 +537,7 @@ class PloneMeetingTestingHelpers(object):
     def _setUpOrderedContacts(
             self,
             meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
-            item_attrs=('itemInitiator', )):
+            item_attrs=('item_initiator', )):
         """ """
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
@@ -598,7 +598,7 @@ class PloneMeetingTestingHelpers(object):
         # useful when test executed with custom profile
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
-        notify(ObjectEditedEvent(cfg))
+        notify(ObjectModifiedEvent(cfg))
 
     def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
         """Setup labels only editable when item editable."""
@@ -632,7 +632,7 @@ class PloneMeetingTestingHelpers(object):
     def _setupFollowUp(self, cfg):
         """Configure followUp labels."""
         self._enable_ftw_labels(cfg, add_follow_up=True)
-        self._enableField(['neededFollowUp', 'providedFollowUp'])
+        self._enableField(['needed_follow_up', 'provided_follow_up'])
         config = list(cfg.getLabelsConfig())
         # needed-follow-up
         new_config = deepcopy(config[0])
@@ -642,7 +642,7 @@ class PloneMeetingTestingHelpers(object):
         # provided-follow-up
         new_config = deepcopy(config[0])
         new_config['label_id'] = "provided-follow-up"
-        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
+        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('provided_follow_up', item)"
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
         cfg.labels_config = config

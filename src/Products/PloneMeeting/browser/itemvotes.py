@@ -279,9 +279,9 @@ def is_vote_updatable_for(context, item_to_update):
        if using same pollType and same voters and not using several or linked votes."""
     res = False
     if context == item_to_update or \
-       (item_to_update.getPollType() != 'no_vote' and
-        context.get_item_votes(vote_number=0).get('poll_type', context.getPollType()) ==
-        item_to_update.get_item_votes(vote_number=0).get('poll_type', item_to_update.getPollType()) and
+       (item_to_update.poll_type != 'no_vote' and
+        context.get_item_votes(vote_number=0).get('poll_type', context.poll_type) ==
+        item_to_update.get_item_votes(vote_number=0).get('poll_type', item_to_update.poll_type) and
         context.get_item_voters() == item_to_update.get_item_voters() and
             len(item_to_update.get_item_votes()) < 2):
         res = True
@@ -530,7 +530,7 @@ def _should_disable_apply_until_item_number(context):
     if len(context.get_item_votes()) > 1 or \
        vote_number > 0 or \
        context.get_item_votes(vote_number).get('poll_type', None) != \
-       context.getPollType():
+       context.poll_type:
         return True
     return False
 

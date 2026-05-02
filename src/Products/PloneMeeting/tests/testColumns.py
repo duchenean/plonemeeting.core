@@ -10,6 +10,7 @@ from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.config import set_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import PMAnnexActionsColumn
@@ -41,14 +42,14 @@ class testColumns(PloneMeetingTestCase):
                                  description='Public item description')
         self.addAnnex(publicItem)
         self.addAnnex(publicItem, relatedTo='item_decision')
-        publicItem.setPrivacy('public')
+        publicItem.privacy = 'public'
         publicItem._update_after_edit()
         publicBrain = self.catalog(UID=publicItem.UID())[0]
         secretItem = self.create('MeetingItem',
                                  title='Secret item title',
                                  description='Secret item description')
         self.addAnnex(secretItem)
-        secretItem.setPrivacy('secret')
+        secretItem.privacy = 'secret'
         secretItem._update_after_edit()
         secretBrain = self.catalog(UID=secretItem.UID())[0]
 
@@ -109,7 +110,7 @@ class testColumns(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setDecision('<p>Decision text</p>')
+        item.decision = richtextval('<p>Decision text</p>')
         annex1 = self.addAnnex(item)
         annex2 = self.addAnnex(item)
 
@@ -317,7 +318,7 @@ class testColumns(PloneMeetingTestCase):
         item_brain = self.catalog(UID=item.UID())[0]
         self.assertEqual(column.renderCell(item_brain), u'Vendors (Reviewers)')
         # value is correct without reindex as we use object stored attr
-        item.setCopyGroups((self.developers_reviewers, self.vendors_reviewers, ))
+        item.copy_groups = (self.developers_reviewers, self.vendors_reviewers, )
         self.assertEqual(column.renderCell(item_brain), u'Developers (Reviewers), Vendors (Reviewers)')
 
 

@@ -20,6 +20,7 @@ from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from plone import api
 from plone.dexterity.interfaces import IDexterityContent
+from Products.PloneMeeting.content.meetingconfig import _at_to_dx
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
@@ -30,7 +31,6 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
-from Products.PloneMeeting.config import registerClasses
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
@@ -101,7 +101,8 @@ class ToolInitializer:
                     for adviserConfig in v:
                         adviserConfig['org_uids'] = [
                             org_id_to_uid(org_id) for org_id in adviserConfig['org_uids']]
-                exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
+                setter = getattr(self.tool, 'set%s%s' % (k[0].upper(), k[1:]))
+                setter(v)
             # contacts directory
             if self.profileData.directory_position_types:
                 self.portal.contacts.position_types = self.profileData.directory_position_types
@@ -110,7 +111,7 @@ class ToolInitializer:
                 if descr.id not in self.portal.contacts:
                     self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
             # this will especially apply advisersConfig
-            self.tool.at_post_edit_script()
+            self.tool.post_edit()
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -129,9 +130,6 @@ class ToolInitializer:
         self.data = self.profileData
         if not self.data:
             return self.noDataMessage
-        # Register classes again, after model adaptations have been performed
-        # (see comment in __init__.py)
-        registerClasses()
         # if we already have existing organizations, we do not add additional ones
         own_org = get_own_organization()
         alreadyHaveGroups = bool(own_org.objectValues())
@@ -288,7 +286,7 @@ class ToolInitializer:
             output = import_contacts(self.portal, path=self.profilePath)
             logger.info(output)
             if IDexterityContent.providedBy(cfg):
-                vocab = get_vocab(cfg, u'Products.PloneMeeting.vocabularies.orderedcontacts_vocabulary')
+                vocab = get_vocab(cfg, u'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
                 cfg.ordered_contacts = list(vocab.by_value.keys())
             else:
                 selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
@@ -507,39 +505,38 @@ class ToolInitializer:
             folder = getattr(cfg, TOOL_FOLDER_RECURRING_ITEMS)
         else:
             folder = getattr(cfg, TOOL_FOLDER_ITEM_TEMPLATES)
-        data = descr.__dict__
+        # MeetingItem moved to Dexterity; descriptor attributes are still
+        # camelCase. Translate to snake_case so invokeFactory's **kwargs hit
+        # the DX schema fields rather than landing as bogus instance attrs.
+        data = {_at_to_dx(k): v for k, v in descr.__dict__.items()
+                if not k.startswith('_')}
         itemType = isRecurring and \
             cfg.getItemTypeName(configType='MeetingItemRecurring') or \
             cfg.getItemTypeName(configType='MeetingItemTemplate')
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
         # adapt org related values as we have org id on descriptor and we need to set org UID
-        if item.proposingGroup:
-            item.setProposingGroup(org_id_to_uid(item.proposingGroup))
-        if item.groupsInCharge:
-            item.setGroupsInCharge([org_id_to_uid(grp_in_charge)
-                                    for grp_in_charge in item.groupsInCharge])
-        if item.proposingGroupWithGroupInCharge:
-            proposing_group_id, group_in_charge_id = item.proposingGroupWithGroupInCharge.split(
+        if item.proposing_group:
+            item.proposing_group = org_id_to_uid(item.proposing_group)
+        if item.groups_in_charge:
+            item.groups_in_charge = [org_id_to_uid(grp_in_charge)
+                                     for grp_in_charge in item.groups_in_charge]
+        if item.proposing_group_with_group_in_charge:
+            proposing_group_id, group_in_charge_id = item.proposing_group_with_group_in_charge.split(
                 '__groupincharge__')
             proposing_group_uid = org_id_to_uid(proposing_group_id)
             group_in_charge_uid = org_id_to_uid(group_in_charge_id)
-            item.setProposingGroup(proposing_group_uid)
-            item.setGroupsInCharge((group_in_charge_uid, ))
-            item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(
+            item.proposing_group = proposing_group_uid
+            item.groups_in_charge = [group_in_charge_uid]
+            item.proposing_group_with_group_in_charge = '{0}__groupincharge__{1}'.format(
                 proposing_group_uid, group_in_charge_uid)
-        if item.associatedGroups:
-            item.setAssociatedGroups(
-                [org_id_to_uid(associated_group)
-                 for associated_group in item.associatedGroups])
-        if item.templateUsingGroups:
-            item.setTemplateUsingGroups(
-                [org_id_to_uid(template_using_group)
-                 for template_using_group in item.templateUsingGroups])
-        # disable _at_rename_after_creation for itemTemplates and recurringItems
-        item._at_rename_after_creation = False
-        # call processForm passing dummy values so existing values are not touched
-        item.processForm(values={'dummy': None})
+        if item.associated_groups:
+            item.associated_groups = [org_id_to_uid(associated_group)
+                                      for associated_group in item.associated_groups]
+        if item.template_using_groups:
+            item.template_using_groups = [org_id_to_uid(template_using_group)
+                                          for template_using_group in item.template_using_groups]
+        item.reindexObject()
         return item
 
     def addAnnexType(self, cfg, at, source):
