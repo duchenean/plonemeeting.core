@@ -8,10 +8,10 @@ from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.dexteritytextindexer.directives import searchable
-from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
-from collective.z3cform.datagridfield import BlockDataGridFieldFactory
-from collective.z3cform.datagridfield import DictRow
+from plone.app.dexterity.textindexer.directives import searchable
+from plone.app.dexterity.textindexer.interfaces import IDynamicTextIndexExtender
+from collective.z3cform.datagridfield.blockdatagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield.row import DictRow
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -32,8 +32,8 @@ from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
-from plone.formwidget.datetime.z3cform.widget import DateFieldWidget
-from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
+from plone.app.z3cform.widgets.datetime import DateFieldWidget
+from plone.app.z3cform.widgets.datetime import DatetimeFieldWidget
 from plone.formwidget.masterselect import MasterSelectField
 from plone.memoize import ram
 from plone.supermodel import model
@@ -82,7 +82,6 @@ from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import directlyProvides
 from zope.interface import implementer
-from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
@@ -856,10 +855,10 @@ def _validate_attendees_signatories(context, signature_numbers):
 ########################################################################
 
 
+@implementer(IMeeting)
 class Meeting(Container):
     """ """
 
-    implements(IMeeting)
 
     security = ClassSecurityInfo()
 
@@ -2511,9 +2510,9 @@ class MeetingCollection(Collection):
     query = property(_get_query, _set_query)
 
 
+@implementer(IDynamicTextIndexExtender)
 class MeetingSearchableTextExtender(object):
     adapts(IMeeting)
-    implements(IDynamicTextIndexExtender)
 
     def __init__(self, context):
         self.context = context
@@ -2543,8 +2542,8 @@ class UnicodeSimpleTerm(object):
             directlyProvides(self, ITitledTokenizedTerm)
 
 
+@implementer(IVocabularyFactory)
 class PlacesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """XXX warning, we need unicode term value, so we use UnicodeSimpleTerm.

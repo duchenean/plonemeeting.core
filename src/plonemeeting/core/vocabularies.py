@@ -48,7 +48,7 @@ from imio.helpers.content import uuidToObject
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
-from plone.app.vocabularies.security import GroupsVocabulary
+from plone.app.vocabularies.principals import GroupsFactory as GroupsVocabulary
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.memoize.ram import store_in_cache
@@ -82,7 +82,7 @@ from zope.annotation import IAnnotations
 from zope.component import getAdapter
 from zope.globalrequest import getRequest
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -106,8 +106,8 @@ def _resolve_dgf_context(context):
     return context
 
 
+@implementer(IVocabularyFactory)
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
-    implements(IVocabularyFactory)
 
     def _cache_invalidation_key(self, context, real_context):
         """Take also into account current user groups,
@@ -153,8 +153,8 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class CategoriesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, cat_type='categories', sort=True):
         '''cachekey method for self.__call__.'''
@@ -201,8 +201,8 @@ class CategoriesVocabulary(object):
         return SimpleVocabulary(res)
 
 
+@implementer(IVocabularyFactory)
 class ItemCategoriesVocabulary(CategoriesVocabulary):
-    implements(IVocabularyFactory)
 
     def ItemCategoriesVocabulary__call__(self, context, cat_type='categories'):
         """ """
@@ -227,8 +227,8 @@ class ItemCategoriesVocabulary(CategoriesVocabulary):
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
-    implements(IVocabularyFactory)
 
     def ItemClassifiersVocabulary__call__(self, context, cat_type='categories'):
         """ """
@@ -242,8 +242,8 @@ class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
 ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingCategoriesVocabulary(CategoriesVocabulary):
-    implements(IVocabularyFactory)
 
     def MeetingCategoriesVocabulary__call__(self, context, cat_type='categories'):
         """ """
@@ -257,8 +257,8 @@ class MeetingCategoriesVocabulary(CategoriesVocabulary):
 MeetingCategoriesVocabularyFactory = MeetingCategoriesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemProposingGroupsVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -306,8 +306,8 @@ class ItemProposingGroupsVocabulary(object):
 ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemProposingGroupsForFacetedFilterVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -364,9 +364,9 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
 ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFacetedFilterVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class UserProposingGroupsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def _user_proposing_group_terms_cachekey(method, self, context, tool, cfg):
         '''cachekey method for self._user_proposing_group_terms.'''
@@ -504,8 +504,8 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
 UserProposingGroupsWithGroupsInChargeVocabularyFactory = UserProposingGroupsWithGroupsInChargeVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class GroupsInChargeVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, only_selected=True, sort=True):
         '''cachekey method for self.__call__.'''
@@ -639,8 +639,8 @@ class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
 PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -700,8 +700,8 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingReviewStatesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -731,8 +731,8 @@ class MeetingReviewStatesVocabulary(object):
 MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemReviewStatesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -762,8 +762,8 @@ class ItemReviewStatesVocabulary(object):
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class CreatorsVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -791,8 +791,8 @@ class CreatorsVocabulary(object):
 CreatorsVocabularyFactory = CreatorsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class CreatorsForFacetedFilterVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -852,8 +852,8 @@ class CreatorsWithNobodyForFacetedFilterVocabulary(CreatorsForFacetedFilterVocab
 CreatorsWithNobodyForFacetedFilterVocabularyFactory = CreatorsWithNobodyForFacetedFilterVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingDatesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -894,8 +894,8 @@ class MeetingDatesVocabulary(object):
 MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AskedAdvicesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def _getAdvisers(self, active=True):
         """ """
@@ -1036,8 +1036,8 @@ class AskedAdvicesVocabulary(object):
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemOptionalAdvicesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, include_selected=True, include_not_selectable_values=True):
         '''cachekey method for self.__call__.'''
@@ -1261,10 +1261,10 @@ class ItemOptionalAdvicesVocabulary(object):
 ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ConfigAdviceTypesVocabulary(object):
     """Expected context is portal_plonemeeting."""
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, include_asked_again=False, include_term_id=True):
         d = "PloneMeeting"
@@ -1293,10 +1293,10 @@ class ConfigAdviceTypesVocabulary(object):
 ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AdviceTypesVocabulary(object):
     """Global advice types vocabulary used in faceted criterion."""
 
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -1343,8 +1343,8 @@ class AdviceTypesVocabulary(object):
 AdviceTypesVocabularyFactory = AdviceTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SentToInfosVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1381,8 +1381,8 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class FacetedAnnexesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1416,8 +1416,8 @@ class FacetedAnnexesVocabulary(object):
 FacetedAnnexesVocabularyFactory = FacetedAnnexesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class BooleanForFacetedVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context, prefix=''):
         """ """
@@ -1440,8 +1440,8 @@ class BooleanForFacetedVocabulary(object):
 BooleanForFacetedVocabularyFactory = BooleanForFacetedVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class DownOrUpWorkflowAgainVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1465,8 +1465,8 @@ class DownOrUpWorkflowAgainVocabulary(object):
 DownOrUpWorkflowAgainVocabularyFactory = DownOrUpWorkflowAgainVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class YearlyInitMeetingNumbersVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1490,8 +1490,8 @@ class YearlyInitMeetingNumbersVocabulary(object):
 YearlyInitMeetingNumbersVocabularyFactory = YearlyInitMeetingNumbersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ListTypesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1511,8 +1511,8 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AllVoteValuesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1530,8 +1530,8 @@ class AllVoteValuesVocabulary(object):
 AllVoteValuesVocabularyFactory = AllVoteValuesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class UsedVoteValuesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def is_first_linked_vote(self, vote_number):
         """ """
@@ -1589,8 +1589,8 @@ class UsedVoteValuesVocabulary(object):
 UsedVoteValuesVocabularyFactory = UsedVoteValuesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectablePrivaciesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1610,8 +1610,8 @@ class SelectablePrivaciesVocabulary(object):
 SelectablePrivaciesVocabularyFactory = SelectablePrivaciesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PrivaciesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1632,8 +1632,8 @@ class PrivaciesVocabulary(object):
 PrivaciesVocabularyFactory = PrivaciesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PollTypesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1657,11 +1657,11 @@ class PollTypesVocabulary(object):
 PollTypesVocabularyFactory = PollTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class EveryAnnexTypesVocabulary(object):
     """
     Vocabulary returning every annex types (item, meeting, advice).
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context, filtered_annex_groups=[], include_icon=False):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1735,8 +1735,8 @@ class IconItemAnnexTypesVocabulary(ItemAnnexTypesVocabulary):
 IconItemAnnexTypesVocabularyFactory = IconItemAnnexTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemTemplatesStorableAsAnnexVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -1773,11 +1773,11 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
 ItemTemplatesStorableAsAnnexVocabularyFactory = ItemTemplatesStorableAsAnnexVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
     """
     Vocabulary factory for 'pod_portal_types' field, make it MeetingConfig aware.
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1807,9 +1807,9 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AdvicePortalTypesVocabulary(object):
     """Vocabulary listing every existing advice portal_types."""
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         # manage multiple 'meetingadvice' portal_types
@@ -1829,9 +1829,9 @@ class AdvicePortalTypesVocabulary(object):
 AdvicePortalTypesVocabularyFactory = AdvicePortalTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class TypeWorkflowsVocabulary(object):
     """Vocabulary listing workflows related to a type of element."""
-    implements(IVocabularyFactory)
 
     def __init__(self, wf_name_startswith=None):
         self.wf_name_startswith = wf_name_startswith
@@ -1851,11 +1851,11 @@ MeetingWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meeting_')
 AdviceWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingadvice')
 
 
+@implementer(IVocabularyFactory)
 class PMExistingPODTemplate(ExistingPODTemplateFactory):
     """
     Vocabulary factory for 'pod_template_to_use' field, include MeetingConfig title in term.
     """
-    implements(IVocabularyFactory)
 
     def _renderTermTitle(self, brain):
         """If template in podtemplates folder of a MeetingConfig,
@@ -1876,12 +1876,12 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
 PMExistingPODTemplateFactory = PMExistingPODTemplate()
 
 
+@implementer(IVocabularyFactory)
 class PMStyleTemplatesVocabulary(StyleTemplatesVocabularyFactory):
     """
     Override to display the MeetingConfig title in the term title as
     style templates are useable cross MetingConfigs.
     """
-    implements(IVocabularyFactory)
 
     def _renderTermTitle(self, brain):
         obj = brain.getObject()
@@ -1893,12 +1893,12 @@ class PMStyleTemplatesVocabulary(StyleTemplatesVocabularyFactory):
 PMStyleTemplatesVocabularyFactory = PMStyleTemplatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
     """
     Vocabulary factory for 'dashboard_collections' field of DashboardPODTemplate.
     """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         catalog = api.portal.get_tool('portal_catalog')
@@ -2023,9 +2023,9 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     __call__ = PMCategoryTitleVocabulary__call__
 
 
+@implementer(IVocabularyFactory)
 class HeldPositionUsagesVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
@@ -2039,9 +2039,9 @@ class HeldPositionUsagesVocabulary(object):
 HeldPositionUsagesVocabularyFactory = HeldPositionUsagesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class HeldPositionDefaultsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
@@ -2055,9 +2055,9 @@ class HeldPositionDefaultsVocabulary(object):
 HeldPositionDefaultsVocabularyFactory = HeldPositionDefaultsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemNotPresentTypeVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2074,9 +2074,9 @@ class ItemNotPresentTypeVocabulary(object):
 ItemNotPresentTypeVocabularyFactory = ItemNotPresentTypeVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class NumbersVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context, start=1, end=21):
         res = []
@@ -2090,9 +2090,9 @@ class NumbersVocabulary(object):
 NumbersVocabularyFactory = NumbersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class NumbersFromZeroVocabulary(NumbersVocabulary):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context, start=0, end=11):
         return super(NumbersFromZeroVocabulary, self).__call__(
@@ -2102,9 +2102,9 @@ class NumbersFromZeroVocabulary(NumbersVocabulary):
 NumbersFromZeroVocabularyFactory = NumbersFromZeroVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAllStatesVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2128,9 +2128,9 @@ class ItemAllStatesVocabulary(object):
 ItemAllStatesVocabularyFactory = ItemAllStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AnnexRestrictShownAndEditableAttributesVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
@@ -2151,9 +2151,9 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 AnnexRestrictShownAndEditableAttributesVocabularyFactory = AnnexRestrictShownAndEditableAttributesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class KeepAccessToItemWhenAdviceVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
@@ -2172,9 +2172,9 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
 KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class EnabledItemActionsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
@@ -2190,9 +2190,9 @@ class EnabledItemActionsVocabulary(object):
 EnabledItemActionsVocabularyFactory = EnabledItemActionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
     """Override pod_template.merge_templates vocabulary to display the MeetingConfig title."""
-    implements(IVocabularyFactory)
 
     def _portal_types(self):
         return ['ConfigurablePODTemplate']
@@ -2214,9 +2214,9 @@ class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
 PMMergeTemplatesVocabularyFactory = PMMergeTemplatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class BaseHeldPositionsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def _is_editing_config(self, context):
         """Force highlight=True person_label in title
@@ -2477,10 +2477,10 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
 ItemVotersVocabularyFactory = ItemVotersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
     """Use BaseOrganizationServicesVocabulary and call it from contacts directory then
        adapt title of the terms to show organizations that are in plonegroup and others that are not."""
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -2504,9 +2504,9 @@ class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
 PMDetailedEveryOrganizationsVocabularyFactory = PMDetailedEveryOrganizationsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AssociatedGroupsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
@@ -2551,9 +2551,9 @@ class AssociatedGroupsVocabulary(object):
 AssociatedGroupsVocabularyFactory = AssociatedGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
     """Manage missing terms if context is a MeetingItem."""
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """This is not ram.cached."""
@@ -2584,9 +2584,9 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 ItemAssociatedGroupsVocabularyFactory = ItemAssociatedGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class BaseCopyGroupsVocabulary(object):
     """ """
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, restricted=False, include_both=False):
         '''cachekey method for self.__call__.'''
@@ -2695,8 +2695,8 @@ class ItemRestrictedCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
 ItemRestrictedCopyGroupsVocabularyFactory = ItemRestrictedCopyGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableCommitteesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def _get_stored_values(self):
         """ """
@@ -2931,10 +2931,10 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class OtherMCsClonableToVocabulary(object):
     """Vocabulary listing other MeetingConfigs clonable to."""
 
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, term_title=None):
         '''cachekey method for self.__call__.'''
@@ -2978,10 +2978,10 @@ class OtherMCsClonableToVocabulary(object):
 OtherMCsClonableToVocabularyFactory = OtherMCsClonableToVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class OtherMCsClonableToEmergencyVocabulary(OtherMCsClonableToVocabulary):
     """Vocabulary listing other MeetingConfigs clonable to emergency."""
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, term_title=None):
         """ """
@@ -2994,10 +2994,10 @@ class OtherMCsClonableToEmergencyVocabulary(OtherMCsClonableToVocabulary):
 OtherMCsClonableToEmergencyVocabularyFactory = OtherMCsClonableToEmergencyVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
     """Vocabulary listing other MeetingConfigs clonable to privacy."""
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, term_title=None):
         """ """
@@ -3011,11 +3011,11 @@ class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
 OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class BaseContainedAnnexesVocabulary(object):
     """Base vocabulary that manages displaying contained annexes with
        a functionnality that will let disable some annexes."""
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, portal_type='annex', prefixed=False):
         """ """
@@ -3154,8 +3154,8 @@ class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
 ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class GenerablePODTemplatesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def _get_generable_templates(self, context, output_formats):
         res = []
@@ -3329,10 +3329,10 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
 PMDxPortalTypesVocabularyFactory = PMDxPortalTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class WorkflowAdaptationsVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, sorted=True):
         """Received "context" is a MeetingConfig."""
@@ -3384,10 +3384,10 @@ class WorkflowAdaptationsVocabulary(object):
 WorkflowAdaptationsVocabularyFactory = WorkflowAdaptationsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AdviceWorkflowAdaptationsVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -3407,10 +3407,10 @@ class AdviceWorkflowAdaptationsVocabulary(object):
 AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ConfigHideHistoryTosVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """Build selectable values for MeetingItem, Meeting and every meetingadvice
@@ -3449,10 +3449,10 @@ class ConfigHideHistoryTosVocabulary(object):
 ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemFieldsConfigVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -3470,10 +3470,10 @@ class ItemFieldsConfigVocabulary(object):
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ConfigCssTransformsActionsVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -3490,10 +3490,10 @@ class ConfigCssTransformsActionsVocabulary(object):
 ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class EveryConfigsVocabulary(object):
     """ """
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, only_active=False):
         """ """
@@ -3534,11 +3534,11 @@ def _dl_to_vocabulary(display_list):
     return SimpleVocabulary(terms)
 
 
+@implementer(IVocabularyFactory)
 class BooleanVocabulary(object):
     """Boolean vocabulary (0/1) for DataGridField columns.
     Replaces AT instance method: MeetingConfig.listBooleanVocabulary
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3550,11 +3550,11 @@ class BooleanVocabulary(object):
 BooleanVocabularyFactory = BooleanVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class CommitteesEnabledVocabulary(object):
     """Vocabulary for committees.enabled column.
     Replaces AT instance method: MeetingConfig.listCommitteesEnabled
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3566,11 +3566,11 @@ class CommitteesEnabledVocabulary(object):
 CommitteesEnabledVocabularyFactory = CommitteesEnabledVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AnnexesBatchActionsVocabulary(object):
     """Vocabulary for enabledAnnexesBatchActions field.
     Replaces AT instance method: MeetingConfig.listAnnexesBatchActions
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3582,11 +3582,11 @@ class AnnexesBatchActionsVocabulary(object):
 AnnexesBatchActionsVocabularyFactory = AnnexesBatchActionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AnnexToPrintModesVocabulary(object):
     """Vocabulary for annexToPrintMode field.
     Replaces AT instance method: MeetingConfig.listAnnexToPrintModes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3598,11 +3598,11 @@ class AnnexToPrintModesVocabulary(object):
 AnnexToPrintModesVocabularyFactory = AnnexToPrintModesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ContentsKeptOnSentToOtherMCVocabulary(object):
     """Vocabulary for contentsKeptOnSentToOtherMC field.
     Replaces AT instance method: MeetingConfig.listContentsKeptOnSentToOtherMCs
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3614,11 +3614,11 @@ class ContentsKeptOnSentToOtherMCVocabulary(object):
 ContentsKeptOnSentToOtherMCVocabularyFactory = ContentsKeptOnSentToOtherMCVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemIconColorsVocabulary(object):
     """Vocabulary for itemIconColor field.
     Replaces AT instance method: MeetingConfig.listItemIconColors
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3630,11 +3630,11 @@ class ItemIconColorsVocabulary(object):
 ItemIconColorsVocabularyFactory = ItemIconColorsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemFieldsToKeepConfigSortingForVocabulary(object):
     """Vocabulary for itemFieldsToKeepConfigSortingFor field.
     Replaces AT instance method: MeetingConfig.listItemFieldsToKeepConfigSortingFor
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3646,11 +3646,11 @@ class ItemFieldsToKeepConfigSortingForVocabulary(object):
 ItemFieldsToKeepConfigSortingForVocabularyFactory = ItemFieldsToKeepConfigSortingForVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ResultsPerPageVocabulary(object):
     """Vocabulary for maxShownListings, maxShownAvailableItems and maxShownMeetingItems fields.
     Replaces AT instance method: MeetingConfig.listResultsPerPage
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3662,11 +3662,11 @@ class ResultsPerPageVocabulary(object):
 ResultsPerPageVocabularyFactory = ResultsPerPageVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AdviceStylesVocabulary(object):
     """Vocabulary for adviceStyle field.
     Replaces AT instance method: MeetingConfig.listAdviceStyles
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3678,11 +3678,11 @@ class AdviceStylesVocabulary(object):
 AdviceStylesVocabularyFactory = AdviceStylesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class VotesEncodersVocabulary(object):
     """Vocabulary for votesEncoder field.
     Replaces AT instance method: MeetingConfig.listVotesEncoders
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3694,11 +3694,11 @@ class VotesEncodersVocabulary(object):
 VotesEncodersVocabularyFactory = VotesEncodersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class TransformTypesVocabulary(object):
     """Vocabulary for cssTransforms transform_type column.
     Replaces AT instance method: MeetingConfig.listTransformTypes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3710,11 +3710,11 @@ class TransformTypesVocabulary(object):
 TransformTypesVocabularyFactory = TransformTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MailModesVocabulary(object):
     """Vocabulary for mailMode field.
     Replaces AT instance method: MeetingConfig.listMailModes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3726,11 +3726,11 @@ class MailModesVocabulary(object):
 MailModesVocabularyFactory = MailModesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemActionsColumnConfigVocabulary(object):
     """Vocabulary for itemActionsColumnConfig field.
     Replaces AT instance method: MeetingConfig.listItemActionsColumnConfig
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3742,11 +3742,11 @@ class ItemActionsColumnConfigVocabulary(object):
 ItemActionsColumnConfigVocabularyFactory = ItemActionsColumnConfigVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class DisplayAvailableItemsToVocabulary(object):
     """Vocabulary for displayAvailableItemsTo field.
     Replaces AT instance method: MeetingConfig.listDisplayAvailableItemsTo
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3758,11 +3758,11 @@ class DisplayAvailableItemsToVocabulary(object):
 DisplayAvailableItemsToVocabularyFactory = DisplayAvailableItemsToVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class RedirectToNextMeetingVocabulary(object):
     """Vocabulary for redirectToNextMeeting field.
     Replaces AT instance method: MeetingConfig.listRedirectToNextMeeting
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3774,11 +3774,11 @@ class RedirectToNextMeetingVocabulary(object):
 RedirectToNextMeetingVocabularyFactory = RedirectToNextMeetingVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ConfigGroupsVocabulary(object):
     """Vocabulary for configGroup field.
     Replaces AT instance method: MeetingConfig.listConfigGroups
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3790,11 +3790,11 @@ class ConfigGroupsVocabulary(object):
 ConfigGroupsVocabularyFactory = ConfigGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class PowerObserversTypesVocabulary(object):
     """Vocabulary for power observer types.
     Replaces AT instance method: MeetingConfig.listPowerObserversTypes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3806,11 +3806,11 @@ class PowerObserversTypesVocabulary(object):
 PowerObserversTypesVocabularyFactory = PowerObserversTypesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAttributeVisibleForVocabulary(object):
     """Vocabulary for itemAttributeVisibleFor-based fields.
     Replaces AT instance method: MeetingConfig.listItemAttributeVisibleFor
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3822,11 +3822,11 @@ class ItemAttributeVisibleForVocabulary(object):
 ItemAttributeVisibleForVocabularyFactory = ItemAttributeVisibleForVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAttributeVisibleForWithMeetingManagersVocabulary(object):
     """Vocabulary including meetingmanagers profile.
     Replaces AT instance method: MeetingConfig.listItemAttributeVisibleForWithMeetingManagers
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3838,11 +3838,11 @@ class ItemAttributeVisibleForWithMeetingManagersVocabulary(object):
 ItemAttributeVisibleForWithMeetingManagersVocabularyFactory = ItemAttributeVisibleForWithMeetingManagersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AdviceAnnexConfidentialVisibleForVocabulary(object):
     """Vocabulary for adviceAnnexConfidentialVisibleFor field.
     Replaces AT instance method: MeetingConfig.listAdviceAnnexConfidentialVisibleFor
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3854,11 +3854,11 @@ class AdviceAnnexConfidentialVisibleForVocabulary(object):
 AdviceAnnexConfidentialVisibleForVocabularyFactory = AdviceAnnexConfidentialVisibleForVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingAnnexConfidentialVisibleForVocabulary(object):
     """Vocabulary for meetingAnnexConfidentialVisibleFor field.
     Replaces AT instance method: MeetingConfig.listMeetingAnnexConfidentialVisibleFor
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3870,11 +3870,11 @@ class MeetingAnnexConfidentialVisibleForVocabulary(object):
 MeetingAnnexConfidentialVisibleForVocabularyFactory = MeetingAnnexConfidentialVisibleForVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ActiveOrgsForPowerAdvisersVocabulary(object):
     """Vocabulary for powerAdvisersGroups field.
     Replaces AT instance method: MeetingConfig.listActiveOrgsForPowerAdvisers
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3886,11 +3886,11 @@ class ActiveOrgsForPowerAdvisersVocabulary(object):
 ActiveOrgsForPowerAdvisersVocabularyFactory = ActiveOrgsForPowerAdvisersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ActiveOrgsForCustomAdvisersVocabulary(object):
     """Vocabulary for customAdvisers.org column.
     Replaces AT instance method: MeetingConfig.listActiveOrgsForCustomAdvisers
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3902,11 +3902,11 @@ class ActiveOrgsForCustomAdvisersVocabulary(object):
 ActiveOrgsForCustomAdvisersVocabularyFactory = ActiveOrgsForCustomAdvisersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableContactsVocabulary(object):
     """Vocabulary for certifiedSignatures.held_position column.
     Replaces AT instance method: MeetingConfig.listSelectableContacts
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3918,11 +3918,11 @@ class SelectableContactsVocabulary(object):
 SelectableContactsVocabularyFactory = SelectableContactsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableCommitteeAutoFromVocabulary(object):
     """Vocabulary for committees.auto_from column.
     Replaces AT instance method: MeetingConfig.listSelectableCommitteeAutoFrom
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3934,11 +3934,11 @@ class SelectableCommitteeAutoFromVocabulary(object):
 SelectableCommitteeAutoFromVocabularyFactory = SelectableCommitteeAutoFromVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableAdvisersVocabulary(object):
     """Vocabulary for selectableAdvisers field.
     Replaces AT instance method: MeetingConfig.listSelectableAdvisers
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3950,11 +3950,11 @@ class SelectableAdvisersVocabulary(object):
 SelectableAdvisersVocabularyFactory = SelectableAdvisersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableProposingGroupsVocabulary(object):
     """Vocabulary for committees.using_groups column.
     Replaces AT instance method: MeetingConfig.listSelectableProposingGroups
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3966,11 +3966,11 @@ class SelectableProposingGroupsVocabulary(object):
 SelectableProposingGroupsVocabularyFactory = SelectableProposingGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class SelectableCopyGroupsVocabulary(object):
     """Vocabulary for selectableCopyGroups field.
     Replaces AT instance method: MeetingConfig.listSelectableCopyGroups
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3982,11 +3982,11 @@ class SelectableCopyGroupsVocabulary(object):
 SelectableCopyGroupsVocabularyFactory = SelectableCopyGroupsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ToDoListSearchesVocabulary(object):
     """Vocabulary for toDoListSearches field.
     Replaces AT instance method: MeetingConfig.listToDoListSearches
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -3998,11 +3998,11 @@ class ToDoListSearchesVocabulary(object):
 ToDoListSearchesVocabularyFactory = ToDoListSearchesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class DashboardItemsListingsFiltersVocabulary(object):
     """Vocabulary for dashboardItemsListingsFilters field.
     Replaces AT instance method: MeetingConfig.listDashboardItemsListingsFilters
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4014,11 +4014,11 @@ class DashboardItemsListingsFiltersVocabulary(object):
 DashboardItemsListingsFiltersVocabularyFactory = DashboardItemsListingsFiltersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class DashboardMeetingsListingsFiltersVocabulary(object):
     """Vocabulary for dashboardMeetingsListingsFilters field.
     Replaces AT instance method: MeetingConfig.listDashboardMeetingsListingsFilters
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4030,11 +4030,11 @@ class DashboardMeetingsListingsFiltersVocabulary(object):
 DashboardMeetingsListingsFiltersVocabularyFactory = DashboardMeetingsListingsFiltersVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingConfigsToCloneToVocabulary(object):
     """Vocabulary for otherMeetingConfigsClonableTo field.
     Replaces AT instance method: MeetingConfig.listMeetingConfigsToCloneTo
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4046,11 +4046,11 @@ class MeetingConfigsToCloneToVocabulary(object):
 MeetingConfigsToCloneToVocabularyFactory = MeetingConfigsToCloneToVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class TransitionsUntilPresentedVocabulary(object):
     """Vocabulary for onMeetingTransitionItemActionToExecute item_wf_val column.
     Replaces AT instance method: MeetingConfig.listTransitionsUntilPresented
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4062,11 +4062,11 @@ class TransitionsUntilPresentedVocabulary(object):
 TransitionsUntilPresentedVocabularyFactory = TransitionsUntilPresentedVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ExecutableItemActionsVocabulary(object):
     """Vocabulary for onMeetingTransitionItemActionToExecute item_action column.
     Replaces AT instance method: MeetingConfig.listExecutableItemActions
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4078,11 +4078,11 @@ class ExecutableItemActionsVocabulary(object):
 ExecutableItemActionsVocabularyFactory = ExecutableItemActionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemTransitionsVocabulary(object):
     """Vocabulary listing every item WF transitions.
     Replaces AT instance method: MeetingConfig.listItemTransitions
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4094,11 +4094,11 @@ class ItemTransitionsVocabulary(object):
 ItemTransitionsVocabularyFactory = ItemTransitionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingTransitionsVocabulary(object):
     """Vocabulary listing every meeting WF transitions.
     Replaces AT instance method: MeetingConfig.listMeetingTransitions
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4110,11 +4110,11 @@ class MeetingTransitionsVocabulary(object):
 MeetingTransitionsVocabularyFactory = MeetingTransitionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemStatesVocabulary(object):
     """Vocabulary listing every item WF states.
     Replaces AT instance method: MeetingConfig.listItemStates
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4126,11 +4126,11 @@ class ItemStatesVocabulary(object):
 ItemStatesVocabularyFactory = ItemStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAutoSentToOtherMCStatesVocabulary(object):
     """Vocabulary for itemAutoSentToOtherMCStates field.
     Replaces AT instance method: MeetingConfig.listItemAutoSentToOtherMCStates
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4142,11 +4142,11 @@ class ItemAutoSentToOtherMCStatesVocabulary(object):
 ItemAutoSentToOtherMCStatesVocabularyFactory = ItemAutoSentToOtherMCStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingStatesVocabulary(object):
     """Vocabulary listing every meeting WF states.
     Replaces AT instance method: MeetingConfig.listMeetingStates
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4158,11 +4158,11 @@ class MeetingStatesVocabulary(object):
 MeetingStatesVocabularyFactory = MeetingStatesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AllTransitionsVocabulary(object):
     """Vocabulary listing all transitions (item + meeting).
     Replaces AT instance method: MeetingConfig.listAllTransitions
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4174,11 +4174,11 @@ class AllTransitionsVocabulary(object):
 AllTransitionsVocabularyFactory = AllTransitionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemEventsVocabulary(object):
     """Vocabulary for itemMailNotifications field.
     Replaces AT instance method: MeetingConfig.listItemEvents
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4190,11 +4190,11 @@ class ItemEventsVocabulary(object):
 ItemEventsVocabularyFactory = ItemEventsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingEventsVocabulary(object):
     """Vocabulary for meetingMailNotifications field.
     Replaces AT instance method: MeetingConfig.listMeetingEvents
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4206,11 +4206,11 @@ class MeetingEventsVocabulary(object):
 MeetingEventsVocabularyFactory = MeetingEventsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class InsertingMethodsVocabulary(object):
     """Vocabulary for insertingMethodOnGroups field.
     Replaces AT instance method: MeetingConfig.listInsertingMethods
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4222,11 +4222,11 @@ class InsertingMethodsVocabulary(object):
 InsertingMethodsVocabularyFactory = InsertingMethodsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class UsedItemAttributesVocabulary(object):
     """Vocabulary for usedItemAttributes field.
     Replaces AT instance method: MeetingConfig.listUsedItemAttributes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4238,11 +4238,11 @@ class UsedItemAttributesVocabulary(object):
 UsedItemAttributesVocabularyFactory = UsedItemAttributesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemAttributesVocabulary(object):
     """Vocabulary for all item attributes.
     Replaces AT instance method: MeetingConfig.listItemAttributes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4254,11 +4254,11 @@ class ItemAttributesVocabulary(object):
 ItemAttributesVocabularyFactory = ItemAttributesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class UsedMeetingAttributesVocabulary(object):
     """Vocabulary for usedMeetingAttributes field.
     Replaces AT instance method: MeetingConfig.listUsedMeetingAttributes
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4271,11 +4271,11 @@ class UsedMeetingAttributesVocabulary(object):
 UsedMeetingAttributesVocabularyFactory = UsedMeetingAttributesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemColumnsVocabulary(object):
     """Vocabulary for itemColumns field.
     Replaces AT instance method: MeetingConfig.listItemColumns
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4287,11 +4287,11 @@ class ItemColumnsVocabulary(object):
 ItemColumnsVocabularyFactory = ItemColumnsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class MeetingColumnsVocabulary(object):
     """Vocabulary for meetingColumns field.
     Replaces AT instance method: MeetingConfig.listMeetingColumns
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4303,11 +4303,11 @@ class MeetingColumnsVocabulary(object):
 MeetingColumnsVocabularyFactory = MeetingColumnsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AvailableItemsListVisibleColumnsVocabulary(object):
     """Vocabulary for availableItemsListVisibleColumns field.
     Replaces AT instance method: MeetingConfig.listAvailableItemsListVisibleColumns
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4319,11 +4319,11 @@ class AvailableItemsListVisibleColumnsVocabulary(object):
 AvailableItemsListVisibleColumnsVocabularyFactory = AvailableItemsListVisibleColumnsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemsListVisibleColumnsVocabulary(object):
     """Vocabulary for itemsListVisibleColumns field.
     Replaces AT instance method: MeetingConfig.listItemsListVisibleColumns
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4335,11 +4335,11 @@ class ItemsListVisibleColumnsVocabulary(object):
 ItemsListVisibleColumnsVocabularyFactory = ItemsListVisibleColumnsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemsVisibleFieldsVocabulary(object):
     """Vocabulary for itemsVisibleFields field.
     Replaces AT instance method: MeetingConfig.listItemsVisibleFields
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4351,11 +4351,11 @@ class ItemsVisibleFieldsVocabulary(object):
 ItemsVisibleFieldsVocabularyFactory = ItemsVisibleFieldsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemsNotViewableVisibleFieldsVocabulary(object):
     """Vocabulary for itemsNotViewableVisibleFields field.
     Replaces AT instance method: MeetingConfig.listItemsNotViewableVisibleFields
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4367,11 +4367,11 @@ class ItemsNotViewableVisibleFieldsVocabulary(object):
 ItemsNotViewableVisibleFieldsVocabularyFactory = ItemsNotViewableVisibleFieldsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemsListVisibleFieldsVocabulary(object):
     """Vocabulary for itemsListVisibleFields field.
     Replaces AT instance method: MeetingConfig.listItemsListVisibleFields
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4383,11 +4383,11 @@ class ItemsListVisibleFieldsVocabulary(object):
 ItemsListVisibleFieldsVocabularyFactory = ItemsListVisibleFieldsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class AllRichTextFieldsVocabulary(object):
     """Vocabulary for cssTransforms field (all rich text fields).
     Replaces AT instance method: MeetingConfig.listAllRichTextFields
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4399,11 +4399,11 @@ class AllRichTextFieldsVocabulary(object):
 AllRichTextFieldsVocabularyFactory = AllRichTextFieldsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemRichTextFieldsVocabulary(object):
     """Vocabulary for cssTransforms field (item rich text fields only).
     Replaces AT instance method: MeetingConfig.listItemRichTextFields
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """context is a MeetingConfig."""
@@ -4449,12 +4449,12 @@ PollTypesVocabularyAliasFactory = PollTypesVocabularyAlias()
 # (registered earlier under the legacy ``categoriesvocabulary`` /
 # ``classifiersvocabulary`` names) — no extra factory is needed.
 
+@implementer(IVocabularyFactory)
 class ItemEmergenciesVocabulary(object):
     """Vocabulary for ``MeetingItem.emergency``.
 
     Replaces AT method ``MeetingItem.listEmergencies``.
     """
-    implements(IVocabularyFactory)
 
     _terms = (
         'no_emergency',
@@ -4476,12 +4476,12 @@ class ItemEmergenciesVocabulary(object):
 ItemEmergenciesVocabularyFactory = ItemEmergenciesVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemCompletenessVocabulary(object):
     """Vocabulary for ``MeetingItem.completeness``.
 
     Replaces AT method ``MeetingItem.listCompleteness``.
     """
-    implements(IVocabularyFactory)
 
     _terms = (
         'completeness_not_yet_evaluated',
@@ -4504,13 +4504,13 @@ class ItemCompletenessVocabulary(object):
 ItemCompletenessVocabularyFactory = ItemCompletenessVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemTagsVocabulary(object):
     """Vocabulary for ``MeetingItem.item_tags``.
 
     Replaces AT method ``MeetingItem.listItemTags``. Tags live in
     ``MeetingConfig.all_item_tags`` (newline-separated text).
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4530,6 +4530,7 @@ class ItemTagsVocabulary(object):
 ItemTagsVocabularyFactory = ItemTagsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemMeetingsAcceptingItemsVocabulary(object):
     """Vocabulary for ``MeetingItem.preferred_meeting``.
 
@@ -4540,7 +4541,6 @@ class ItemMeetingsAcceptingItemsVocabulary(object):
     longer in the active set, so editing an old item does not lose the
     information.
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         from plonemeeting.core.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -4593,6 +4593,7 @@ class ItemMeetingsAcceptingItemsVocabulary(object):
 ItemMeetingsAcceptingItemsVocabularyFactory = ItemMeetingsAcceptingItemsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemMeetingTransitionsVocabulary(object):
     """Vocabulary for ``MeetingItem.meeting_transition_inserting_me``.
 
@@ -4603,7 +4604,6 @@ class ItemMeetingTransitionsVocabulary(object):
     this one prepends a special ``_init_`` value meaning "right after
     the meeting is created".
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4627,6 +4627,7 @@ class ItemMeetingTransitionsVocabulary(object):
 ItemMeetingTransitionsVocabularyFactory = ItemMeetingTransitionsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class ItemInitiatorsVocabulary(object):
     """Vocabulary for ``MeetingItem.item_initiator``.
 
@@ -4636,7 +4637,6 @@ class ItemInitiatorsVocabulary(object):
     a fallback that re-injects any currently-stored UID that has been
     de-selected from the cfg.
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4667,8 +4667,8 @@ class ItemInitiatorsVocabulary(object):
 ItemInitiatorsVocabularyFactory = ItemInitiatorsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class WeekDaysVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         request = getattr(context, 'REQUEST', None)
@@ -4683,8 +4683,8 @@ class WeekDaysVocabulary(object):
 WeekDaysVocabularyFactory = WeekDaysVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class DeferParentReindexVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         request = getattr(context, 'REQUEST', None)

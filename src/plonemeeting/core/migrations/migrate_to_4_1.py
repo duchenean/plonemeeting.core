@@ -20,7 +20,10 @@ from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import get_vocab_values
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
+try:
+    from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
+except ImportError:
+    migrate_base_class_to_new_class = None
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW

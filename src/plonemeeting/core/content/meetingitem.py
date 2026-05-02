@@ -35,8 +35,8 @@ from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from Acquisition import aq_parent
-from App.class_init import InitializeClass
-from appy.gen import No
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -185,7 +185,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.schema import getFieldsInOrder as zope_getFieldsInOrder
 from zope.schema.interfaces import IVocabularyFactory
@@ -1227,6 +1227,7 @@ class _ATSchemaStub(object):
 # Content class skeleton
 # ---------------------------------------------------------------------------
 
+@implementer(IMeetingItem)
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
 
@@ -1235,7 +1236,6 @@ class MeetingItem(Container):
     in the source tree but is no longer instantiated at runtime.
     """
 
-    implements(IMeetingItem)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'

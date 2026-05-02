@@ -6,8 +6,8 @@ from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
-from collective.contact.core.vocabulary import get_directory
-from collective.contact.core.vocabulary import NoDirectoryFound
+from collective.contact.core.vocabularies import get_directory
+from collective.contact.core.vocabularies import NoDirectoryFound
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.widget.schema import ContactChoice

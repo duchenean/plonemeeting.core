@@ -63,7 +63,7 @@ PM_TESTING_PROFILE = PMLayer(
     additional_z2_products=('plonemeeting.core',
                             'collective.eeafaceted.collectionwidget',
                             'Products.CMFPlacefulWorkflow',
-                            'Products.PasswordStrength'),
+                            ),
     gs_profile_id='plonemeeting.core:testing',
     name="PM_TESTING_PROFILE")
 

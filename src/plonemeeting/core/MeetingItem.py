@@ -6,9 +6,12 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
-from App.class_init import InitializeClass
-from appy.gen import No
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
+try:
+    from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+except ImportError:
+    ReferenceBrowserWidget = None
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -47,24 +50,32 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
-from Products.Archetypes.atapi import BaseFolder
-from Products.Archetypes.atapi import BooleanField
-from Products.Archetypes.atapi import DateTimeField
-from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import IntegerField
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
-from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import ReferenceField
-from Products.Archetypes.atapi import registerType
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import SelectionWidget
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import StringWidget
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
+try:
+    from Products.Archetypes.atapi import BaseFolder
+    from Products.Archetypes.atapi import BooleanField
+    from Products.Archetypes.atapi import DateTimeField
+    from Products.Archetypes.atapi import DisplayList
+    from Products.Archetypes.atapi import IntegerField
+    from Products.Archetypes.atapi import LinesField
+    from Products.Archetypes.atapi import MultiSelectionWidget
+    from Products.Archetypes.atapi import OrderedBaseFolder
+    from Products.Archetypes.atapi import OrderedBaseFolderSchema
+    from Products.Archetypes.atapi import ReferenceField
+    from Products.Archetypes.atapi import registerType
+    from Products.Archetypes.atapi import RichWidget
+    from Products.Archetypes.atapi import Schema
+    from Products.Archetypes.atapi import SelectionWidget
+    from Products.Archetypes.atapi import StringField
+    from Products.Archetypes.atapi import StringWidget
+    from Products.Archetypes.atapi import TextAreaWidget
+    from Products.Archetypes.atapi import TextField
+except ImportError:
+    BaseFolder = OrderedBaseFolder = object
+    BooleanField = DateTimeField = IntegerField = LinesField = None
+    ReferenceField = StringField = TextField = None
+    DisplayList = MultiSelectionWidget = RichWidget = Schema = None
+    OrderedBaseFolderSchema = SelectionWidget = StringWidget = None
+    TextAreaWidget = registerType = None
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -168,7 +179,7 @@ from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 
 import html
@@ -206,9 +217,9 @@ INSERT_ITEM_ERROR = 'There was an error when inserting the item, ' \
                     'please contact system administrator!'
 
 
+@implementer(IMeetingItemWorkflowConditions)
 class MeetingItemWorkflowConditions(object):
     '''Adapts a MeetingItem to interface IMeetingItemWorkflowConditions.'''
-    implements(IMeetingItemWorkflowConditions)
     security = ClassSecurityInfo()
 
     def __init__(self, item):
@@ -800,9 +811,9 @@ class MeetingItemWorkflowConditions(object):
 InitializeClass(MeetingItemWorkflowConditions)
 
 
+@implementer(IMeetingItemWorkflowActions)
 class MeetingItemWorkflowActions(object):
     '''Adapts a meeting item to interface IMeetingItemWorkflowActions.'''
-    implements(IMeetingItemWorkflowActions)
     security = ClassSecurityInfo()
 
     def __init__(self, item):
@@ -2249,11 +2260,11 @@ MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
 MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
 
 
+@implementer(IMeetingItem)
 class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(IMeetingItem)
 
     meta_type = 'MeetingItem'
     _at_rename_after_creation = True

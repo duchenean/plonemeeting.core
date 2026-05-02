@@ -12,7 +12,7 @@ from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
 from plonemeeting.core.utils import getAdvicePortalTypeIds
 from zope.component import adapts
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import Interface
 
 import zlib
@@ -26,11 +26,11 @@ def _modified(obj=None, date=None):
     return str(res)
 
 
+@implementer(IETagValue)
 class UserGroups(object):
     """The ``usergroups`` etag component, returning the current user's groups
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -46,12 +46,12 @@ class UserGroups(object):
         return 'ug_' + str(res)
 
 
+@implementer(IETagValue)
 class ContextModified(object):
     """The ``contextmodified`` etag component, returning the most recent
        between modified date or _p_mtime of context
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -63,13 +63,13 @@ class ContextModified(object):
         return 'cm_' + _modified(context)
 
 
+@implementer(IETagValue)
 class ParentModified(object):
     """The ``parentmodified`` etag component, returning the most recent
        between modified date or _p_mtime of context's parent
        Usefull to reload advice view if item modified.
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -85,13 +85,13 @@ class ParentModified(object):
         return res
 
 
+@implementer(IETagValue)
 class LinkedMeetingModified(object):
     """The ``linkedmeetingmodified`` etag component, returning the modified
        date of linked meeting for MeetingItem or the date of the last time a
        meeting date was edited (meeting created, meeting date modified).
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -118,12 +118,12 @@ class LinkedMeetingModified(object):
         return res
 
 
+@implementer(IETagValue)
 class ConfigModified(object):
     """The ``configmodified`` etag component, returning the modified
        date of linked MeetingConfig
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -140,12 +140,12 @@ class ConfigModified(object):
         return res
 
 
+@implementer(IETagValue)
 class ToolModified(object):
     """The ``toolmodified`` etag component, returning the modified
        date of portal_plonemeeting
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):
@@ -157,12 +157,12 @@ class ToolModified(object):
         return 'toolm_' + _modified(tool)
 
 
+@implementer(IETagValue)
 class MessagesViewlet(object):
     """The ``messagesviewlet`` etag component, returning the modified
        date of every messages from collective.messagesviewlet to display.
     """
 
-    implements(IETagValue)
     adapts(Interface, Interface)
 
     def __init__(self, published, request):

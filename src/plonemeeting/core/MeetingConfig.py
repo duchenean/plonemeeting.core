@@ -14,9 +14,12 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_registry_functions
-from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
+try:
+    from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+    from collective.datagridcolumns.SelectColumn import SelectColumn
+    from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
+except ImportError:
+    MultiSelectColumn = SelectColumn = TextAreaColumn = None
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -145,7 +148,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.i18nmessageid.message import Message
 from zope.interface import alsoProvides
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -2967,11 +2970,11 @@ for field in MeetingConfig_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 
 
+@implementer(IMeetingConfig)
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(IMeetingConfig)
 
     meta_type = 'MeetingConfig'
     _at_rename_after_creation = True

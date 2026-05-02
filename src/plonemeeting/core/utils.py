@@ -6,14 +6,14 @@ from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
-from appy.shared.diff import HtmlDiff
+from appy.utils.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.behavior.internalnumber.browser.settings import increment_nb_for
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
-from collective.contact.core.vocabulary import get_directory
+from collective.contact.core.vocabularies import get_directory
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -26,10 +26,10 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from dexterity.localroles.utils import add_fti_configuration
-from email import Encoders
-from email.MIMEBase import MIMEBase
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email import encoders as Encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
@@ -119,12 +119,12 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
-from zope.component.interfaces import ObjectEvent
+from zope.interface.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import alsoProvides
-from zope.interface import implements
+from zope.interface import implementer
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
@@ -184,23 +184,16 @@ def getInterface(interfaceName):
     elems = interfaceName.split('.')
     if len(elems) < 2:
         raise PloneMeetingError(WRONG_INTERFACE_NAME % interfaceName)
-    interfaceName = elems[len(elems) - 1]
-    packageName = ''
-    for elem in elems[:-1]:
-        if not packageName:
-            point = ''
-        else:
-            point = '.'
-        packageName += '%s%s' % (point, elem)
+    attrName = elems[-1]
+    packageName = '.'.join(elems[:-1])
     try:
-        res = None
-        exec 'import %s' % packageName
-        exec 'res = %s.%s' % (packageName, interfaceName)
-        return res
+        import importlib
+        mod = importlib.import_module(packageName)
+        return getattr(mod, attrName)
     except ImportError:
         raise PloneMeetingError(WRONG_INTERFACE_PACKAGE % packageName)
     except AttributeError:
-        raise PloneMeetingError(WRONG_INTERFACE % (interfaceName, packageName))
+        raise PloneMeetingError(WRONG_INTERFACE % (attrName, packageName))
 
 
 def getWorkflowAdapter(obj, conditions):
@@ -2949,8 +2942,8 @@ def _add_advice(item,
     return advice
 
 
+@implementer(IAdvicesUpdatedEvent)
 class AdvicesUpdatedEvent(ObjectEvent):
-    implements(IAdvicesUpdatedEvent)
 
     def __init__(self, object, triggered_by_transition=None, old_adviceIndex={}):
         self.object = object
@@ -2958,108 +2951,108 @@ class AdvicesUpdatedEvent(ObjectEvent):
         self.old_adviceIndex = old_adviceIndex
 
 
+@implementer(IMeetingLocalRolesUpdatedEvent)
 class MeetingLocalRolesUpdatedEvent(ObjectEvent):
-    implements(IMeetingLocalRolesUpdatedEvent)
 
     def __init__(self, object, old_local_roles):
         self.object = object
         self.old_local_roles = old_local_roles
 
 
+@implementer(IMeetingAfterTransitionEvent)
 class MeetingAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onMeetingTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IMeetingAfterTransitionEvent)
 
 
+@implementer(IItemAfterTransitionEvent)
 class ItemAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IItemAfterTransitionEvent)
 
 
+@implementer(IAdviceAfterTransitionEvent)
 class AdviceAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onAdviceTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IAdviceAfterTransitionEvent)
 
 
+@implementer(IItemDuplicatedEvent)
 class ItemDuplicatedEvent(ObjectEvent):
-    implements(IItemDuplicatedEvent)
 
     def __init__(self, object, newItem):
         self.object = object
         self.newItem = newItem
 
 
+@implementer(IItemDuplicatedToOtherMCEvent)
 class ItemDuplicatedToOtherMCEvent(ObjectEvent):
-    implements(IItemDuplicatedToOtherMCEvent)
 
     def __init__(self, object, newItem):
         self.object = object
         self.newItem = newItem
 
 
+@implementer(IItemDuplicatedFromConfigEvent)
 class ItemDuplicatedFromConfigEvent(ObjectEvent):
-    implements(IItemDuplicatedFromConfigEvent)
 
     def __init__(self, object, usage):
         self.object = object
         self.usage = usage
 
 
+@implementer(IItemListTypeChangedEvent)
 class ItemListTypeChangedEvent(ObjectEvent):
-    implements(IItemListTypeChangedEvent)
 
     def __init__(self, object, old_listType):
         self.object = object
         self.old_listType = old_listType
 
 
+@implementer(IItemPollTypeChangedEvent)
 class ItemPollTypeChangedEvent(ObjectEvent):
-    implements(IItemPollTypeChangedEvent)
 
     def __init__(self, object, old_pollType):
         self.object = object
         self.old_pollType = old_pollType
 
 
+@implementer(IItemLocalRolesUpdatedEvent)
 class ItemLocalRolesUpdatedEvent(ObjectEvent):
-    implements(IItemLocalRolesUpdatedEvent)
 
     def __init__(self, object, old_local_roles):
         self.object = object
         self.old_local_roles = old_local_roles
 
 
+@implementer(IAdviceAfterAddEvent)
 class AdviceAfterAddEvent(ObjectEvent):
     '''
       Event triggered at the end of the onAdviceAdded,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IAdviceAfterAddEvent)
 
     def __init__(self, object):
         self.object = object
 
 
+@implementer(IAdviceAfterModifyEvent)
 class AdviceAfterModifyEvent(ObjectEvent):
     '''
       Event triggered at the end of the onAdviceModified,
       so we are sure that subplugins registering to this event
       will be called after onItemTransition.
     '''
-    implements(IAdviceAfterModifyEvent)
 
     def __init__(self, object):
         self.object = object

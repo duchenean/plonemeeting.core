@@ -20,8 +20,8 @@ from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
-from collective.z3cform.datagridfield import DataGridField
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldWidget as DataGridField
+from collective.z3cform.datagridfield.row import DictRow
 from z3c.form.interfaces import IFieldWidget
 from z3c.form.interfaces import IFormLayer
 from z3c.form.widget import FieldWidget
@@ -105,16 +105,16 @@ from plonemeeting.core.interfaces import IMeetingWorkflowActions
 from plonemeeting.core.interfaces import IMeetingWorkflowConditions
 from plonemeeting.core.indexes import DELAYAWARE_ROW_ID_PATTERN
 from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
-from plonemeeting.core.MeetingConfig import CONFIGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import DUPLICATE_SHORT_NAME
-from plonemeeting.core.MeetingConfig import ITEM_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import READERPREFIX
-from plonemeeting.core.MeetingConfig import SUFFIXPROFILEPREFIX
+from plonemeeting.core.config import CONFIGGROUPPREFIX
+from plonemeeting.core.config import DUPLICATE_SHORT_NAME
+from plonemeeting.core.config import ITEM_WF_STATE_ATTRS
+from plonemeeting.core.config import ITEM_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import MEETING_WF_STATE_ATTRS
+from plonemeeting.core.config import MEETING_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import POWEROBSERVERPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import READERPREFIX
+from plonemeeting.core.config import SUFFIXPROFILEPREFIX
 from plonemeeting.core.content.meeting import Meeting
 from plonemeeting.core.content.meetingitem import IMeetingItem
 from plonemeeting.core.model.adaptations import _getValidationReturnedStates
@@ -157,7 +157,6 @@ from zope.i18nmessageid.message import Message
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
 from zope.interface import implementer
-from zope.interface import implements
 from zope.interface import Interface
 from zope.schema.interfaces import IField
 from zope.schema.interfaces import IVocabularyFactory
@@ -2560,13 +2559,13 @@ def _camel_to_snake(name):
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
+@implementer(IMeetingConfig)
 class MeetingConfig(Container):
     """Meeting configuration content type (migrated from Archetypes OrderedBaseFolder).
 
     Business logic methods are being migrated progressively from MeetingConfig.py.
     """
 
-    implements(IMeetingConfig)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingConfig'

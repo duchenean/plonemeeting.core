@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, print_function
 
-from cgi import escape
+from html import escape
 from collections import OrderedDict
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from plone import api

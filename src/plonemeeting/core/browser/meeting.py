@@ -28,7 +28,7 @@ from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.content.meeting import get_all_usable_held_positions
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import Meeting
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
+from plonemeeting.core.config import POWEROBSERVERPREFIX
 from plonemeeting.core.utils import _base_extra_expr_ctx
 from plonemeeting.core.utils import field_is_empty
 from plonemeeting.core.utils import get_attendee_short_title
@@ -40,7 +40,7 @@ from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 
 def manage_fields(the_form):
@@ -398,11 +398,11 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         return get_attendee_short_title(hp, cfg)
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class MeetingEdit(DefaultEditForm, BaseMeetingView):
     """
         Edit form redefinition to customize fields.
     """
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['attendees_edit_provider'] = AttendeesEditProvider
     # defining a contentProvider position is mandatory...
@@ -430,9 +430,9 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         manage_groups(self)
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class MeetingAddForm(DefaultAddForm, BaseMeetingView):
 
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['attendees_edit_provider'] = AttendeesEditProvider
     # defining a contentProvider position is mandatory...

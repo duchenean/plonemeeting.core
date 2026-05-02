@@ -4,6 +4,7 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
+    <!-- P6 migration: IContentViews viewlet manager removed in Plone 6
     <browser:viewlet
         name="plone.contentactions"
         for="*"
@@ -21,6 +22,7 @@
         class="plonemeeting.core.browser.overrides.PMContentActionsViewlet"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
+    -->
 
     <browser:viewlet
         name="plone.global_sections"
@@ -61,7 +63,7 @@
             for="*"
             class="plonemeeting.core.browser.overrides.PMFolderContentsView"
             name="folder_contents"
-            template="browser/folder_contents.pt"
+            template="browser/contents/templates/folder_contents.pt"
             permission="cmf.ListFolderContents" />
     </configure>
 
@@ -265,10 +267,12 @@
         factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
     -->
 
+    <!-- P6 migration: AT reference browser popup removed
     <adapter
         for="Products.Five.BrowserView"
         factory=".browser.overrides.pm_default_popup_template"
         name="popup"
         provides="zope.formlib.namedtemplate.INamedTemplate" />
+    -->
 
 </configure>

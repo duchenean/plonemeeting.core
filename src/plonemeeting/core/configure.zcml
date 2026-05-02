@@ -14,20 +14,24 @@
   <!-- <include package="communesplone.layout" /> -->
   <include package="plonetheme.imioapps"/>
   <include package="imio.annex" />
-  <include package="Products.PasswordStrength" />
+  <!-- P6 migration: Products.PasswordStrength dropped -->
+  <!-- <include package="Products.PasswordStrength" /> -->
   <include package="collective.behavior.internalnumber" />
   <!-- P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D. -->
   <!-- <include package="collective.ckeditor" /> -->
   <include package="collective.contact.core" />
   <include package="collective.contact.plonegroup" />
-  <include package="collective.dexteritytextindexer" />
+  <!-- P6 migration: merged into plone.app.dexterity.textindexer -->
+  <!-- <include package="collective.dexteritytextindexer" /> -->
   <include package="collective.documentviewer" />
-  <include package="collective.datagridcolumns" />
+  <!-- P6 migration: collective.datagridcolumns is AT-only, replaced by collective.z3cform.datagridfield -->
+  <!-- <include package="collective.datagridcolumns" /> -->
   <include package="collective.eeafaceted.collectionwidget" />
   <include package="collective.eeafaceted.dashboard" />
   <include package="collective.iconifieddocumentactions" />
   <include package="collective.iconifiedcategory" />
-  <include package="collective.js.tablednd" />
+  <!-- P6 migration: collective.js.tablednd uses removed includeDependencies directive -->
+  <!-- <include package="collective.js.tablednd" /> -->
   <include package="collective.js.fancytree" />
   <include package="collective.js.jqueryui" />
   <include package="collective.messagesviewlet" />
@@ -49,7 +53,8 @@
   <include package="Products.CPUtils"/>
   <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
   <!-- <include package="Products.cron4plone" /> -->
-  <include package="Products.DataGridField" />
+  <!-- P6 migration: Products.DataGridField is AT-only, removed in Plone 6 -->
+  <!-- <include package="Products.DataGridField" /> -->
   <include package=".behaviors" />
   <include package=".browser" />
   <!-- P6 migration: CKEditor dropped (custom plugins removed), configure stock TinyMCE in Stage D. -->
@@ -84,12 +89,13 @@
   <permission id="PloneMeeting.manage_item_category_fields"
               title="PloneMeeting: Manage item category fields" />
 
-  <adapter for=".interfaces.IMeetingItem"
+  <!-- P6 migration: AT MeetingItem workflow adapters, to be reimplemented in DX content/meetingitem.py -->
+  <!-- <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
            provides=".interfaces.IMeetingItemWorkflowConditions" />
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowActions"
-           provides=".interfaces.IMeetingItemWorkflowActions" />
+           provides=".interfaces.IMeetingItemWorkflowActions" /> -->
   <adapter for="plonemeeting.core.interfaces.IMeeting"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
@@ -382,10 +388,11 @@
            provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
            factory=".adapters.PMGenerablePODTemplatesAdapter"/>
 
-  <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
+  <!-- P6 migration: AT classes removed, no longer need deprecatedManageAddDelete -->
+  <!-- <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingCategory.MeetingCategory" />
   <five:deprecatedManageAddDelete class=".MeetingGroup.MeetingGroup" />
-  <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
+  <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" /> -->
   <include file="profiles.zcml" />
 
   <!-- Make ToolPloneMeeting and MeetingConfig types portlet-aware -->
@@ -456,19 +463,20 @@
   </class>
   <!-- Mark some default Plone portal_types as IConfigElement so adding elements
        to a "documents" folder will notify folder modified and invalidate caching -->
-  <class class="Products.ATContentTypes.content.document.ATDocument">
+  <!-- P6 migration: AT content types replaced with DX equivalents -->
+  <class class="plone.app.contenttypes.content.Document">
     <implements interface="plonemeeting.core.interfaces.IPloneElement" />
   </class>
-  <class class="plone.app.blob.content.ATBlob">
+  <class class="plone.app.contenttypes.content.File">
     <implements interface="plonemeeting.core.interfaces.IPloneElement" />
   </class>
-  <class class="Products.ATContentTypes.content.folder.ATFolder">
+  <class class="plone.app.contenttypes.content.Folder">
     <implements interface="plonemeeting.core.interfaces.IPloneElement" />
   </class>
-  <class class="Products.ATContentTypes.content.newsitem.ATNewsItem">
+  <class class="plone.app.contenttypes.content.NewsItem">
     <implements interface="plonemeeting.core.interfaces.IPloneElement" />
   </class>
-  <class class="Products.ATContentTypes.content.link.ATLink">
+  <class class="plone.app.contenttypes.content.Link">
     <implements interface="plonemeeting.core.interfaces.IPloneElement" />
   </class>
 

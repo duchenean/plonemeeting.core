@@ -32,7 +32,7 @@ from plonemeeting.core.interfaces import IMeetingContent
 from plonemeeting.core.interfaces import IMeetingItem
 from plonemeeting.core.utils import get_annexes
 from plonemeeting.core.utils import get_datagridfield_column_value
-from Products.PluginIndexes.common.UnIndex import _marker
+from Products.PluginIndexes.unindex import _marker
 
 
 REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'

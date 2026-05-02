@@ -431,3 +431,41 @@ def registerClasses():
 
 class PloneMeetingError(Exception):
     pass
+
+
+DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting configuration. Please choose another one.'
+CONFIGGROUPPREFIX = 'configgroup_'
+PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
+READERPREFIX = 'reader_'
+SUFFIXPROFILEPREFIX = 'suffix_profile_'
+POWEROBSERVERPREFIX = 'powerobserver__'
+
+ITEM_WF_STATE_ATTRS = [
+    'itemAdviceStates',
+    'itemAdviceEditStates',
+    'itemAdviceViewStates',
+    'itemAdviceInvalidateStates',
+    'itemAutoSentToOtherMCStates',
+    'itemBudgetInfosStates',
+    'itemCommitteesStates',
+    'itemCommitteesViewStates',
+    'itemCopyGroupsStates',
+    'itemGroupsInChargeStates',
+    'itemManualSentToOtherMCStates',
+    'itemObserversStates',
+    'recordItemHistoryStates',
+    'powerObservers/item_states']
+ITEM_WF_TRANSITION_ATTRS = [
+    'transitionsReinitializingDelays',
+    'transitionsToConfirm',
+    'mailItemEvents',
+    'onTransitionFieldTransforms/transition',
+    'onMeetingTransitionItemActionToExecute/item_action']
+MEETING_WF_STATE_ATTRS = [
+    'itemPreferredMeetingStates',
+    'meetingPresentItemWhenNoCurrentMeetingStates',
+    'powerObservers/meeting_states']
+MEETING_WF_TRANSITION_ATTRS = [
+    'transitionsToConfirm',
+    'mailMeetingEvents',
+    'onMeetingTransitionItemActionToExecute/meeting_transition']

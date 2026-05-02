@@ -8,7 +8,7 @@ from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
-from App.class_init import InitializeClass
+from AccessControl.class_init import InitializeClass
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from collections import OrderedDict
@@ -74,7 +74,10 @@ from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import Meeting
 from plonemeeting.core.indexes import DELAYAWARE_ROW_ID_PATTERN
 from plonemeeting.core.interfaces import IMeetingItem
-from plonemeeting.core.MeetingItem import MeetingItem
+try:
+    from plonemeeting.core.MeetingItem import MeetingItem as ATMeetingItem
+except (ImportError, AttributeError):
+    ATMeetingItem = None
 from plonemeeting.core.model.adaptations import _performAdviceWorkflowAdaptations
 from plonemeeting.core.profiles import PloneMeetingConfiguration
 from plonemeeting.core.utils import configure_advice_dx_localroles_for
@@ -91,7 +94,7 @@ from Products.ZCatalog.ProgressHandler import ZLogHandler
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 from . import interfaces
 import OFS.Moniker
@@ -126,11 +129,11 @@ _TOOL_AT_TO_DX = {
 _TOOL_DROPPED_FIELDS = {'enableScanDocs': False}
 
 
+@implementer(interfaces.IToolPloneMeeting)
 class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
     """PloneMeeting portal tool -- singleton configuration manager."""
 
     security = ClassSecurityInfo()
-    implements(interfaces.IToolPloneMeeting)
 
     meta_type = 'ToolPloneMeeting'
     portal_type = 'ToolPloneMeeting'
@@ -998,7 +1001,8 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         wftool = api.portal.get_tool('portal_workflow')
         newItem = getattr(destFolder, pasteResult[0]['new_id'])
         # original item _at_rename_after_creation may have been changed
-        newItem._at_rename_after_creation = MeetingItem._at_rename_after_creation
+        if ATMeetingItem is not None:
+            newItem._at_rename_after_creation = ATMeetingItem._at_rename_after_creation
         # Get the copied item, we will need information from it
         copiedItem = None
         copiedId = CopySupport._cb_decode(copiedData)[1][0]

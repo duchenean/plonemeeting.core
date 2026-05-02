@@ -124,10 +124,9 @@ class ToolInitializer:
             return
         profileModule = pp[pp.rfind(self.productname.replace('.', '/')):].replace('/', '.')
         profileModule = profileModule.replace('\\', '.')
-        data = ''
-        module_path = 'from %s.import_data import data' % profileModule
-        exec module_path
-        return data
+        import importlib
+        mod = importlib.import_module('%s.import_data' % profileModule)
+        return mod.data
 
     def run(self):
         self.data = self.profileData

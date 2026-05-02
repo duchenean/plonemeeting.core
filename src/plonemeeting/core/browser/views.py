@@ -12,7 +12,6 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from fnmatch import fnmatch
@@ -1595,7 +1594,7 @@ class BaseDGHV(object):
         return signature_lines
 
 
-class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
+class FolderDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -1836,7 +1835,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         return res
 
 
-class MeetingDocumentGenerationHelperView(DXDocumentGenerationHelperView, FolderDocumentGenerationHelperView):
+class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
     def _print_special_value(self, field_name, empty_marker='', **kwargs):
@@ -2108,7 +2107,7 @@ def print_votes(item,
     return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
-class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
+class ItemDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def deliberation_for_restapi(self, deliberation_types=[]):

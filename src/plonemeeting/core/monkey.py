@@ -161,13 +161,12 @@ def getEntry(self, ob, key):
         self._misses[ob] += 1
         raise
     else:
-        data[2] += 1                    # increment access count
+        data.access_count += 1
         # XXX begin change by PM, update timestamp
-        timestamp = time()
-        data[1] = timestamp
+        data.ctime = time()
         # XXX end change by PM
 
-        return data[0]
+        return data.value
 
 
 Storage.getEntry = getEntry
@@ -178,15 +177,14 @@ Storage.__old_pm_getStatistics = Storage.getStatistics
 
 
 def getStatistics(self):
-    objects = self._data.keys()
-    objects.sort()
+    objects = sorted(self._data.keys())
     result = []
 
     for ob in objects:
         size = len(dumps(self._data[ob]))
-        hits = sum(entry[2] for entry in self._data[ob].values())
+        hits = sum(entry.access_count for entry in self._data[ob].values())
         from DateTime import DateTime
-        older_date = min(entry[1] for entry in self._data[ob].values())
+        older_date = min(entry.ctime for entry in self._data[ob].values())
         result.append({'path': ob,
                        'hits': hits,
                        'misses': self._misses.get(ob, 0),

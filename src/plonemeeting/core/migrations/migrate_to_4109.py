@@ -2,7 +2,10 @@
 
 from __future__ import absolute_import, print_function
 
-from plone.app.controlpanel.mail import MailControlPanelAdapter
+try:
+    from plone.app.controlpanel.mail import MailControlPanelAdapter
+except ImportError:
+    MailControlPanelAdapter = None
 from plonemeeting.core.migrations import logger
 from plonemeeting.core.migrations import Migrator
 from plonemeeting.core.utils import get_public_url

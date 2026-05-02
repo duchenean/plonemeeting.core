@@ -18,7 +18,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope import schema
 from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
-from zope.interface import implements
+from zope.interface import implementer
 
 
 _ = MessageFactory('PloneMeeting')
@@ -41,8 +41,8 @@ class ITodoPortlet(IPortletDataProvider):
         default=45)
 
 
+@implementer(ITodoPortlet)
 class Assignment(base.Assignment):
-    implements(ITodoPortlet)
 
     # this needs to be done for old portlets that did not have the new batch_size attribute
     batch_size = 3
@@ -57,7 +57,7 @@ class Assignment(base.Assignment):
         return _(u"To do")
 
 
-class Renderer(base.Renderer, FacetedRenderer):
+class Renderer(FacetedRenderer):
 
     _template = ViewPageTemplateFile('templates/portlet_todo.pt')
 

@@ -5,8 +5,8 @@
 
 from __future__ import absolute_import, print_function
 
-from appy.gen import No
-from appy.shared.diff import HtmlDiff
+from appy.utils import No
+from appy.utils.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
 from collective.contact.plonegroup.utils import get_organizations
@@ -63,10 +63,10 @@ from plonemeeting.core.config import NOT_GIVEN_ADVICE_VALUE
 from plonemeeting.core.config import READER_USECASES
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.interfaces import IMeetingContent
-from plonemeeting.core.MeetingConfig import CONFIGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import READERPREFIX
-from plonemeeting.core.MeetingConfig import SUFFIXPROFILEPREFIX
+from plonemeeting.core.config import CONFIGGROUPPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import READERPREFIX
+from plonemeeting.core.config import SUFFIXPROFILEPREFIX
 from plonemeeting.core.utils import compute_item_roles_to_assign_to_suffixes
 from plonemeeting.core.utils import displaying_available_items
 from plonemeeting.core.utils import findNewValue

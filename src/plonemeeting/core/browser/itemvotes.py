@@ -4,8 +4,8 @@ from __future__ import absolute_import, print_function
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.z3cform.datagridfield import DataGridFieldFactory
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldFactory
+from collective.z3cform.datagridfield.row import DictRow
 from imio.helpers.content import get_vocab
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
@@ -32,7 +32,7 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
@@ -303,9 +303,9 @@ def display_item_numbers(numbers):
     return res
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class EncodeVotesForm(BaseAttendeeForm):
     """ """
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['select_all'] = DisplaySelectAllProvider
     contentProviders['select_all'].position = 2

@@ -27,7 +27,7 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 
 USING_ABSENTS_OR_EXCUSED_MSGID = u"Enter the item attendees to be applied. By default, the value of the field is " \
@@ -283,6 +283,7 @@ def _itemsToUpdate(from_item_number, until_item_number, meeting):
     return [brain.getObject() for brain in brains]
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class ManageItemAssemblyForm(form.Form):
     """
       This form will help MeetingManagers manage itemAssembly
@@ -290,7 +291,6 @@ class ManageItemAssemblyForm(form.Form):
       item without having to use the edit form and to apply
       redefined value until the item number he wants.
     """
-    implements(IFieldsAndContentProvidersForm)
 
     fields = field.Fields(IManageItemAssembly)
     ignoreContext = True  # don't use context to get widget data

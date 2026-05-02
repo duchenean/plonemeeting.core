@@ -8,12 +8,14 @@
     <!-- P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D. -->
     <!-- <dependency>profile-collective.ckeditor:default</dependency> -->
     <dependency>profile-collective.contact.plonegroup:default</dependency>
-    <dependency>profile-collective.datagridcolumns:default</dependency>
+    <!-- P6 migration: collective.datagridcolumns is AT-only, replaced by collective.z3cform.datagridfield -->
+    <!-- <dependency>profile-collective.datagridcolumns:default</dependency> -->
     <dependency>profile-collective.iconifieddocumentactions:default</dependency>
     <dependency>profile-collective.js.fancytree:default</dependency>
     <dependency>profile-collective.js.fancytree:theme-vista</dependency>
     <dependency>profile-collective.js.iframeresizer:default</dependency>
-    <dependency>profile-collective.js.tablednd:default</dependency>
+    <!-- P6 migration: collective.js.tablednd dropped (jQuery plugin, table DnD handled natively in P6) -->
+    <!-- <dependency>profile-collective.js.tablednd:default</dependency> -->
     <dependency>profile-collective.messagesviewlet:messages</dependency>
     <!-- P6 migration: communesplone.layout dropped; reimplement in Stage D if any feature is still needed. -->
     <!-- <dependency>profile-communesplone.layout:default</dependency> -->
@@ -25,8 +27,10 @@
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
     <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>
     <dependency>profile-Products.CPUtils:default</dependency>
-    <dependency>profile-Products.DataGridField:default</dependency>
-    <dependency>profile-Products.PasswordStrength:default</dependency>
+    <!-- P6 migration: Products.DataGridField is AT-only, replaced by collective.z3cform.datagridfield -->
+    <!-- <dependency>profile-Products.DataGridField:default</dependency> -->
+    <!-- P6 migration: Products.PasswordStrength dropped -->
+    <!-- <dependency>profile-Products.PasswordStrength:default</dependency> -->
     <!-- P6 migration: cron4plone dropped, scheduled tasks to be reimplemented with external scheduler in Stage D. -->
     <!-- <dependency>profile-Products.cron4plone:default</dependency> -->
     <dependency>profile-plone.app.caching:default</dependency>

@@ -9,13 +9,13 @@ from plone.outputfilters.interfaces import IFilter
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from plonemeeting.core.utils import isPowerObserverForCfg
-from zope.interface import implements
+from zope.interface import implementer
 
 
+@implementer(IFilter)
 class CssTransformer(object):
     """Transform that will remove some defined css classes and anonymize some others."""
 
-    implements(IFilter)
     order = 1000
 
     def __init__(self, context, request):

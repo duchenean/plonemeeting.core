@@ -525,7 +525,7 @@
 
     <!-- Overlays views -->
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+        for="plone.dexterity.interfaces.IDexterityContainer"
         name="createitemfromtemplate"
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
@@ -1174,7 +1174,7 @@
 
     <!-- collective.documentgenerator helper view for Folder -->
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+        for="plone.dexterity.interfaces.IDexterityContainer"
         class=".views.FolderDocumentGenerationHelperView"
         permission="zope2.View"
         name="document_generation_helper_view" />
@@ -1286,12 +1286,13 @@
         class=".batchactions.AnnexesBatchActionsViewlet"
         permission="zope2.View" />
 
+    <!-- P6 migration: AT reference browser removed
     <browser:page
         name="refbrowser_popup"
         permission="zope2.Public"
         for="plonemeeting.core.interfaces.IMeetingItem"
         class=".overrides.PMReferenceBrowserPopup"
-        />
+        /> -->
 
     <!-- Override @@historyview for IMeetingItem and IMeeting -->
     <browser:view
@@ -1334,24 +1335,24 @@
     </configure>
 
     <!-- Override @@usergroup-userprefs -->
-    <configure package="plone.app.controlpanel">
+    <configure package="Products.CMFPlone.controlpanel">
         <browser:page
             name="usergroup-userprefs"
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="plonemeeting.core.browser.overrides.PMUsersOverviewControlPanel"
             permission="plone.app.controlpanel.UsersAndGroups"
-            template="usergroups_usersoverview.pt"
+            template="browser/usergroups_usersoverview.pt"
             layer="plonemeeting.core.interfaces.IPloneMeetingLayer" />
     </configure>
 
     <!-- Override @@usergroup-groupprefs -->
-    <configure package="plone.app.controlpanel">
+    <configure package="Products.CMFPlone.controlpanel">
         <browser:page
             name="usergroup-groupprefs"
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="plonemeeting.core.browser.overrides.PMGroupsOverviewControlPanel"
             permission="plone.app.controlpanel.UsersAndGroups"
-            template="usergroups_groupsoverview.pt"
+            template="browser/usergroups_groupsoverview.pt"
             layer="plonemeeting.core.interfaces.IPloneMeetingLayer" />
     </configure>
 
