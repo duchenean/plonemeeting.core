@@ -5,8 +5,8 @@
 from __future__ import absolute_import, print_function
 
 from plone import api
-from plone.app.textfield.widget import IRichTextWidget
-from plone.app.textfield.widget import RichTextWidget
+from plone.app.z3cform.interfaces import IRichTextWidget
+from plone.app.z3cform.widgets.richtext import RichTextWidget
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.events import EditBegunEvent
 from Products.CMFCore.permissions import ModifyPortalContent

@@ -997,7 +997,8 @@
         class=".views_unrestricted.ItemUnrestrictedMethodsView"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
         allowed_attributes="getLinkedMeetingTitle
-                            getLinkedMeetingDate"
+                            getLinkedMeetingDate
+                            getLinkedMeetingDateStr"
         permission="zope2.View" />
     <browser:page
         for="plonemeeting.core.content.meeting.IMeeting"

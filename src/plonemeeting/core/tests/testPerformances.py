@@ -145,7 +145,7 @@ class testPerformances(PloneMeetingTestCase):
     def _setItemReferenceFormat(self):
         """Compute metingDate, proposingGroup acronym and item number relativeTo meeting."""
         self.meetingConfig.setItemReferenceFormat(
-            "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') + "
+            "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDateStr() + "
             "'/' + here.getProposingGroup(True).getAcronym() + '/' + "
             "str(here.getItemNumber(relativeTo='meeting', for_display=True))")
 

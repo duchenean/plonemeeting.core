@@ -748,7 +748,7 @@ class testContacts(PloneMeetingTestCase):
         person1.person_title = u"Miss"
 
         file_path = os.path.join(os.path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
+        data = open(file_path, 'rb')
         person1.signature = NamedImage(data=data)
 
         signatory1 = person1.get_held_positions()[0]
@@ -844,7 +844,7 @@ class testContacts(PloneMeetingTestCase):
 
         # test when some signatories redefined on item
         # redefine signature_number "2"
-        contacts = meeting.ordered_contacts.items()
+        contacts = list(meeting.ordered_contacts.items())
         signatory3 = contacts[1]
         signatory3_uid = signatory3[0]
         self.assertFalse(signatory3[1]['signer'])

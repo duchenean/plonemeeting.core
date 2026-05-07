@@ -331,8 +331,8 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 502])
         # trying to move 502 to 600 works
-        self.assertEqual(item.getItemNumber(), 502)
-        view = item.restrictedTraverse('@@change-item-order')
+        self.assertEqual(item3.getItemNumber(), 502)
+        view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6')
         self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 600])

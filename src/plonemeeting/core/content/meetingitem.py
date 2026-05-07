@@ -32,6 +32,7 @@ from AccessControl import ClassSecurityInfo
 from functools import cmp_to_key
 from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
+from zExceptions import Unauthorized as ZUnauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
 from Acquisition import aq_inner
@@ -1754,16 +1755,16 @@ class MeetingItem(Container):
                         title = title.decode('utf-8')
                     title = u"{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True))
-        if isinstance(title, six.text_type):
-            title = title.encode('utf-8')
+        if isinstance(title, bytes):
+            title = title.decode('utf-8')
         return title
 
     def Description(self):
         desc = self.description
         if isinstance(desc, RichTextValue):
-            return safe_encode(desc.output_relative_to(self) or u'')
-        if isinstance(desc, six.text_type):
-            return desc.encode('utf-8')
+            return safe_unicode(desc.output_relative_to(self) or u'')
+        if isinstance(desc, bytes):
+            return desc.decode('utf-8')
         return desc or ''
 
     security.declarePublic('getPrettyLink')
@@ -7612,7 +7613,7 @@ class MeetingItem(Container):
         try:
             destFolder = tool.getPloneMeetingFolder(destMeetingConfigId,
                                                     self.Creator())
-        except ValueError:
+        except (ValueError, Unauthorized, ZUnauthorized):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(

@@ -229,9 +229,9 @@ def _resolve_adaptable_key(tag_name):
     for base_name in adaptables:
         if tag_lower == base_name.lower():
             return base_name
-    # Prefix match (e.g. 'MeetingCollege' -> 'Meeting')
+    # Prefix match (e.g. 'MeetingCollege' -> 'Meeting', 'meetingadvicefinances' -> 'MeetingAdvice')
     for base_name in adaptables:
-        if tag_name.startswith(base_name):
+        if tag_lower.startswith(base_name.lower()):
             return base_name
     return tag_name
 
@@ -2007,12 +2007,14 @@ def _addManagedPermissions(obj):
             obj.manage_permission("plone.app.contenttypes: Add Image", roles, acquire=False)
         except ValueError:
             pass
+        return roles
 
-    def _addPortalContentPermission():
+    def _addPortalContentPermission(image_roles=()):
         # now manage the AddPortalContent permission
         # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
-        # if a role is able to add something, it also needs the AddPortalContent permission
-        roles = []
+        # if a role is able to add something, it also needs the AddPortalContent permission.
+        # In Plone 6, invokeFactory requires AddPortalContent, so also include image-adder roles.
+        roles = list(image_roles)
         for add_subcontent_permission in ADD_SUBCONTENT_PERMISSIONS:
             permission = Permission(add_subcontent_permission, {}, obj)
             roles += permission.getRoles()
@@ -2030,8 +2032,8 @@ def _addManagedPermissions(obj):
         roles += add_annex_decision_permission.getRoles()
         obj.manage_permission(ManageProperties, roles, acquire=True)
 
-    _addImagePermission()
-    _addPortalContentPermission()
+    image_roles = _addImagePermission()
+    _addPortalContentPermission(image_roles)
     _addManagePropertiesPermission()
 
 

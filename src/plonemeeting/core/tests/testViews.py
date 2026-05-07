@@ -477,23 +477,31 @@ class testViews(PloneMeetingTestCase):
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
-        _load_zcml_config('tests/events.zcml', products_plonemeeting)
-        self.assertEqual(item.Title(), 'Item title')
-        view('normal')
-        self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.list_type, u'normal')
-        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
-        # if title is 'late - normal' call to subscriber will raise an error
-        # this way, we test that when an error occur in the event, the listType is not changed
-        view('late')
-        # not changed and a portal_message is added
-        self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.list_type, u'normal')
-        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
-        messages = IStatusMessage(self.request).show()
-        self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
-        from zope.testing.cleanup import cleanUp
-        cleanUp()
+        from zope.component import getSiteManager
+        from zope.component import provideHandler
+        from plonemeeting.core.interfaces import IItemListTypeChangedEvent
+        from plonemeeting.core.interfaces import IMeetingItem
+        from plonemeeting.core.tests.events import onItemListTypeChanged
+        provideHandler(onItemListTypeChanged, adapts=(IMeetingItem, IItemListTypeChangedEvent))
+        try:
+            self.assertEqual(item.Title(), 'Item title')
+            view('normal')
+            self.assertEqual(item.Title(), 'late - normal')
+            self.assertEqual(item.list_type, u'normal')
+            self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
+            # if title is 'late - normal' call to subscriber will raise an error
+            # this way, we test that when an error occur in the event, the listType is not changed
+            view('late')
+            # not changed and a portal_message is added
+            self.assertEqual(item.Title(), 'late - normal')
+            self.assertEqual(item.list_type, u'normal')
+            self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
+            messages = IStatusMessage(self.request).show()
+            self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
+        finally:
+            getSiteManager().unregisterHandler(
+                onItemListTypeChanged,
+                required=(IMeetingItem, IItemListTypeChangedEvent))
 
     def test_pm_UpdateDelayAwareAdvices(self):
         '''
@@ -1512,7 +1520,7 @@ class testViews(PloneMeetingTestCase):
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+            "python: here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDateStr() + '/' + "
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()

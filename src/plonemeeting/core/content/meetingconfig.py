@@ -3780,9 +3780,9 @@ class MeetingConfig(Container):
                    if level['label_id'] in label_ids]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_label_id_singleton and len(label_ids) == 1:
             res = res and res[0] or res
         return res
@@ -3798,9 +3798,9 @@ class MeetingConfig(Container):
                    if level['name'] in names]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_name_singleton and len(names) == 1:
             res = res and res[0] or res
         return res
@@ -4586,8 +4586,8 @@ class MeetingConfig(Container):
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
-                # manage multivalued columns
-                if values and hasattr(values[0], "__iter__"):
+                # manage multivalued columns (str is iterable in Py3, exclude it)
+                if values and isinstance(values[0], (list, tuple)):
                     values = itertools.chain.from_iterable(values)
             crossed_states = [v for v in values
                               for r in removed_or_disabled_states

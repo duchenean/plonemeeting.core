@@ -2462,7 +2462,7 @@ class DisplayMeetingItemChangedAttendeesOrder(BrowserView):
 
     def _get_items(self):
         """Returns the list of items the attendees were changed for."""
-        uids = self.context._get_item_attendees_order().keys()
+        uids = list(self.context._get_item_attendees_order().keys())
         ordered_items = []
         if uids:
             ordered_items = [

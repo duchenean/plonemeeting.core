@@ -778,7 +778,7 @@ document.location.reload(true);
           </tr>
           <tr tal:repeat="change event/changes/items" valign="top">
             <tal:change define="field python:context.getField(change[0])">
-            <td tal:content="python: context.translate(field.widget.label_msgid, domain=field.widget.i18n_domain)"></td>
+            <td tal:content="python: translate(field.widget.label_msgid, domain=field.widget.i18n_domain)"></td>
             <td tal:content="structure python: change[1]"></td>
             </tal:change>
           </tr>

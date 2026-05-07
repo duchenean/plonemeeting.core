@@ -1556,11 +1556,11 @@ class testMeetingType(PloneMeetingTestCase):
              'Admettre un nouveau super',
              'Admettre un nouveau supression',
              'Editer une nouvelle',
-             '\xc3\x89mettre une annonce - Nouveau contrat',
-             '\xc3\x89mettre une annonce : changement',
-             '\xc3\x89mettre une annonce : changement',
-             '\xc3\x89mettre une annonce : nouveau',
-             "Probl\xc3\xa8me envoi d'e-mails - Solution temporaire",
+             'Émettre une annonce - Nouveau contrat',
+             'Émettre une annonce : changement',
+             'Émettre une annonce : changement',
+             'Émettre une annonce : nouveau',
+             "Problème envoi d'e-mails - Solution temporaire",
              'Recurring item #1',
              'Recurring item #2',
              'Suppression du serveur SMTP'])
@@ -1601,14 +1601,14 @@ class testMeetingType(PloneMeetingTestCase):
             self.presentItem(item)
         self.assertEqual(
             [anItem.getDecision() for anItem in meeting.get_items(ordered=True)],
-            ["<p>A REFUS\xc3\x89 d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             "<p>ACCEPTE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             "<p>ACCEPTENT d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             '<p>DECIDE aussi de ne pas d\xc3\xa9cider</p>',
-             "<p>D\xc3\x89CIDE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             '<p>D\xc3\x89CIDE de refuser</p>',
+            ["<p>A REFUSÉ d'engager Madame Untell Anne au poste proposé</p>",
+             "<p>ACCEPTE d'engager Madame Untell Anne au poste proposé</p>",
+             "<p>ACCEPTENT d'engager Madame Untell Anne au poste proposé</p>",
+             '<p>DECIDE aussi de ne pas décider</p>',
+             "<p>DÉCIDE d'engager Madame Untell Anne au poste proposé</p>",
+             '<p>DÉCIDE de refuser</p>',
              '<p>First recurring item approved</p>',
-             "<p>REFUSE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             "<p>REFUSE d'engager Madame Untell Anne au poste proposé</p>",
              '<p>Second recurring item approved</p>'])
         self.assertEqual(
             [anItem._findOrderFor('on_item_decision_first_words') for anItem in meeting.get_items(ordered=True)],
@@ -3308,7 +3308,7 @@ class testMeetingType(PloneMeetingTestCase):
         # only done if used
         cfg.used_meeting_attributes = ('place', )
         # make sure does not break when configuration uses special characters
-        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n'
+        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSpécial place\r\n'
         meeting_type_name = cfg.getMeetingTypeName()
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()

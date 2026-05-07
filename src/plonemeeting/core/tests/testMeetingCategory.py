@@ -213,7 +213,7 @@ class testMeetingCategory(PloneMeetingTestCase):
             dev_cat,
             u"plonemeeting.core.content.category."
             u"category_mapping_when_cloning_to_other_mc_vocabulary")
-        values = dev_cat_vocab.by_token.keys()
+        values = list(dev_cat_vocab.by_token.keys())
         # one value is ok
         self.assertTrue(constraint([values[0]]))
         # but not 2 for the same meetingConfig...

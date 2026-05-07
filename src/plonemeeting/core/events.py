@@ -321,12 +321,15 @@ def onConfigBeforeTransition(config, event):
                 continue
             meetingConfigs = [v['meeting_config'] for v in other_cfg.meeting_configs_to_clone_to]
             if config_id in meetingConfigs:
-                msg = _('Can not disable a meeting configuration used in another, '
-                        'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
-                        mapping={'field_title': translate('PloneMeeting_label_meetingConfigsToCloneTo',
-                                                          domain='PloneMeeting',
-                                                          context=config.REQUEST),
-                                 'other_cfg_title': safe_unicode(other_cfg.Title())})
+                msg = translate(
+                    'Can not disable a meeting configuration used in another, '
+                    'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
+                    domain='PloneMeeting',
+                    mapping={'field_title': translate('PloneMeeting_label_meetingConfigsToCloneTo',
+                                                      domain='PloneMeeting',
+                                                      context=config.REQUEST),
+                             'other_cfg_title': safe_unicode(other_cfg.Title())},
+                    context=config.REQUEST)
                 raise WorkflowException(msg)
 
 

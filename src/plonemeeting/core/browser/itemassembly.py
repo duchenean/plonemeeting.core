@@ -276,8 +276,8 @@ def _itemsToUpdate(from_item_number, until_item_number, meeting):
         until_item_number = from_item_number
     brains = catalog.unrestrictedSearchResults(
         meeting_uid=meeting.UID(),
-        getItemNumber={'query': (from_item_number,
-                                 until_item_number),
+        getItemNumber={'query': (int(from_item_number),
+                                 int(until_item_number)),
                        'range': 'minmax'},
         sort_on='getItemNumber')
     return [brain.getObject() for brain in brains]
