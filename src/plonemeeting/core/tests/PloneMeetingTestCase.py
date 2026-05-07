@@ -813,7 +813,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True, reload=False):
         """ """
-        if not hasattr(field_names, "__iter__"):
+        if isinstance(field_names, str):
             field_names = [field_names]
         cfg = cfg or self.meetingConfig
         for field_name in field_names:

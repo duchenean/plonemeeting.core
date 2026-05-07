@@ -50,12 +50,14 @@ def manage_fields(the_form):
     """
     to_remove = []
 
-    extra_expr_ctx = _base_extra_expr_ctx(the_form.context, {'view': the_form})
+    is_meeting = IMeeting.providedBy(the_form.context)
+    extra_expr_ctx = _base_extra_expr_ctx(the_form.context, {'view': the_form}) \
+        if is_meeting else {}
     for field_name, field_info in Meeting.FIELD_INFOS.items():
         if field_info['optional'] and \
            not the_form.show_field(field_name):
             to_remove.append(field_name)
-        elif field_info['condition'] and \
+        elif is_meeting and field_info['condition'] and \
                 not _evaluateExpression(the_form.context,
                                         expression=field_info['condition'],
                                         extra_expr_ctx=extra_expr_ctx,

@@ -2738,7 +2738,7 @@ class SelectableCommitteesVocabulary(object):
         # if current context is an item, cache by stored committees
         # so we avoid cache by context
         committees = []
-        if getattr(context, 'portal_type', '') == "MeetingItem":
+        if IMeetingItem.providedBy(context):
             committees = context.committees or []
         # check_is_manager_for_suppl depend on isManager
         isManager = tool.isManager(cfg)
