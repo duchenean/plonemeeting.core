@@ -73,6 +73,7 @@ from plone.supermodel.utils import mergedTaggedValueDict
 from plonemeeting.core.compat import DisplayList
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
+from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
@@ -2622,7 +2623,9 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
 
 def _base_extra_expr_ctx(obj, extra_ctx={}):
     """ """
-    tool = api.portal.get_tool('portal_plonemeeting')
+    # Use getToolByName (acquisition) instead of api.portal.get_tool to avoid
+    # CannotGetPortalError when called after ZCA registry manipulation (e.g. pushGlobalRegistry)
+    tool = getToolByName(obj, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by
     # collective.behavior.talcondition or collective.documentgenerator
@@ -2632,8 +2635,8 @@ def _base_extra_expr_ctx(obj, extra_ctx={}):
             'meetingConfig': cfg,
             'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
             # backward compatibility, "member" will be available by default
-            'user': api.user.get_current(),
-            'catalog': api.portal.get_tool('portal_catalog'),
+            'user': getToolByName(obj, 'portal_membership').getAuthenticatedMember(),
+            'catalog': getToolByName(obj, 'portal_catalog'),
             # give ability to access annexes some package safe utils
             'collective_iconifiedcategory_utils': SecureModuleImporter['collective.iconifiedcategory.safe_utils'],
             'contact_core_utils': SecureModuleImporter['collective.contact.core.safe_utils'],

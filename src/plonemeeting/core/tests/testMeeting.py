@@ -1705,16 +1705,16 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # change categories order
         self.changeUser('siteadmin')
-        cfg.categories.folder_position(position='up', id=item.getCategory())
+        cfg['categories'].moveObjectsUp([item.getCategory()])
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
-        self._disableObj(cfg.categories.development)
+        self._disableObj(cfg['categories']['development'])
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # remove a category
-        self.deleteAsManager(cfg.categories.development.UID())
+        self.deleteAsManager(cfg['categories']['development'].UID())
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
@@ -3166,7 +3166,11 @@ class testMeetingType(PloneMeetingTestCase):
         # load subscriber and.update_local_roles
         # push a new layer so we can pop it (instead of cleanUp) to avoid nuking the registry
         from plone.testing import zca as _zca
+        from zope.component.hooks import setSite
         _zca.pushGlobalRegistry()
+        # pushGlobalRegistry/popGlobalRegistry call setSite() which clears the site;
+        # restore it so plone.api can find the portal
+        setSite(self.portal)
         try:
             _load_zcml_config('tests/events.zcml', products_plonemeeting)
             meeting.update_local_roles()
@@ -3182,6 +3186,7 @@ class testMeetingType(PloneMeetingTestCase):
             self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
         finally:
             _zca.popGlobalRegistry()
+            setSite(self.portal)  # restore site cleared by popGlobalRegistry
 
     def test_pm_Get_states_before(self):
         """This should return states before a given state.
