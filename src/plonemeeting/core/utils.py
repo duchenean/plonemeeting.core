@@ -1946,7 +1946,7 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
 
 
 def _addManagedPermissions(obj):
-    """Manage the 'ATContentTypes: Add Image' and 'Add portal content' permission :
+    """Manage the 'plone.app.contenttypes: Add Image' and 'Add portal content' permission :
        - first compute permission to Add Image, give to users able to edit at least one
          XHTML field, this means every roles having the 'Modify portal content' or a RichText
          field.write_permission must be able to add images;
@@ -2003,7 +2003,7 @@ def _addManagedPermissions(obj):
         # remove duplicates
         roles = tuple(set(roles))
         try:
-            obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+            obj.manage_permission("plone.app.contenttypes: Add Image", roles, acquire=False)
         except ValueError:
             pass
 

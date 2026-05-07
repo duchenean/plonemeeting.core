@@ -1994,7 +1994,7 @@ class testAdvices(PloneMeetingTestCase):
                             'for_item_created_from': '2012/01/01',
                             'for_item_created_until': '',
                             'delay': '5',
-                            'delay_label': 'h\xc3\xa9h\xc3\xa9',
+                            'delay_label': 'h\xe9h\xe9',
                             'available_on': '',
                             'is_linked_to_previous_row': '0'},
                            {'row_id': 'unique_id_456',
@@ -2003,7 +2003,7 @@ class testAdvices(PloneMeetingTestCase):
                             'for_item_created_from': '2012/01/01',
                             'for_item_created_until': '',
                             'delay': '10',
-                            'delay_label': 'h\xc3\xa9h\xc3\xa9',
+                            'delay_label': 'h\xe9h\xe9',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'},
                            {'row_id': 'unique_id_789',
@@ -2012,7 +2012,7 @@ class testAdvices(PloneMeetingTestCase):
                             'for_item_created_from': '2012/01/01',
                             'for_item_created_until': '',
                             'delay': '20',
-                            'delay_label': 'h\xc3\xa9h\xc3\xa9',
+                            'delay_label': 'h\xe9h\xe9',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(custom_advisers)
@@ -3102,7 +3102,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.item_advice_edit_states = ('itemcreated',)
         cfg.item_advice_view_states = ('itemcreated',)
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
+        data = open(file_path, 'rb')
 
         # just check that an adviser may add images to an editable advice
         self.changeUser('pmCreator1')
@@ -3118,7 +3118,7 @@ class testAdvices(PloneMeetingTestCase):
                                                      'advice_type': u'positive',
                                                      'advice_hide_during_redaction': False,
                                                      'advice_comment': richtextval(u'My comment')})
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', vendors_advice))
         self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
         vendors_advice.invokeFactory('Image', id='img1', title='Image1', file=data.read())
 
@@ -3128,12 +3128,12 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         # pmReviewer2 still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
-        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+        self.assertFalse(self.hasPermission('plone.app.contenttypes: Add Image', vendors_advice))
         self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
         # back to 'itemcreated', add image permission is set back correctly
         self.backToState(item, 'itemcreated')
         self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', vendors_advice))
 
     def test_pm_AdviceExternalImagesStoredLocally(self):
         """External images are stored locally."""
@@ -4408,8 +4408,8 @@ class testAdvices(PloneMeetingTestCase):
         cfg.mail_item_events = ('advice_edited__Owner', 'advice_edited_in_meeting__creators')
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited_in_meeting")
         self.assertEqual(len(sent[0][0]), 2)
-        self.assertEqual(sent[0][0][0], u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>')
-        self.assertEqual(sent[0][0][1], u'M. PMCreator One <pmcreator1@plonemeeting.org>')
+        self.assertIn(u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>', sent[0][0])
+        self.assertIn(u'M. PMCreator One <pmcreator1@plonemeeting.org>', sent[0][0])
 
     def test_pm_AdviceMandatoriness(self):
         """When using MeetingConfig.enforceAdviceMandatoriness, an item
