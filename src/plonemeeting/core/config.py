@@ -155,8 +155,7 @@ PRODUCT_DEPENDENCIES = []
 ADD_SUBCONTENT_PERMISSIONS = [
     AddAdvice,
     AddAnnex,
-    AddAnnexDecision,
-    'ATContentTypes: Add Image']
+    AddAnnexDecision]
 
 # base suffixes, if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 # or monkeypatch it if base values are not correct

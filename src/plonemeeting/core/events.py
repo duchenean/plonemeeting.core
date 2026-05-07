@@ -62,6 +62,7 @@ from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
 from plonemeeting.core.interfaces import IConfigElement
 from plonemeeting.core.interfaces import IMeetingContent
 from plonemeeting.core.utils import _addManagedPermissions
+from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import addDataChange
 from plonemeeting.core.utils import AdviceAfterAddEvent
 from plonemeeting.core.utils import AdviceAfterModifyEvent
@@ -104,7 +105,7 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Code executed after a workflow transition has been triggered
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.getTagName()
+    objectType = _resolve_adaptable_key(getattr(event.object, 'portal_type', None))
     actionsAdapter = event.object.wfActions()
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
@@ -645,6 +646,8 @@ def onConfigWillBeRemoved(config, event):
     # Check that every meetingConfig folder of Members is empty.
     membershipTool = api.portal.get_tool('portal_membership')
     members = membershipTool.getMembersFolder()
+    if members is None:
+        return
     meetingConfigId = config.getId()
     searches_folder_ids = [info[0] for info in config.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
     for member in members.objectValues():
@@ -1112,7 +1115,7 @@ def onAnnexFileChanged(annex, event):
        - if ++add++annex in REQUEST, should not really happen, it means we are adding
          a new annex and defining a scan_id for it (power user);
        - or annex is signed (it means that we are updating the annex thru the AMQP WS).'''
-    if annex.scan_id and \
+    if getattr(annex, 'scan_id', None) and \
        not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or
             annex.REQUEST.get('currentlyPastingItems', False) or
             '/++add++annex' in annex.REQUEST.getURL() or
@@ -1711,8 +1714,9 @@ def onMeetingWillBeRemoved(meeting, event):
     if event.object.meta_type == 'Plone Site':
         return
 
-    # We can remove an meeting directly but not "through" his container.
-    if event.object.getTagName() != 'Meeting':
+    # We can remove a meeting directly but not "through" its container.
+    # Use IMeeting.providedBy to cover all meeting subtypes (Meeting, MeetingCouncil, etc.)
+    if not IMeeting.providedBy(event.object):
         msg = translate(
             u"can_not_delete_meeting_container",
             domain='PloneMeeting',

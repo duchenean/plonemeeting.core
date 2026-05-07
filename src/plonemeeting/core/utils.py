@@ -202,7 +202,7 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    tag_name = getattr(obj, 'getTagName', lambda: obj.portal_type)()
+    tag_name = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
     interfaceMethod = adaptables[tag_name]['method']
     if conditions:
         interfaceMethod += 'Conditions'
@@ -216,11 +216,38 @@ def getWorkflowAdapter(obj, conditions):
     return adapter
 
 
+def _resolve_adaptable_key(tag_name):
+    '''Resolve a portal_type like MeetingCollege to its base adaptables key (Meeting).
+       Handles case-insensitive exact matches (e.g. meetingadvice -> MeetingAdvice)
+       and prefix matches (e.g. MeetingCollege -> Meeting).'''
+    if not tag_name:
+        return tag_name
+    if tag_name in adaptables:
+        return tag_name
+    # Case-insensitive exact match (e.g. 'meetingadvice' -> 'MeetingAdvice')
+    tag_lower = tag_name.lower()
+    for base_name in adaptables:
+        if tag_lower == base_name.lower():
+            return base_name
+    # Prefix match (e.g. 'MeetingCollege' -> 'Meeting')
+    for base_name in adaptables:
+        if tag_name.startswith(base_name):
+            return base_name
+    return tag_name
+
+
 def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
+    # Already adapted — return as-is to avoid infinite recursion
+    if IMeetingCustom.providedBy(obj) or \
+       IMeetingItemCustom.providedBy(obj) or \
+       IMeetingConfigCustom.providedBy(obj):
+        return obj
     res = obj
-    tag_name = getattr(obj, 'getTagName', lambda: obj.portal_type)()
+    tag_name = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
+    if not tag_name or tag_name not in adaptables:
+        return res
     theInterface = adaptables[tag_name]['interface']
     try:
         res = theInterface(obj)
@@ -277,7 +304,7 @@ def getCurrentMeetingObject(context):
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            obj.context.getTagName() == 'Meeting':
+            _resolve_adaptable_key(getattr(aq_base(obj.context), 'portal_type', None)) == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -290,7 +317,7 @@ def getCurrentMeetingObject(context):
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):
                 obj = obj.getParentNode()
-                if not (obj.getTagName() in ('Meeting', 'MeetingItem')):
+                if not (_resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None)) in ('Meeting', 'MeetingItem')):
                     obj = None
             else:
                 # It can be a method with attribute im_class
@@ -557,11 +584,12 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                 wf_action['action'] in wf.transitions) else u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
-    if obj.getTagName() == 'Meeting':
+    _base_tag = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
+    if _base_tag == 'Meeting':
         translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
         translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
         translation_mapping['meetingState'] = get_state_infos(obj)['state_title']
-    elif obj.getTagName() == 'MeetingItem':
+    elif _base_tag == 'MeetingItem':
         translation_mapping['itemTitle'] = safe_unicode(obj.Title())
         translation_mapping['itemState'] = get_state_infos(obj)['state_title']
         meeting = obj.getMeeting()
@@ -1334,7 +1362,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         fieldContent = storeImagesLocally(obj, field_raw_value, force_resolve_uid=True)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
+        if ("%s.%s" % (_resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None)), field_name) in fieldsToTransform):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
         if IDexterityContent.providedBy(obj):
@@ -1388,7 +1416,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         # transform a field or execute the TAL expression
         if tal_expr and transform['transition'] == transitionId and \
            ('.' not in transform['field_name'] or
-                transform['field_name'].split('.')[0] == obj.getTagName()):
+                transform['field_name'].split('.')[0] == _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))):
             try:
                 res = _evaluateExpression(
                     obj,
@@ -1974,7 +2002,10 @@ def _addManagedPermissions(obj):
         roles += modify_perm_roles
         # remove duplicates
         roles = tuple(set(roles))
-        obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+        try:
+            obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+        except ValueError:
+            pass
 
     def _addPortalContentPermission():
         # now manage the AddPortalContent permission
@@ -2258,7 +2289,8 @@ def checkMayQuickEdit(obj,
     from plonemeeting.core.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
     res = False
-    meeting = obj.getTagName() == "Meeting" and obj or (
+    from plonemeeting.core.interfaces import IMeeting
+    meeting = IMeeting.providedBy(obj) and obj or (
         hasattr(obj, 'hasMeeting') and obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \

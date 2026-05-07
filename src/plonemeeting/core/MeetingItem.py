@@ -11,7 +11,7 @@ from appy.utils import No
 try:
     from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 except ImportError:
-    ReferenceBrowserWidget = None
+    ReferenceBrowserWidget = lambda **kw: None
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -70,12 +70,25 @@ try:
     from Products.Archetypes.atapi import TextAreaWidget
     from Products.Archetypes.atapi import TextField
 except ImportError:
+    class _ATStub:
+        """Stub for AT schema objects so module-level code doesn't crash."""
+        _properties = {'widget': lambda **kw: _ATStub()}
+        def __init__(self, *a, **kw): pass
+        def __call__(self, *a, **kw): return self
+        def __getitem__(self, k): return self
+        def __getattr__(self, k): return self
+        def __setattr__(self, k, v): pass
+        def __add__(self, other): return self
+        def copy(self): return self
     BaseFolder = OrderedBaseFolder = object
-    BooleanField = DateTimeField = IntegerField = LinesField = None
-    ReferenceField = StringField = TextField = None
-    DisplayList = MultiSelectionWidget = RichWidget = Schema = None
-    OrderedBaseFolderSchema = SelectionWidget = StringWidget = None
-    TextAreaWidget = registerType = None
+    BooleanField = DateTimeField = IntegerField = LinesField = _ATStub()
+    ReferenceField = StringField = TextField = _ATStub()
+    DisplayList = MultiSelectionWidget = RichWidget = _ATStub
+    Schema = _ATStub
+    OrderedBaseFolderSchema = _ATStub()
+    SelectionWidget = StringWidget = _ATStub()
+    TextAreaWidget = _ATStub()
+    def registerType(*a, **kw): pass
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent

@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import Unauthorized
+from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -55,12 +56,14 @@ from plonemeeting.core.utils import get_dx_widget
 from plonemeeting.core.utils import get_item_validation_wf_suffixes
 from plonemeeting.core.utils import getAvailableMailingLists
 from plonemeeting.core.utils import may_view_field
+from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
 from zope.annotation import IAnnotations
+from zope.component import getMultiAdapter
 from zope.i18n import translate
 
-import cgi
+import html as cgi  # cgi.escape removed in Py3; html.escape is the replacement
 import json
 import lxml
 import operator
@@ -741,9 +744,9 @@ class BaseDGHV(object):
 
     def print_history(self):
         """Return the history view for templates. """
-        historyView = self.context.restrictedTraverse('@@historyview')()
-        historyViewRendered = lxml.html.fromstring(historyView)
-        return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
+        from plone.app.layout.viewlets.content import ContentHistoryView
+        view = ContentHistoryView(self.context, self.request)
+        return view()
 
     def get_contact_infos(self, position_types=[], userid=None):
         """Return informations for given userid, if not given, we take current element creator,
@@ -858,7 +861,7 @@ class BaseDGHV(object):
         if not itemAdvicesByType:
             res += "<p class='pmAdvices'>-</p>"
 
-        return res.encode('utf-8')
+        return res
 
     def get_scan_id(self):
         """Return the stored annex scan_id when available, else None.
@@ -958,7 +961,7 @@ class BaseDGHV(object):
         if committee_id:
             meeting = self.context
             attendees = self.context.get_committee_attendees(committee_id)
-        elif self.context.getTagName() == 'Meeting':
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
             meeting = self.context
             attendees = meeting.get_attendees()
             item_non_attendees = meeting.get_item_non_attendees()
@@ -983,7 +986,7 @@ class BaseDGHV(object):
             else:
                 # when context is an item, make sure we have correct order in case
                 # attendees order was redefined
-                if self.context.getTagName() == 'MeetingItem':
+                if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'MeetingItem':
                     contacts = self.context.get_all_attendees(the_objects=True, ordered=True)
                 else:
                     contacts = meeting.get_all_attendees(the_objects=True)
@@ -1076,7 +1079,7 @@ class BaseDGHV(object):
                 (is_voter is True and contact_uid not in voters)):
                 continue
             forced_position_type_value = None
-            if self.context.getTagName() == "MeetingItem":
+            if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == "MeetingItem":
                 forced_position_type_value = meeting.get_attendee_position_for(
                     context_uid, contact_uid)
             contact_short_title = contact.get_short_title(
@@ -1188,7 +1191,7 @@ class BaseDGHV(object):
                                 is_voter=None):
 
         context_uid = self.context.UID()
-        is_item = self.context.getTagName() == "MeetingItem"
+        is_item = _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == "MeetingItem"
 
         def _buildContactsValue(meeting, contacts):
             """ """
@@ -1471,9 +1474,9 @@ class BaseDGHV(object):
         signatures = None
         if committee_id:
             signatures = self.context.get_committee_signatures(committee_id)
-        elif self.context.getTagName() == 'Meeting' and self.context.get_signatures():
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting' and self.context.get_signatures():
             signatures = self.context.get_signatures()
-        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
         if signatures:
@@ -1526,7 +1529,7 @@ class BaseDGHV(object):
             if committee_id:
                 signatories = self.context.get_committee_signatories(
                     committee_id, the_objects=True, by_signature_number=True)
-            elif self.context.getTagName() == 'Meeting':
+            elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
                 signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
             else:
                 signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
@@ -1962,7 +1965,7 @@ def print_votes(item,
         res = []
         for voter in voters:
             forced_position_type_value = None
-            if item.getTagName() == "MeetingItem":
+            if _resolve_adaptable_key(getattr(aq_base(item), 'portal_type', None)) == "MeetingItem":
                 forced_position_type_value = meeting.get_attendee_position_for(
                     item.UID(), voter.UID())
             if include_hp:

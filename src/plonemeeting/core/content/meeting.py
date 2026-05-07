@@ -892,11 +892,11 @@ class Meeting(Container):
              'condition': ""},
         'validation_deadline':
             {'optional': True,
-             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+             'condition': "python:context.date and "
                 "cfg.show_meeting_manager_reserved_field('validation_deadline')"},
         'freeze_deadline':
             {'optional': True,
-             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+             'condition': "python:context.date and "
                 "cfg.show_meeting_manager_reserved_field('freeze_deadline')"},
         'place':
             {'optional': True,
@@ -1038,7 +1038,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.getTagName() != 'Meeting':
+        if type(self) is not Meeting:
             res = self.context
         return res
 
@@ -2348,7 +2348,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.get_self. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.getTagName() != 'Meeting':
+        if type(self) is not Meeting:
             res = self.context
         return res
 
@@ -2555,7 +2555,7 @@ class PlacesVocabulary(object):
         places = [safe_unicode(place) for place in cfg.places.strip().split('\r\n')
                   if place.strip()]
         # history when context is a Meeting
-        if context.getTagName() == "Meeting" and \
+        if IMeeting.providedBy(context) and \
            context.place and \
            context.place not in places and \
            context.place != PLACE_OTHER:

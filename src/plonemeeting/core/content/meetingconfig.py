@@ -5472,6 +5472,7 @@ class MeetingConfig(Container):
                     portalType.model_source = dxBaseFTI.model_source
                     portalType.filter_content_types = dxBaseFTI.filter_content_types
                     portalType.allowed_content_types = dxBaseFTI.allowed_content_types
+                    portalType.add_permission = dxBaseFTI.add_permission
 
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring') and site_properties:
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
@@ -6715,7 +6716,8 @@ class MeetingConfig(Container):
             # remove searches_* folders from the given p_folder
             toDelete = [folderId for folderId in folder.objectIds()
                         if folderId.startswith('searches_')]
-            folder.manage_delObjects(toDelete)
+            if toDelete:
+                folder.manage_delObjects(toDelete)
 
             # create relevant folders and activate faceted on it
             for subFolderId, subFolderTitle in subFolderInfos:

@@ -26,6 +26,7 @@ from plonemeeting.core.content.meetingconfig import _at_to_dx
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
+from plone.base.utils import get_installer
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
 from plonemeeting.core import logger
@@ -80,7 +81,7 @@ class ToolInitializer:
         self.profilePath = context._profile_path
         # productname default's name space is 'Products'.
         # If a name space is found, then Products namespace is not used
-        self.productname = '.' in productname and productname or 'Products.%s' % productname
+        self.productname = '.' in productname and productname or 'plonemeeting.%s' % productname
         self.request = getRequest()
         self.portal = context.getSite()
         self.tool = self.portal.portal_plonemeeting
@@ -911,19 +912,22 @@ def isTestOrArchiveProfile(context):
 
 
 def initializeTool(context):
-    '''Initialises the PloneMeeting tool based on information from the current
-       profile.'''
-    # This method is called by several profiles: testing, archive. Because of a bug
-    # in portal_setup, the method can be wrongly called by the default profile.
+    """Initialises the PloneMeeting tool based on information from the current
+       profile."""
     if not isTestOrArchiveProfile(context):
         return
-    # Installs PloneMeeting if not already done
-    pqi = context.getSite().portal_quickinstaller
-    # Now that we do not run this profile from elsewhere than portal_setup
-    # We had to install PloneMeeting first...
-    # pqi.listInstalledProducts()
-    if not pqi.isProductInstalled('PloneMeeting'):
-        profileId = u'profile-plonemeeting.core:default'
-        context.getSite().portal_setup.runAllImportStepsFromProfile(profileId)
-    # Initialises data from the profile.
-    return ToolInitializer(context, PROJECTNAME).run()
+
+    portal = api.portal.get()
+    request = getattr(portal, "REQUEST", None)
+
+    if request is None:
+        installer = get_installer(portal)
+    else:
+        installer = get_installer(portal, request)
+
+    addon_id = "plonemeeting.core"
+
+    if not installer.is_product_installed(addon_id):
+        installer.install_product(addon_id)
+
+    return ToolInitializer(context, "core").run()

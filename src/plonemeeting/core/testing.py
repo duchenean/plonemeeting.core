@@ -42,7 +42,15 @@ class PMLayer(PloneWithPackageLayer):
         # configure default workflows so Folder has a workflow
         # make sure we have a default workflow
         portal.portal_workflow.setDefaultChain('simple_publication_workflow')
+        # Plone 6: ensure Members folder exists before profile setup
+        if not base_hasattr(portal, 'Members'):
+            from plone.base.utils import unrestricted_construct_instance
+            unrestricted_construct_instance('Folder', portal, 'Members')
         super(PMLayer, self).setUpPloneSite(portal)
+        # Plone 6: ensure Members folder exists before creating member areas
+        if not base_hasattr(portal, 'Members'):
+            from plone.base.utils import unrestricted_construct_instance
+            unrestricted_construct_instance('Folder', portal, 'Members')
         # Create member area of existing users
         for user in api.user.get_users():
             # this layer is used by imio.pm.wsclient

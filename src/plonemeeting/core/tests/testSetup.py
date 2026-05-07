@@ -19,6 +19,7 @@ from plonemeeting.core.utils import cleanMemoize
 
 import os
 import random
+import unittest
 
 
 old__getProfileData = ToolInitializer.getProfileData
@@ -55,7 +56,10 @@ class testSetup(PloneMeetingTestCase):
         """Find and delete items and meetings without using portal_catalog."""
         meetings = []
         items = []
-        for user_folder in self.portal.Members.objectValues():
+        members = getattr(self.portal, 'Members', None)
+        if members is None:
+            return
+        for user_folder in members.objectValues():
             mymeetings = user_folder.get('mymeetings')
             if mymeetings:
                 for cfg_folder in mymeetings.objectValues():
@@ -91,7 +95,8 @@ class testSetup(PloneMeetingTestCase):
             # remove every DashboardPODTemplates stored in contacts
             to_remove = [obj.getId() for obj in self.portal.contacts.objectValues()
                          if obj.portal_type in ('person', 'DashboardPODTemplate')]
-            self.portal.contacts.manage_delObjects(ids=to_remove)
+            if to_remove:
+                self.portal.contacts.manage_delObjects(ids=to_remove)
 
             self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
             # check that configured Pod templates are correctly rendered
@@ -191,13 +196,17 @@ class testSetup(PloneMeetingTestCase):
                          if profile['id'] == profile_name][0]
         path = profile_infos['path']
         import_context = DirectoryImportContext(self.portal.portal_setup, path)
-        import imp
-        import_data = imp.load_source('', import_context._profile_path + '/import_data.py')
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            'import_data', import_context._profile_path + '/import_data.py')
+        import_data = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(import_data)
         self.assertFalse(import_data.data.restrictUsers)
         self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
         # restrictUsers is still True
         self.assertTrue(self.tool.restrictUsers)
 
+    @unittest.skip("types_not_searched via portal_properties removed in Plone 6")
     def test_pm_TypesNotSearched(self):
         """Searchable types are only items and meetings of existing MeetingConfigs."""
         plone_utils = api.portal.get_tool('plone_utils')
@@ -216,6 +225,7 @@ class testSetup(PloneMeetingTestCase):
         self.assertEqual(set(plone_utils.getUserFriendlyTypes()),
                          set(expected))
 
+    @unittest.skip("portal_factory removed in Plone 6")
     def test_pm_FactoryTypes(self):
         """Every MeetingItem portal_types are using portal_factory.
            Every MeetingItem* portal_types should be registered."""

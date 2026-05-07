@@ -627,8 +627,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             org.groups_in_charge = []
         # unselect every organizations from plonegroup
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, [])
-        ids_to_remove = self.own_org.objectIds()
-        self.own_org.manage_delObjects(ids=ids_to_remove)
+        ids_to_remove = list(self.own_org.objectIds())
+        if ids_to_remove:
+            self.own_org.manage_delObjects(ids=ids_to_remove)
         self.cleanMemoize()
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):
@@ -653,7 +654,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                         api.content.transition(obj, 'deactivate')
                     continue
                 objectIds_to_remove.append(obj.getId())
-            subfolder.manage_delObjects(ids=objectIds_to_remove)
+            if objectIds_to_remove:
+                subfolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):
