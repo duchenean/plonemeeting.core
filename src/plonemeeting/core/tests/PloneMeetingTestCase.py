@@ -794,7 +794,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_convert = enable
         # False or every portal_type having a file is converted, like PODTemplate, ...
         gsettings.auto_select_layout = False
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        gsettings.auto_layout_file_types = list(CONVERTABLE_TYPES.keys())
         self.tool.at_post_edit_script()
         return gsettings
 

@@ -66,7 +66,7 @@ class testVotes(PloneMeetingTestCase):
             self.presentItem(no_vote_item)
         voters = meeting.get_voters()
         # public votes
-        public_votes = public_item.get_item_votes()[0]
+        public_votes = public_item.get_item_votes(vote_number=0)
         public_votes['voters'][voters[0]] = "yes"
         public_votes['voters'][voters[1]] = "yes"
         public_votes['voters'][voters[2]] = "no"
@@ -74,7 +74,7 @@ class testVotes(PloneMeetingTestCase):
         meeting.set_item_public_vote(public_item, public_votes, 0)
         transaction.commit()
         # encode secret votes
-        secret_votes = secret_item.get_item_votes()[0]
+        secret_votes = secret_item.get_item_votes(vote_number=0)
         secret_votes['votes']['abstain'] = 2
         secret_votes['votes']['no'] = 1
         secret_votes['votes']['yes'] = 1

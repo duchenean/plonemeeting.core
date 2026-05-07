@@ -3400,7 +3400,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'accept_out_of_meeting')
         self.assertEqual(item.query_state(), 'accepted_out_of_meeting')
         # not duplicated
-        self.assertFalse(item.getBRefs())
+        self.assertFalse(item.get_successors(the_objects=False))
         self.assertFalse(item.get_successors())
         # back transition
         self.do(item, 'backToValidatedFromAcceptedOutOfMeeting')
@@ -3468,7 +3468,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'accept_out_of_meeting_emergency')
         self.assertEqual(item.query_state(), 'accepted_out_of_meeting_emergency')
         # not duplicated
-        self.assertFalse(item.getBRefs())
+        self.assertFalse(item.get_successors(the_objects=False))
         self.assertEqual(item.get_successors(the_objects=False), [])
         # back transition
         self.do(item, 'backToValidatedFromAcceptedOutOfMeetingEmergency')
@@ -3535,7 +3535,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'transfer')
         self.assertEqual(item.query_state(), 'transfered')
         # not duplicated
-        self.assertFalse(item.getBRefs())
+        self.assertFalse(item.get_successors(the_objects=False))
         self.assertEqual(item.get_successors(the_objects=False), [])
         # back transition
         self.do(item, 'backToValidatedFromTransfered')

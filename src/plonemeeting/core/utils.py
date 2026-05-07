@@ -652,6 +652,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                        tool.functional_admin_email)
     if not recipients:
         recipients = [adminFromAddress]
+    recipients = [r for r in recipients if r]
 
     # add a fingerpointing log message
     extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
