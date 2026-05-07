@@ -397,8 +397,8 @@ def get_datagridfield_column_value(value, column):
         return []
     value = [row[column] for row in value
              if row.get('orderindex_', None) != 'template_row_marker' and row[column]]
-    # merge lists and remove duplicates
-    if value and hasattr(value[0], "__iter__"):
+    # merge lists and remove duplicates (not strings — str has __iter__ in Py3)
+    if value and hasattr(value[0], "__iter__") and not isinstance(value[0], str):
         value = set(list(itertools.chain.from_iterable(value)))
     return value
 
