@@ -2349,7 +2349,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.get_self. Check MeetingItem.py for more
            info.'''
         res = self
-        if not isinstance(aq_base(self), Meeting):
+        if hasattr(aq_base(self), 'context'):
             res = self.context
         return res
 

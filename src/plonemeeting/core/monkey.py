@@ -109,11 +109,6 @@ def extract(self, default=interfaces.NO_VALUE):
             value = (value,)
         # do some kind of validation, at least only use existing values
         for token in value:
-            # XXX begin do not encode to utf-8 for MasterSelectWidget
-            # as we use unicode values or validation fails with "field required"
-            if isinstance(token, six.text_type) and not self.__class__.__name__ == 'MasterSelectWidget':
-                token = token.encode('utf-8')
-            # XXX end
             if token == self.noValueToken:
                 continue
             try:
