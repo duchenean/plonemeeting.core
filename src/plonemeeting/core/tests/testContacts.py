@@ -1724,11 +1724,11 @@ class testContacts(PloneMeetingTestCase):
 
         # 1) fails because used in the configuration, in
         # selectableCopyGroups, selectableAdvisers, customAdvisers, powerAdvisersGroups or usingGroups
-        self.failIf(cfg.custom_advisers)
-        self.failIf(cfg.power_advisers_groups)
-        self.failIf(cfg.selectable_advisers)
-        self.failIf(cfg.getOrderedAssociatedOrganizations())
-        self.failIf(cfg.getOrderedGroupsInCharge())
+        self.assertFalse(cfg.custom_advisers)
+        self.assertFalse(cfg.power_advisers_groups)
+        self.assertFalse(cfg.selectable_advisers)
+        self.assertFalse(cfg.getOrderedAssociatedOrganizations())
+        self.assertFalse(cfg.getOrderedGroupsInCharge())
         self.assertIn(self.developers_reviewers, cfg.selectable_copy_groups)
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
@@ -1934,7 +1934,7 @@ class testContacts(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(
             self.developers_uid, catch_before_delete_exception=False)
         # the group is actually removed
-        self.failIf(self.developers in self.own_org)
+        self.assertFalse(self.developers in self.own_org)
 
         # 4) fails when used in a meetingcategory.using_groups or meetingcategory.groups_in_charge
         # usingGroups
@@ -2017,7 +2017,7 @@ class testContacts(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(
             self.vendors_uid, catch_before_delete_exception=False)
         # the group is actually removed
-        self.failIf(self.vendors in self.own_org)
+        self.assertFalse(self.vendors in self.own_org)
 
     def test_pm_CanNotRemoveOrganizationUsedAsGroupsInCharge(self):
         '''While removing an organization, it should raise if

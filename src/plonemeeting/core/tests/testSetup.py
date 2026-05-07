@@ -235,7 +235,7 @@ class testSetup(PloneMeetingTestCase):
         # every portal_types starting with MeetingItem/MeetingConfig
         meeting_types = [pt for pt in portal_types if pt.startswith(('MeetingConfig', 'MeetingItem'))]
         for meeting_type in meeting_types:
-            self.failIf(set(meeting_types).difference(factory_types))
+            self.assertFalse(set(meeting_types).difference(factory_types))
 
     def test_pm_VersionableTypes(self):
         """Make sure every Plone default types are not more versionable."""

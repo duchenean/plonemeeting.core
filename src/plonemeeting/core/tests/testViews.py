@@ -241,7 +241,7 @@ class testViews(PloneMeetingTestCase):
         itemTemplate.privacy = 'secret'
         # an itemTemplate can have no proposingGroup, it does validate
         itemTemplate.setProposingGroup('')
-        self.failIf(itemTemplate.validate_proposingGroup(''))
+        self.assertFalse(itemTemplate.validate_proposingGroup(''))
         # use this template
         self.changeUser('pmCreator1')
         newItem2 = itemTemplateView.createItemFromTemplate(itemTemplateUID)
@@ -781,7 +781,7 @@ class testViews(PloneMeetingTestCase):
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
         self.assertEqual(template.mailing_lists, u'')
-        self.failIf(getAvailableMailingLists(item, template))
+        self.assertFalse(getAvailableMailingLists(item, template))
 
         # define mailing_lists
         # False condition
@@ -2366,7 +2366,7 @@ class testViews(PloneMeetingTestCase):
         labeljar.add('Label', 'green', False)
         self.cleanMemoize()
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
 
     def test_pm_ftw_labels_viewlet_available_item_template(self):
         """Available on item templates to Managers and item templates managers."""
@@ -2381,7 +2381,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # item templates manager can access every labels
         self.changeUser('templatemanager1')
@@ -2390,7 +2390,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # a user that would access it would access no labels
         self.changeUser('pmCreator1')
@@ -2399,7 +2399,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
         # MeetingManager
         self.changeUser('pmManager')
@@ -2408,7 +2408,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
 
     def test_pm_ftw_labels_viewlet_can_edit(self):

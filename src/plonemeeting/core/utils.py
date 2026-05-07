@@ -2269,13 +2269,14 @@ def main_item_data(item):
     usedItemAttrs = cfg.used_item_attributes
     data = []
     data.append({'field_name': 'title',
-                 'field_content': item.Title()})
+                 'field_content': safe_unicode(item.Title())})
     for field in item.Schema().fields():
         fieldName = field.getName()
         if field.widget.getName() == 'RichWidget' and \
            (fieldName in usedItemAttrs or not field.optional):
+            value = field.get(item)
             data.append({'field_name': fieldName,
-                         'field_content': field.get(item)})
+                         'field_content': safe_unicode(value) if isinstance(value, bytes) else value})
     return data
 
 

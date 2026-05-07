@@ -67,6 +67,7 @@ from plonemeeting.core.config import NOT_GIVEN_ADVICE_VALUE
 from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.indexes import DELAYAWARE_ROW_ID_PATTERN
 from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
+from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.interfaces import IMeetingConfig
 from plonemeeting.core.interfaces import IMeetingItem
 from plonemeeting.core.utils import get_dx_attrs
@@ -2338,7 +2339,7 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
     def __call__(self, context):
         # as vocabulary is used in a DataGridField
         # context is often NO_VALUE...
-        if not hasattr(context, "getTagName"):
+        if not hasattr(context, "portal_type"):
             context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -2729,7 +2730,7 @@ class SelectableCommitteesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         # as vocabulary is used in a DataGridField
         # context is often NO_VALUE or the dict...
-        if not hasattr(context, "getTagName"):
+        if not hasattr(context, "portal_type"):
             context = get_context_with_request(context)
         cfg = tool.getMeetingConfig(context)
         if cfg is None:
@@ -2737,7 +2738,7 @@ class SelectableCommitteesVocabulary(object):
         # if current context is an item, cache by stored committees
         # so we avoid cache by context
         committees = []
-        if context.getTagName() == "MeetingItem":
+        if getattr(context, 'portal_type', '') == "MeetingItem":
             committees = context.committees or []
         # check_is_manager_for_suppl depend on isManager
         isManager = tool.isManager(cfg)
@@ -2776,7 +2777,7 @@ class SelectableCommitteesVocabulary(object):
 
         # as vocabulary is used in a DataGridField
         # context is often NO_VALUE or the dict...
-        if not hasattr(context, "getTagName"):
+        if not hasattr(context, "portal_type"):
             context = get_context_with_request(context)
         self.context = context
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2913,7 +2914,7 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
     def _get_stored_values(self):
         """ """
         stored_values = []
-        if self.context.getTagName() == "Meeting":
+        if IMeeting.providedBy(self.context):
             stored_values = get_datagridfield_column_value(self.context.committees, "row_id")
         return stored_values
 

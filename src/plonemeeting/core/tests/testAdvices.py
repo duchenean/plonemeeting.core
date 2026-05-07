@@ -76,25 +76,25 @@ class testAdvices(PloneMeetingTestCase):
         item3 = self.create('MeetingItem', **data)
         # at this state, the item is not viewable by the advisers
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(View, item1))
-        self.failIf(self.hasPermission(View, item2))
-        self.failIf(self.hasPermission(View, item3))
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item2))
+        self.assertFalse(self.hasPermission(View, item3))
         # propose the items
         self.changeUser('pmCreator1')
         for item in (item1, item2, item3):
             self.proposeItem(item)
         # now the item (item1) to advice is viewable because 'pmReviewer2' has an advice to add
         self.changeUser('pmReviewer2')
-        self.failUnless(self.hasPermission(View, item1))
-        self.failIf(self.hasPermission(View, (item2, item3)))
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, (item2, item3)))
         self.changeUser('pmReviewer1')
         # validate the items
         for item in (item1, item2, item3):
             self.validateItem(item)
         # item1 still viewable because 'pmReviewer2' can still edit advice
         self.changeUser('pmReviewer2')
-        self.failUnless(self.hasPermission(View, item1))
-        self.failIf(self.hasPermission(View, (item2, item3)))
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, (item2, item3)))
         # present the items
         self.changeUser('pmManager')
         self.create('Meeting')
@@ -105,14 +105,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item3.query_state(), self._stateMappingFor('presented'))
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
         self.changeUser('pmReviewer2')
-        self.failUnless(self.hasPermission(View, item1))
-        self.failIf(self.hasPermission(View, (item2, item3)))
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, (item2, item3)))
         # now put the item back to itemcreated so it is no more viewable
         # by 'pmReviewer2' as 'itemcreated' is not in self.meetingConfig.itemAdviceViewStates
         self.changeUser('pmManager')
         self.backToState(item1, 'itemcreated')
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(View, (item1, item2, item3)))
+        self.assertFalse(self.hasPermission(View, (item1, item2, item3)))
 
     def test_pm_ShowAdvices(self):
         """Shown if MeetingConfig.useAdvices or MeetingItem.adviceIndex."""
@@ -150,7 +150,7 @@ class testAdvices(PloneMeetingTestCase):
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item1))
         self.changeUser('pmCreator1')
         self.proposeItem(item1)
         # a user able to View the item can not add an advice, even if he tries...
@@ -186,7 +186,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('advice_group' in data)
         # we can use the values from the vocabulary
         vocab = form.widgets.get('advice_group').terms.terms
-        self.failUnless(self.vendors_uid in vocab)
+        self.assertTrue(self.vendors_uid in vocab)
         self.assertEqual(len(vocab), 1)
         # give the advice, select a valid 'advice_group' and save
         form.request.set('form.widgets.advice_group', self.vendors_uid)
@@ -221,16 +221,16 @@ class testAdvices(PloneMeetingTestCase):
         # now 'pmReviewer2' can't add (already given) an advice
         # but he can still edit the advice he just gave
         self.changeUser('pmReviewer2')
-        self.failUnless(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item1))
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [self.vendors_uid]))
-        self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [self.vendors_uid]))
-        self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
-        self.failIf(self.hasPermission(ModifyPortalContent, given_advice))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, given_advice))
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         self.changeUser('pmManager')
@@ -378,9 +378,9 @@ class testAdvices(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', **data)
         # check than the adviser can see the item
         self.changeUser('pmReviewer2')
-        self.failUnless(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item1))
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
-        self.failUnless(self.hasPermission(AddAdvice, item1))
+        self.assertTrue(self.hasPermission(AddAdvice, item1))
 
     def test_pm_AdvicesInvalidation(self):
         '''Test the advice invalidation process.'''
@@ -397,7 +397,7 @@ class testAdvices(PloneMeetingTestCase):
             'optional_advisers': (self.vendors_uid,)
         }
         item = self.create('MeetingItem', **data)
-        self.failIf(item.willInvalidateAdvices())
+        self.assertFalse(item.willInvalidateAdvices())
         self.proposeItem(item)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
@@ -410,27 +410,27 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         # login as an user that can actually edit the item because not 'validated'
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
         # modifying the item will not invalidate the advices because not 'validated'
-        self.failIf(item.willInvalidateAdvices())
+        self.assertFalse(item.willInvalidateAdvices())
         item.decision = richtextval(item.getDecision() + '<p>New line</p>')
         item._update_after_edit()
         # check that advices are still there
-        self.failUnless(item.hasAdvices())
+        self.assertTrue(item.hasAdvices())
         # adding an annex or editing a field thru ajax does not invalidate the item because not 'validated'
         annex1 = self.addAnnex(item)
-        self.failUnless(item.hasAdvices())
+        self.assertTrue(item.hasAdvices())
         item.setFieldFromAjax('description', item.getDecision() + '<p>Another new line</p>')
         # validate the item
         self.validateItem(item)
         # login as a user that can edit the item when it is 'validated'
         self.changeUser('pmManager')
         # now that the item is validated, editing it will invalidate advices
-        self.failUnless(item.willInvalidateAdvices())
+        self.assertTrue(item.willInvalidateAdvices())
         # removing an annex will invalidate the advices
         self.deleteAsManager(annex1.UID())
-        self.failIf(item.hasAdvices())
-        self.failIf(item.getGivenAdvices())
+        self.assertFalse(item.hasAdvices())
+        self.assertFalse(item.getGivenAdvices())
         # advice does not exist anymore and has been correctly unindexed
         self.assertEqual(len(self.catalog(path="/".join(item.getPhysicalPath()))), 1)
         # given the advice again so we can check other case where advices are invalidated
@@ -443,13 +443,13 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
-        self.failUnless(item.hasAdvices())
-        self.failUnless(item.getGivenAdvices())
+        self.assertTrue(item.hasAdvices())
+        self.assertTrue(item.getGivenAdvices())
         # adding an annex will invalidate advices
-        self.failUnless(item.willInvalidateAdvices())
+        self.assertTrue(item.willInvalidateAdvices())
         annex1 = self.addAnnex(item)
-        self.failIf(item.hasAdvices())
-        self.failIf(item.getGivenAdvices())
+        self.assertFalse(item.hasAdvices())
+        self.assertFalse(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
         self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
@@ -460,14 +460,14 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
-        self.failUnless(item.hasAdvices())
-        self.failUnless(item.getGivenAdvices())
+        self.assertTrue(item.hasAdvices())
+        self.assertTrue(item.getGivenAdvices())
         # editing the item will invalidate advices
-        self.failUnless(item.willInvalidateAdvices())
+        self.assertTrue(item.willInvalidateAdvices())
         item.decision = richtextval(item.getDecision() + '<p>Still another new line</p>')
         item._update_after_edit()
-        self.failIf(item.hasAdvices())
-        self.failIf(item.getGivenAdvices())
+        self.assertFalse(item.hasAdvices())
+        self.assertFalse(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
         self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
@@ -478,14 +478,14 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
-        self.failUnless(item.hasAdvices())
-        self.failUnless(item.getGivenAdvices())
+        self.assertTrue(item.hasAdvices())
+        self.assertTrue(item.getGivenAdvices())
         # changing a field value thru ajax will invalidate advices
-        self.failUnless(item.willInvalidateAdvices())
+        self.assertTrue(item.willInvalidateAdvices())
         item.setFieldFromAjax('description', '<p>My new description</p>')
-        self.failIf(item.hasAdvices())
-        self.failIf(item.getGivenAdvices())
-        self.failIf(item.willInvalidateAdvices())
+        self.assertFalse(item.hasAdvices())
+        self.assertFalse(item.getGivenAdvices())
+        self.assertFalse(item.willInvalidateAdvices())
 
     def test_pm_IndexAdvisers(self):
         '''Test the indexAdvisers index and check that it is always consistent.
@@ -1155,7 +1155,7 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         cfg.setCustomAdvisers([])
         # if nothing defined, getAutomaticAdvisersData returns nothing...
-        self.failIf(item.getAutomaticAdvisersData())
+        self.assertFalse(item.getAutomaticAdvisersData())
         # define some customAdvisers
         cfg.setCustomAdvisers([])
         cfg.setCustomAdvisers(
@@ -1179,7 +1179,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': ''}])
         # one wrong condition (raising an error when evaluated) and one returning False
-        self.failIf(item.getAutomaticAdvisersData())
+        self.assertFalse(item.getAutomaticAdvisersData())
         # now make the second row expression return True, set item.budgetRelated
         item.budget_related = True
         self.assertEqual(
@@ -1208,7 +1208,7 @@ class testAdvices(PloneMeetingTestCase):
               'userids': []}, ])
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(future_date > item.created())
-        self.failIf(item.getAutomaticAdvisersData())
+        self.assertFalse(item.getAutomaticAdvisersData())
         # define an old 'for_item_created_from' and a 'for_item_created_until' in the future
         # the advice should be considered as automatic advice to ask
         cfg.setCustomAdvisers(
@@ -1243,7 +1243,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '',
               'delay_left_alert': '',
               'delay_label': ''}, ])
-        self.failIf(item.getAutomaticAdvisersData())
+        self.assertFalse(item.getAutomaticAdvisersData())
 
     def test_pm_RowIdSetOnAdvices(self):
         '''Test that if we are adding an automatic and/or delay-aware advice,
@@ -1583,10 +1583,10 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(isPowerObserverForCfg(cfg))
         self.assertTrue(self.developers_uid not in item.adviceIndex)
         # he may not see item
-        self.failIf(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(View, item))
         # but he is able to add the advice
-        self.failUnless(self.hasPermission(AddPortalContent, item))
-        self.failUnless(self.hasPermission(AddAdvice, item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertTrue(self.hasPermission(AddAdvice, item))
         # right, give 'View' access, now pmAdviser1 will be able to see the item
         # add pmAdviser1 to power observers
         self.changeUser('siteadmin')
@@ -1596,9 +1596,9 @@ class testAdvices(PloneMeetingTestCase):
         # pmAdviser1 can give advice for developers even if
         # not asked, aka not in item.adviceIndex
         self.assertTrue(self.developers_uid not in item.adviceIndex)
-        self.failUnless(self.hasPermission(AddPortalContent, item))
-        self.failUnless(self.hasPermission(AddAdvice, item))
-        self.failUnless(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        self.assertTrue(self.hasPermission(View, item))
         # he can actually give it
         createContentInContainer(item,
                                  'meetingadvice',
@@ -1609,9 +1609,9 @@ class testAdvices(PloneMeetingTestCase):
         # he can give advice for every groups he is adviser for
         # here as only adviser for 'developers', he can not give an advice anymore
         # after having given the advice for 'developers'
-        self.failIf(self.hasPermission(AddAdvice, item))
+        self.assertFalse(self.hasPermission(AddAdvice, item))
         # but he can still see the item obviously
-        self.failUnless(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, item))
         # but if he is also adviser for 'vendors', he can give it also
         self.changeUser('admin')
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.vendors_uid))
@@ -1621,8 +1621,8 @@ class testAdvices(PloneMeetingTestCase):
         # he can add an advice for vendors
         self.changeUser('pmAdviser1')
         self.assertTrue(self.vendors_uid not in item.adviceIndex)
-        self.failUnless(self.hasPermission(AddAdvice, item))
-        self.failUnless(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        self.assertTrue(self.hasPermission(View, item))
         # make sure he can not add an advice for an other group he is adviser for
         # but he already gave the advice for.  So check that 'developers' is not in the
         # meetingadvice.advice_group vocabulary
@@ -3831,7 +3831,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) test removing inheritance, make sure 'vendors' not in optionalAdvisers
         item2.optional_advisers = ()
-        self.request['form.widgets.advice_uid'] = six.text_type(self.vendors_uid, 'utf-8')
+        self.request['form.widgets.advice_uid'] = self.vendors_uid
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
@@ -3897,7 +3897,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) check 'remove', for now, not removeable because item not in relevant state
         item2.optional_advisers = ()
-        self.request['form.widgets.advice_uid'] = six.text_type(self.vendors_uid, 'utf-8')
+        self.request['form.widgets.advice_uid'] = self.vendors_uid
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
@@ -3931,9 +3931,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item1.portal_type, item2.portal_type)
         # as optionalAdvisers are selected by default on copied item
         # it must validate as it, but we can not change an herited advice row_id
-        self.failIf(item2.validate_optionalAdvisers(item2.getOptionalAdvisers()))
-        self.failIf(item2.validate_optionalAdvisers((self.vendors_uid, )))
-        self.failIf(item2.validate_optionalAdvisers(
+        self.assertFalse(item2.validate_optionalAdvisers(item2.getOptionalAdvisers()))
+        self.assertFalse(item2.validate_optionalAdvisers((self.vendors_uid, )))
+        self.assertFalse(item2.validate_optionalAdvisers(
             ('{0}__rowid__unique_id_123'.format(self.developers_uid), )))
         # fails when changing row_id
         inherited_select_error_msg = translate(
@@ -3973,7 +3973,7 @@ class testAdvices(PloneMeetingTestCase):
                 self.developers_uid), )),
             inherited_select_error_msg)
         # possible to select a new adviser
-        self.failIf(item3.validate_optionalAdvisers((self.endUsers_uid, )))
+        self.assertFalse(item3.validate_optionalAdvisers((self.endUsers_uid, )))
 
     def test_pm_ItemModifiedWhenAdviceChanged(self):
         """When an advice is added/modified/removed/attribute changed,

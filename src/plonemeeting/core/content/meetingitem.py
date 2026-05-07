@@ -29,6 +29,7 @@ full punch list.
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
+from functools import cmp_to_key
 from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
@@ -2772,7 +2773,7 @@ class MeetingItem(Container):
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
             valueToStore = list(set(valueToStore).union(newLinkedUids))
-            valueToStore.sort(_sortByMeetingDate)
+            valueToStore.sort(key=cmp_to_key(_sortByMeetingDate))
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)

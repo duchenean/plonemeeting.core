@@ -935,7 +935,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(secret_item.poll_type, original_poll_type)
         self.assertTrue(secret_item.validate_pollType("freehand"))
         # but can change to a vote is same mode, "secret"
-        self.failIf(secret_item.validate_pollType("secret_separated"))
+        self.assertFalse(secret_item.validate_pollType("secret_separated"))
         change_pt_view("secret_separated")
         self.assertNotEqual(secret_item.poll_type, original_poll_type)
         self.assertEqual(secret_item.poll_type, "secret_separated")

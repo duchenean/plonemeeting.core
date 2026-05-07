@@ -1537,7 +1537,7 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
         if held_pos_uid in [row['held_position'] for row
                             in obj.certified_signatures or ()]:
             res = True
-    elif obj.getTagName() == 'Meeting':
+    elif IMeeting.providedBy(obj):
         ordered_contacts = getattr(obj, 'ordered_contacts', {})
         if held_pos_uid in ordered_contacts:
             res = True

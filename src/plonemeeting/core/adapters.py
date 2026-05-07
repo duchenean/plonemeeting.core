@@ -727,7 +727,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
           history comment.
         """
         userMayAccessComment = True
-        if self.context.getTagName() == 'MeetingItem':
+        if self.context.portal_type == 'MeetingItem':
             if self.cfg.hide_item_history_comments_to_users_outside_proposing_group and \
                not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user()
@@ -1755,7 +1755,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            WE DO NOT apply this on Meeting because of the possibility to select
            "every _creators groups" and it is not possible to give the
            'AnnexReader' role to all these _creators groups."""
-        if self.parent.getTagName() == 'MeetingItem' or \
+        if self.parent.portal_type == 'MeetingItem' or \
            self.parent.portal_type in getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
@@ -1797,11 +1797,10 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _compute_visible_for_groups(self):
         """ """
         groups = []
-        parent_classname = self.parent.getTagName()
-        if parent_classname == 'MeetingItem':
+        if self.parent.portal_type == 'MeetingItem':
             visible_fors = self.cfg.item_annex_confidential_visible_for
             groups = self._item_visible_for_groups(visible_fors, item=self.parent)
-        elif parent_classname == 'Meeting':
+        elif IMeeting.providedBy(self.parent):
             visible_fors = self.cfg.meeting_annex_confidential_visible_for
             groups = self._meeting_visible_for_groups(visible_fors)
         else:
@@ -2030,11 +2029,11 @@ class IconifiedCategoryGroupAdapter(object):
         cfg = tool.getMeetingConfig(self.context)
         parent = self.context.getParentNode()
         # adding annex to an item
-        if self.context.getTagName() == 'MeetingItem' or \
+        if self.context.portal_type == 'MeetingItem' or \
            (self.context.portal_type in ('annex', 'annexDecision') and
-                parent.getTagName() == 'MeetingItem'):
+                parent.portal_type == 'MeetingItem'):
             isItemDecisionAnnex = False
-            if self.context.getTagName() == 'MeetingItem':
+            if self.context.portal_type == 'MeetingItem':
                 # it is possible to force to use the item_decision_annexes group
                 # or when using quickupload, the typeupload contains the type of element to add
                 if self.request.get('force_use_item_decision_annexes_group', False) or \
@@ -2065,13 +2064,13 @@ class IconifiedCategoryGroupAdapter(object):
                 return cfg.annexes_types.item_decision_annexes
 
         # adding annex to an advice
-        if self.context.getTagName() == "MeetingAdvice" or \
-           parent.getTagName() == "MeetingAdvice":
+        if self.context.portal_type in getAdvicePortalTypeIds() or \
+           parent.portal_type in getAdvicePortalTypeIds():
             return cfg.annexes_types.advice_annexes
 
         # adding annex to a meeting
-        if self.context.getTagName() == 'Meeting' or \
-           parent.getTagName() == 'Meeting':
+        if IMeeting.providedBy(self.context) or \
+           IMeeting.providedBy(parent):
             return cfg.annexes_types.meeting_annexes
 
     def get_every_categories(self, only_enabled=True):

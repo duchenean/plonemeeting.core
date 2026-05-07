@@ -33,7 +33,7 @@ class testValidators(PloneMeetingTestCase):
            - date format is wrong (respect YYYY/DD/MM, valid DateTime, date_from <= date_to).'''
         v = validation.validatorFor('isValidCertifiedSignatures')
         # if nothing is defined, validation is successful
-        self.failIf(v([]))
+        self.assertFalse(v([]))
         # nothing is required, except signatureNumber
         # here is a working sample
         certified = [
@@ -68,7 +68,7 @@ class testValidators(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.failIf(v(certified))
+        self.assertFalse(v(certified))
 
         # every signatures are not mandatorily redefined
         # this is the case especially while overriding for example signature 2
@@ -82,7 +82,7 @@ class testValidators(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.failIf(v(certified))
+        self.assertFalse(v(certified))
 
     @unittest.skip("AT validator removed in Plone 6")
     def test_pm_IsValidCertifiedSignaturesValidatorFailsIfNotOrdered(self):
