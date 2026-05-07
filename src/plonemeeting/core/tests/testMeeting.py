@@ -3066,29 +3066,30 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         # test image
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        with open(file_path, 'rb') as fh:
+            img_data = fh.read()
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+        meeting.invokeFactory('Image', id='img1', title='Image1', file=img_data)
 
         # frozen meeting
         self.freezeMeeting(meeting)
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        meeting.invokeFactory('Image', id='img2', title='Image2', file=img_data)
 
         # decide meeting
         self.decideMeeting(meeting)
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+        meeting.invokeFactory('Image', id='img3', title='Image3', file=img_data)
 
         # close meeting
         self.closeMeeting(meeting)
-        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertFalse(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         # pmManager still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=img_data)
 
     def test_pm_MeetingExternalImagesStoredLocally(self):
         """External images are stored locally."""

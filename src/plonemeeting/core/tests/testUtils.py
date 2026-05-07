@@ -342,7 +342,7 @@ class testUtils(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # add image
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        file_handler = open(file_path, 'r')
+        file_handler = open(file_path, 'rb')
         data = file_handler.read()
         file_handler.close()
         img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)

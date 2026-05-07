@@ -1142,9 +1142,9 @@ class testViews(PloneMeetingTestCase):
         """ """
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.motivation = richtextval('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
+        item.motivation = richtextval('<p>The motivation using UTF-8 characters : \xe8\xe0.</p>')
         motivation = item.getMotivation()
-        item.decision = richtextval('<p>The d\xc3\xa9cision using UTF-8 characters.</p>')
+        item.decision = richtextval('<p>The d\xe9cision using UTF-8 characters.</p>')
         decision = item.getDecision()
         template = self.meetingConfig.podtemplates.itemTemplate
         # call the document-generation view
@@ -1201,7 +1201,7 @@ class testViews(PloneMeetingTestCase):
 
         # use image_src_to_paths
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
+        data = open(file_path, 'rb')
         img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
         img = getattr(item, img_id)
         img_blob_path = img.getBlobWrapper().blob._p_blob_committed
@@ -1228,7 +1228,7 @@ class testViews(PloneMeetingTestCase):
 
         # use image_src_to_data
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
+        data = open(file_path, 'rb')
         img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
         img = getattr(item, img_id)
         pattern = '<p>Text with image <img src="{0}"/> and more text.</p>'
@@ -1270,7 +1270,7 @@ class testViews(PloneMeetingTestCase):
         # use_safe_html is True by default
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=True),
-            motivation + '<br />')
+            motivation + '<br>')
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>']),
             motivation + '<br>')
@@ -1302,14 +1302,14 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>')
         # anonymize=True
-        motivation += '<p>The motivation <span class="pm-anonymize">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        motivation += '<p>The motivation <span class="pm-anonymize">chars \xe8\xe0</span>.</p>'
         self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                          '<p>The motivation <span class="pm-anonymize"></span>.</p>')
 
         # anonymize may be a dict with some more config
         anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]"}
-        motivation += '<p>The motivation <span class="pm-hide">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        motivation += '<p>The motivation <span class="pm-hide">chars \xe8\xe0</span>.</p>'
         self.assertEqual(
             helper.printXhtml(item, motivation, anonymize=anonymize),
             '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
@@ -1351,7 +1351,7 @@ class testViews(PloneMeetingTestCase):
             "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xe9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
         # every advices given
         self.changeUser('pmReviewer2')
@@ -1367,7 +1367,7 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
             "<u>Advice comment :</u> -<p></p></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xe9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
     def test_pm_print_meeting_date(self):
         # Setup
@@ -1461,7 +1461,7 @@ class testViews(PloneMeetingTestCase):
         """Test the BaseDGHV.print_value that will print almost everything...
            For now, only working for DX elements (Meeting, MeetingAdvice)."""
         cfg = self.meetingConfig
-        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n'
+        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xe9cial place\r\n'
         self._enableField(
             ["convocation_date", "place", "notes", ],
             related_to='Meeting')

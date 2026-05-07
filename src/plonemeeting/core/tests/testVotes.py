@@ -1223,7 +1223,7 @@ class testVotes(PloneMeetingTestCase):
             'et une abstention,</p>')
         self.assertEqual(
             yes_public_item.getVotesResult(),
-            "<p>Il y a 4 votants.</p><p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+            "<p>Il y a 4 votants.</p><p>\xc0 l'unanimit\xe9,</p>")
         self.assertEqual(
             secret_item.getVotesResult(),
             '<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
@@ -1231,7 +1231,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(
             yes_secret_item.getVotesResult(),
             "<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>"
-            "<p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+            "<p>\xc0 l'unanimit\xe9,</p>")
 
         # freeze the meeting and set values
         self.freezeMeeting(meeting)

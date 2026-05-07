@@ -2798,7 +2798,7 @@ def convert2xhtml(obj,
         xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
 
     if use_appy_pod_preprocessor:
-        xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
+        xhtmlFinal = XhtmlPreprocessor.preprocess(xhtmlFinal, html=True)
 
     return xhtmlFinal
 

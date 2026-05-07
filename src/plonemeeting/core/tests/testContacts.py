@@ -79,7 +79,7 @@ class testContacts(PloneMeetingTestCase):
         # include_new=True will return default value selected in MeetingConfig
         # if context is the meeting container, like when creating a new meeting
         self.assertEqual(
-            meeting.ordered_contacts.keys(),
+            list(meeting.ordered_contacts.keys()),
             [hp_uid for hp_uid
              in get_all_usable_held_positions(pm_folder, the_objects=False)])
         # every contacts are selected

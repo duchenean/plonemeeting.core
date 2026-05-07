@@ -57,7 +57,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
           We check that every test files in plonemeeting.core are also in this sub-product.
         """
         # list test files from plonemeeting.core
-        options = self._resultForDoCleanups.options
+        options = self._outcome.result.options
         # get test files for subproduct
         subproduct_files_generator = find_test_files(options)
         # self.__module__ is like 'Products.MySubProducts.tests.MySubProductTestCase'

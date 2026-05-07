@@ -713,7 +713,7 @@ class testSearches(PloneMeetingTestCase):
         self._removePrincipalFromGroups('pmReviewer2', member_groups)
         self._addPrincipalToGroup('pmReviewer2', self.developers_reviewers)
         self._addPrincipalToGroup('pmReviewer2', self.vendors_prereviewers)
-        self.assertItemsEqual(
+        self.assertCountEqual(
             self.member.getGroups(),
             ['AuthenticatedUsers', self.developers_reviewers, self.vendors_prereviewers])
 

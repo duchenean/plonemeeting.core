@@ -2009,14 +2009,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         values = [
             {'item_access_on': '',
              'item_states': ['accepted'],
-             'label': 'Power observers \xc3\xa9',
+             'label': 'Power observers \xe9',
              'meeting_access_on': '',
              'meeting_states': ['closed'],
              'orderindex_': '1',
              'row_id': 'powerobservers'},
             {'item_access_on': '',
              'item_states': ['accepted'],
-             'label': 'Restricted power observers \xc3\xa9',
+             'label': 'Restricted power observers \xe9',
              'meeting_access_on': '',
              'meeting_states': ['closed'],
              'orderindex_': '2',
@@ -2060,7 +2060,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         values = [
             {'item_access_on': '',
              'item_states': ['accepted'],
-             'label': 'Power observers \xc3\xa9',
+             'label': 'Power observers \xe9',
              'meeting_access_on': '',
              'meeting_states': ['closed'],
              'row_id': 'powerobservers'}]
