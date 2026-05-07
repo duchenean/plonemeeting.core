@@ -2536,7 +2536,7 @@ class testMeetingType(PloneMeetingTestCase):
         # wrong value
         with self.assertRaises(Invalid) as cm:
             assembly_constraint(richtextval(ASSEMBLY_WRONG_VALUE))
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        self.assertEqual(cm.exception.args[0], validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
@@ -2686,7 +2686,7 @@ class testMeetingType(PloneMeetingTestCase):
         transaction.begin()
         with self.assertRaises(Unauthorized) as cm:
             meetingParentFolder.manage_delObjects([meeting.getId()])
-        self.assertEqual(cm.exception.message, CAN_NOT_DELETE_MEETING_ERROR)
+        self.assertEqual(cm.exception.args[0], CAN_NOT_DELETE_MEETING_ERROR)
         transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
@@ -3163,21 +3163,24 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
 
         # load subscriber and.update_local_roles
-        _load_zcml_config('tests/events.zcml', products_plonemeeting)
-        meeting.update_local_roles()
-        # pmCreator2 may edit now
-        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
-        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+        # push a new layer so we can pop it (instead of cleanUp) to avoid nuking the registry
+        from plone.testing import zca as _zca
+        _zca.pushGlobalRegistry()
+        try:
+            _load_zcml_config('tests/events.zcml', products_plonemeeting)
+            meeting.update_local_roles()
+            # pmCreator2 may edit now
+            self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+            self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
 
-        # freeze the meeting, still ok
-        self.changeUser('pmManager')
-        self.freezeMeeting(meeting)
-        self.changeUser('pmCreator2')
-        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
-        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
-
-        from zope.testing.cleanup import cleanUp
-        cleanUp()
+            # freeze the meeting, still ok
+            self.changeUser('pmManager')
+            self.freezeMeeting(meeting)
+            self.changeUser('pmCreator2')
+            self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+            self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+        finally:
+            _zca.popGlobalRegistry()
 
     def test_pm_Get_states_before(self):
         """This should return states before a given state.

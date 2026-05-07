@@ -34,6 +34,7 @@ from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
 from plonemeeting.core.content.meeting import IMeeting
+from plonemeeting.core.interfaces import IMeetingItem as IMeetingItemIface
 from plonemeeting.core.content.meetingconfig import _camel_to_snake
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
@@ -478,7 +479,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.portal_type == 'MeetingItem':
+            if IMeetingItemIface.providedBy(context):
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':

@@ -107,7 +107,7 @@ class testValidators(PloneMeetingTestCase):
         order_error_msg = translate('error_certified_signatures_order',
                                     domain='PloneMeeting',
                                     context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           order_error_msg)
 
     @unittest.skip("AT validator removed in Plone 6")
@@ -128,7 +128,7 @@ class testValidators(PloneMeetingTestCase):
                                    mapping={'row_number': 1},
                                    domain='PloneMeeting',
                                    context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           both_error_msg)
         certified = [
             {'signatureNumber': '1',
@@ -138,7 +138,7 @@ class testValidators(PloneMeetingTestCase):
              'date_to': '2015/01/01',
              },
         ]
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           both_error_msg)
 
     @unittest.skip("AT validator removed in Plone 6")
@@ -160,7 +160,7 @@ class testValidators(PloneMeetingTestCase):
                                             mapping={'row_number': 1},
                                             domain='PloneMeeting',
                                             context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           invalid_dates_error_msg)
         # wrong date format, not respecting YYYY/MM/DD
         certified = [
@@ -171,7 +171,7 @@ class testValidators(PloneMeetingTestCase):
              'date_to': '2015/20/01',
              },
         ]
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           invalid_dates_error_msg)
         # date_from must be <= date_to
         certified = [
@@ -182,7 +182,7 @@ class testValidators(PloneMeetingTestCase):
              'date_to': '2015/01/10',
              },
         ]
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           invalid_dates_error_msg)
 
         # row number is displayed in the error message, check that it works
@@ -211,7 +211,7 @@ class testValidators(PloneMeetingTestCase):
                                              mapping={'row_number': 2},
                                              domain='PloneMeeting',
                                              context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           invalid_dates_error_msg2)
 
     @unittest.skip("AT validator removed in Plone 6")
@@ -244,7 +244,7 @@ class testValidators(PloneMeetingTestCase):
                                                  mapping={'row_number': 3},
                                                  domain='PloneMeeting',
                                                  context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           duplicated_entries_error_msg)
         # test with dates, row 2 is wrong
         certified = [
@@ -271,7 +271,7 @@ class testValidators(PloneMeetingTestCase):
                                                   mapping={'row_number': 2},
                                                   domain='PloneMeeting',
                                                   context=self.portal.REQUEST)
-        self.assertEquals(v(certified),
+        self.assertEqual(v(certified),
                           duplicated_entries_error_msg2)
 
     def test_pm_PloneGroupSettingsFunctionsValidator(self):
@@ -299,7 +299,7 @@ class testValidators(PloneMeetingTestCase):
             for value in values:
                 with self.assertRaises(Invalid) as cm:
                     validator.validate(value)
-                self.assertEqual(cm.exception.message, validation_error_msg)
+                self.assertEqual(cm.exception.args[0], validation_error_msg)
 
         self.changeUser('siteadmin')
         # add a new suffix and play with it
@@ -362,7 +362,7 @@ class testValidators(PloneMeetingTestCase):
         functions_with_fct_orgs_advisers[0]['fct_orgs'] = [self.vendors_uid]
         with self.assertRaises(Invalid) as cm:
             validator.validate(functions_with_fct_orgs_advisers)
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        self.assertEqual(cm.exception.args[0], validation_error_msg)
         # but if disabling another level it is correct
         # disable level prereviewers for vendors
         functions_with_fct_orgs_prereviewers = deepcopy(functions)
@@ -393,7 +393,7 @@ class testValidators(PloneMeetingTestCase):
             validator.validate([organizations[0]])
         validation_error_msg = _('can_not_unselect_plone_group_org',
                                  mapping={'item_url': orgs[0].absolute_url()})
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        self.assertEqual(cm.exception.args[0], validation_error_msg)
         # but other could be unselected
         self.assertIsNone(validator.validate([organizations[1]]))
         # remove groups_in_charge so org may be unselected
@@ -405,7 +405,7 @@ class testValidators(PloneMeetingTestCase):
             validator.validate([organizations[0]])
         validation_error_msg = _('can_not_unselect_plone_group_meetingconfig',
                                  mapping={'cfg_title': cfg.Title()})
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        self.assertEqual(cm.exception.args[0], validation_error_msg)
         # remove usingGroups so org may be unselected
         cfg.setUsingGroups([])
 

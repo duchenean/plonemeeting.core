@@ -63,6 +63,7 @@ from plonemeeting.core.config import NOT_GIVEN_ADVICE_VALUE
 from plonemeeting.core.config import READER_USECASES
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.interfaces import IMeetingContent
+from plonemeeting.core.interfaces import IMeetingItem as IMeetingItemIface
 from plonemeeting.core.config import CONFIGGROUPPREFIX
 from plonemeeting.core.config import PROPOSINGGROUPPREFIX
 from plonemeeting.core.config import READERPREFIX
@@ -727,7 +728,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
           history comment.
         """
         userMayAccessComment = True
-        if self.context.portal_type == 'MeetingItem':
+        if IMeetingItemIface.providedBy(self.context):
             if self.cfg.hide_item_history_comments_to_users_outside_proposing_group and \
                not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user()
@@ -1755,7 +1756,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            WE DO NOT apply this on Meeting because of the possibility to select
            "every _creators groups" and it is not possible to give the
            'AnnexReader' role to all these _creators groups."""
-        if self.parent.portal_type == 'MeetingItem' or \
+        if IMeetingItemIface.providedBy(self.parent) or \
            self.parent.portal_type in getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
@@ -1797,7 +1798,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _compute_visible_for_groups(self):
         """ """
         groups = []
-        if self.parent.portal_type == 'MeetingItem':
+        if IMeetingItemIface.providedBy(self.parent):
             visible_fors = self.cfg.item_annex_confidential_visible_for
             groups = self._item_visible_for_groups(visible_fors, item=self.parent)
         elif IMeeting.providedBy(self.parent):
@@ -2029,11 +2030,11 @@ class IconifiedCategoryGroupAdapter(object):
         cfg = tool.getMeetingConfig(self.context)
         parent = self.context.getParentNode()
         # adding annex to an item
-        if self.context.portal_type == 'MeetingItem' or \
+        if IMeetingItemIface.providedBy(self.context) or \
            (self.context.portal_type in ('annex', 'annexDecision') and
-                parent.portal_type == 'MeetingItem'):
+                IMeetingItemIface.providedBy(parent)):
             isItemDecisionAnnex = False
-            if self.context.portal_type == 'MeetingItem':
+            if IMeetingItemIface.providedBy(self.context):
                 # it is possible to force to use the item_decision_annexes group
                 # or when using quickupload, the typeupload contains the type of element to add
                 if self.request.get('force_use_item_decision_annexes_group', False) or \

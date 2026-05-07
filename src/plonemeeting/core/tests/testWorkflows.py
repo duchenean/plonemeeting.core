@@ -271,15 +271,15 @@ class testWorkflows(PloneMeetingTestCase):
         duplicatedItem = item3.get_successor()
         self.assertEqual(duplicatedItem.get_predecessor(the_object=False), item3.UID())
         # When a meeting is decided, items are at least set to 'itempublished'
-        self.assertEquals(item1.query_state(), 'itempublished')
-        self.assertEquals(item2.query_state(), 'itempublished')
+        self.assertEqual(item1.query_state(), 'itempublished')
+        self.assertEqual(item2.query_state(), 'itempublished')
         # An already decided item keep his given decision
         self.assertEqual(item3.query_state(), 'delayed')
         self.assertFalse(len(self.transitions(meeting)) != 2)
         # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
-        self.assertEquals(item1.query_state(), 'accepted')
-        self.assertEquals(item2.query_state(), 'accepted')
+        self.assertEqual(item1.query_state(), 'accepted')
+        self.assertEqual(item2.query_state(), 'accepted')
         # Reviewers may add decision annexes but not normal annexes
         self.changeUser('pmReviewer1')
         self.assertFalse(self.hasPermission(AddAnnex, item1))
@@ -902,7 +902,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          u'Can not set a meeting to Closed if it '
                          u'contains items returned to proposing group!')
         # if no item returned anymore, closable
@@ -935,7 +935,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.do(meeting, 'publish_decisions')
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          u'Can not set a meeting to Decisions published if it '
                          u'contains items returned to proposing group!')
         # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'

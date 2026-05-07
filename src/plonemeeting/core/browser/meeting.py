@@ -141,13 +141,13 @@ def manage_field_attendees(the_form):
     """Move ContentProvider from the_form.widgets to the 'assembly' group."""
     if the_form.show_attendees_fields() or \
        not the_form.show_field("assembly"):
-        # Prepend "attendees" widget to the assembly group (OrderedDict insert at 0)
+        # Prepend "attendees" widget at position 0 in the assembly group.
+        # Manager(OrderedDict).update() is the form lifecycle method, not dict.update(),
+        # so we loop over __setitem__ then move_to_end to avoid calling it.
         group_widgets = the_form.groups[1].widgets
         attendees_widget = the_form.widgets["attendees_edit_provider"]
-        existing = list(group_widgets.items())
-        group_widgets.clear()
         group_widgets["attendees"] = attendees_widget
-        group_widgets.update(existing)
+        group_widgets.move_to_end("attendees", last=False)
     # remove "attendees_edit_provider" from the_form.widgets (moved above or not used)
     if "attendees_edit_provider" in the_form.widgets:
         del the_form.widgets["attendees_edit_provider"]

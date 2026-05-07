@@ -810,7 +810,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(cm.exception.args[0], error_msg)
 
         # linked vote
         self.request.form['form.widgets.linked_to_previous'] = True
@@ -823,7 +823,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes, vote_number=1)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(cm.exception.args[0], error_msg)
 
         # when used in an overlay, the PMNumberWidget number brower validation
         # is not correctly done, we could get values other than integers...
@@ -837,7 +837,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(cm.exception.args[0], error_msg)
 
     def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
         """Ensure Meeting.item_votes correctly wiped out when item removed from meeting."""

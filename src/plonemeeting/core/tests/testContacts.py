@@ -271,7 +271,7 @@ class testContacts(PloneMeetingTestCase):
         self.request['person_uid'] = wrong_uid
         with self.assertRaises(BadRequest) as cm:
             byebye_form._update_description()
-        self.assertEqual(cm.exception.message, WRONG_PERSON_UID % wrong_uid)
+        self.assertEqual(cm.exception.args[0], WRONG_PERSON_UID % wrong_uid)
 
     def test_pm_ItemAbsentsAndExcusedAndNonAttendees(self):
         '''Item absents management (item_absents, item_excused, non_attendees),
@@ -1739,7 +1739,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
         cfg.selectable_copy_groups = ()
         cfg2.selectable_copy_groups = ()
@@ -1750,7 +1750,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove selectableAdvisers
         cfg.selectable_advisers = ()
 
@@ -1763,7 +1763,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove customAdvisers
         cfg.setCustomAdvisers([])
 
@@ -1773,7 +1773,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove powerAdvisersGroups
         cfg.setPowerAdvisersGroups([])
 
@@ -1783,7 +1783,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove usingGroups
         cfg.setUsingGroups([])
 
@@ -1793,7 +1793,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove orderedAssociatedOrganizations
         cfg.setOrderedAssociatedOrganizations([])
 
@@ -1803,7 +1803,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingconfig)
         # so remove orderedGroupsInCharge
         cfg.setOrderedGroupsInCharge([])
 
@@ -1817,7 +1817,7 @@ class testContacts(PloneMeetingTestCase):
                       mapping={'member_id': 'pmAdviser1'},
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_plonegroup)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_plonegroup)
         # so remove every users of these groups
         for ploneGroup in get_plone_groups(self.developers_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -1834,13 +1834,13 @@ class testContacts(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
 
-        self.assertNotEquals(cm.exception.message, can_not_delete_organization_plonegroup)
+        self.assertNotEqual(cm.exception.args[0], can_not_delete_organization_plonegroup)
         can_not_delete_organization_meetingitem = \
             translate('can_not_delete_organization_meetingitem',
                       mapping={'item_url': item.absolute_url()},
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # 3) complains about a linked meetingitem
         # checks on the item are made around :
@@ -1865,7 +1865,7 @@ class testContacts(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
 
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # now check with item having associatedGroups
         item.setProposingGroup(self.vendors_uid)
@@ -1878,7 +1878,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # now check with item having optionalAdvisers
         item.setProposingGroup(self.vendors_uid)
@@ -1891,7 +1891,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # check with groupsInCharge
         item.setProposingGroup(self.vendors_uid)
@@ -1903,7 +1903,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # check with item having itemInitiator
         self._tearDownGroupsInCharge(item)
@@ -1913,7 +1913,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # check with item having copyGroups
         item.item_initiator = ()
@@ -1924,7 +1924,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_meetingitem)
 
         # remove copyGroups
         item.copy_groups = ()
@@ -1943,7 +1943,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          translate('can_not_delete_organization_meetingcategory',
                                    domain='plone',
                                    mapping={'url': cat.absolute_url()},
@@ -1955,7 +1955,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          translate('can_not_delete_organization_meetingcategory',
                                    domain='plone',
                                    mapping={'url': cat.absolute_url()},
@@ -1977,7 +1977,7 @@ class testContacts(PloneMeetingTestCase):
                       mapping={'member_id': 'pmManager'},
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.message, can_not_delete_organization_plonegroup)
+        self.assertEqual(cm.exception.args[0], can_not_delete_organization_plonegroup)
         # so remove them...
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -1990,7 +1990,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          translate('can_not_delete_organization_config_meetingitem',
                                    domain='plone',
                                    mapping={'item_url': item_template_url},
@@ -2003,7 +2003,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          translate('can_not_delete_organization_config_meetingitem',
                                    domain='plone',
                                    mapping={'item_url': item_template_url},
@@ -2030,7 +2030,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 org2_uid, catch_before_delete_exception=False)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(cm.exception.args[0],
                          translate('can_not_delete_organization_groupsincharge',
                                    domain='plone',
                                    mapping={'org_url': org1.absolute_url()},
