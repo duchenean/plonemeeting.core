@@ -45,7 +45,7 @@
                         i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
                   <tal:hasProposingGroup condition="nocall:proposingGroup">
                     <span tal:content="structure python: context.displayValue(context.Vocabulary('proposingGroup')[0], proposingGroup.UID())" />
-                    <metal:people use-macro="here/@@pm-macros/proposingGroupUsers"/>
+                    <metal:people tal:on-error="nothing" use-macro="here/@@pm-macros/proposingGroupUsers"/>
                   </tal:hasProposingGroup>
                   <span tal:condition="not:nocall:proposingGroup">-</span>
               </div>
@@ -182,7 +182,7 @@
                     i18n:translate="PloneMeeting_label_takenOverBy"></span>:&nbsp;&nbsp;
               <tal:defines define="meetingItem python: context;
                                    ajaxEdit python: True;">
-               <metal:itemIsSigned use-macro="here/@@pm-macros/takenOverBy" />
+               <metal:itemIsSigned tal:on-error="nothing" use-macro="here/@@pm-macros/takenOverBy" />
               </tal:defines>
             </div>
 
@@ -387,10 +387,11 @@
                                content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_all_attendees())) + ')'">Number of attendees</tal:block>
               </span>
 
-              <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
-                <img tal:attributes="src string:$portal_url/edit.png" />
-              </a>
-              <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
+              <span i18n:name="assembly_edit">
+                <a tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
+                  <img tal:attributes="src string:$portal_url/edit.png" />
+                </a>
+              </span>
               and
               <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
                     tal:attributes="class class_to_use">
@@ -399,10 +400,11 @@
                                content="python:'(' + str(len(context.get_item_signatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
               </span>
 
-              <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
-                <img tal:attributes="src string:$portal_url/edit.png" />
-              </a>
-              <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
+              <span i18n:name="signatures_edit">
+                <a tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
+                  <img tal:attributes="src string:$portal_url/edit.png" />
+                </a>
+              </span>
           </span>
       </div>
       <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
@@ -485,11 +487,11 @@
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
     <tal:comment replace="nothing">Detailed description</tal:comment>
     <tal:field define="fieldName python: 'detailedDescription'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
@@ -505,7 +507,7 @@
       </legend>
       <div id="budget_content">
         <p class="item-before-budget-related"></p>
-        <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
+        <metal:budgetInfos tal:on-error="nothing" use-macro="here/@@pm-macros/budgetInfos" />
 
         <tal:displayBudgetInfos define="fieldName string:budgetInfos;
                                         ajaxEdit string:True;">
@@ -513,7 +515,7 @@
                 style="display: none;"
                 tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
                 tal:attributes="style string:display:${defaultDisplay};">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+              <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>
       </div>
@@ -522,12 +524,12 @@
 
     <tal:comment replace="nothing">Emergency motivation</tal:comment>
     <tal:field define="fieldName python: 'emergencyMotivation'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Motivation</tal:comment>
     <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:votesResult_after_motivation condition="python: 'votes_result_after_motivation' in usedAttrs">
@@ -538,17 +540,17 @@
 
     <tal:comment replace="nothing">Decision</tal:comment>
     <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">DecisionSuite</tal:comment>
     <tal:field define="fieldName python: 'decisionSuite'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">DecisionEnd</tal:comment>
     <tal:field define="fieldName python: 'decisionEnd'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:votesResult_after_decisionEnd condition="python: 'votes_result_after_decision_end' in usedAttrs">
@@ -589,7 +591,7 @@
             </tal:otherMeetingConfigsClonableToFieldTitle>
             <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg, ignored_field_names=['otherMeetingConfigsClonableToFieldTitle'])">
                 <tal:field define="fieldName python: other_mc_field_name; ajaxEdit python:True">
-                  <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+                  <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
                 </tal:field>
             </tal:loop>
           </fieldset>
@@ -639,84 +641,84 @@
 
     <tal:comment replace="nothing">Groups in charge notes</tal:comment>
     <tal:field define="fieldName python: 'groupsInChargeNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">In and out moves</tal:comment>
     <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Notes</tal:comment>
     <tal:field define="fieldName python: 'notes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Committee observations</tal:comment>
     <tal:field define="fieldName python: 'committeeObservations'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Committee transcript</tal:comment>
     <tal:field define="fieldName python: 'committeeTranscript'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Votes observations</tal:comment>
     <tal:field define="fieldName python: 'votesObservations'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Meeting managers notes</tal:comment>
     <tal:field define="fieldName python: 'meetingManagersNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Meeting managers notes suite</tal:comment>
     <tal:field define="fieldName python: 'meetingManagersNotesSuite'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
     <tal:comment replace="nothing">Meeting managers notes end</tal:comment>
 
     <tal:field define="fieldName python: 'meetingManagersNotesEnd'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Poll type observations</tal:comment>
     <tal:field define="fieldName python: 'pollTypeObservations'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Observations</tal:comment>
     <tal:field define="fieldName python: 'observations'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Marginal notes</tal:comment>
     <tal:field define="fieldName python: 'marginalNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Internal notes</tal:comment>
     <tal:field define="fieldName python: 'internalNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Needed follow up</tal:comment>
     <tal:field define="fieldName python: 'neededFollowUp'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Provided follow up</tal:comment>
     <tal:field define="fieldName python: 'providedFollowUp'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+       <metal:f tal:on-error="nothing" use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:itemNavigation tal:condition="nocall:meeting">
       <tal:itemNavigation replace="structure python: context.restrictedTraverse('@@item-navigation-widget')()" />
     </tal:itemNavigation>
 
-    <metal:global_actions use-macro="context/@@pm-macros/global_actions" />
+    <metal:global_actions tal:on-error="nothing" use-macro="context/@@pm-macros/global_actions" />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="python: context.isDefinedInTool()">

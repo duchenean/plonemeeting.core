@@ -264,6 +264,12 @@ def SearchableText(obj):
     return res or _marker
 
 
+@indexer(IMeeting)
+def SearchableText_meeting(obj):
+    safe_delattr(obj, REINDEX_NEEDED_MARKER)
+    return SearchableText(obj)
+
+
 @indexer(IMeetingItem)
 def SearchableText_item(obj):
     # remove reindex needed marker

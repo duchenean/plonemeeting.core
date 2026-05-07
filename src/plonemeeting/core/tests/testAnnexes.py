@@ -306,16 +306,18 @@ class testAnnexes(PloneMeetingTestCase):
         self.tool.invalidateAllCache()
         if obj.__class__.__name__ == 'MeetingAdvice':
             rendered_view = obj.restrictedTraverse('@@view')()
-            term_check = 'title="Adviceannex(es)"><span>{0}</span>'
+            term_check = r'title="Adviceannex\(es\)"[^>]*><span>{0}</span>'
         elif obj.__class__.__name__ == 'Meeting':
             rendered_view = obj.restrictedTraverse('@@meeting_view')()
-            term_check = 'title="Meetingannex(es)"><span>{0}</span>'
+            term_check = r'title="Meetingannex\(es\)"[^>]*><span>{0}</span>'
         else:
             # MeetingItem
             rendered_view = obj.restrictedTraverse('meetingitem_view')()
-            term_check = 'title="Financialanalysis"><span>{0}</span>'
+            term_check = r'title="Financialanalysis"[^>]*><span>{0}</span>'
         rendered_view = rendered_view.replace(' ', '').replace('\n', '')
-        self.assertTrue(term_check.format(number) in rendered_view)
+        import re
+        self.assertTrue(bool(re.search(
+            term_check.format(number), rendered_view)))
 
     def _checkMayAccessConfidentialAnnexes(self,
                                            obj,
@@ -1729,6 +1731,10 @@ class testAnnexes(PloneMeetingTestCase):
             self.changeUser('siteadmin')
             # number of path is correct, just "step" added
             self.number_of_paths += step
+            # flush the CMFCore indexing queue before checking the raw dict
+            # (in Plone 6 catalog operations are queued and only committed at transaction boundary)
+            from Products.CMFCore.indexing import processQueue
+            processQueue()
             self.assertEqual(len(self.catalog._catalog.uids), self.number_of_paths)
             self.assertEqual(len(self.catalog()), self.number_of_paths)
             # no paths ending with '/'
@@ -1768,7 +1774,7 @@ class testAnnexes(PloneMeetingTestCase):
         advice_annex = self.addAnnex(advice)
         _check_catalog()
         # removal of everything
-        self.portal.restrictedTraverse('@@delete_givenuid')(item_annex.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(item_annex.UID(), redirect=False)
         _check_catalog(step=-1)
         self.portal.restrictedTraverse('@@delete_givenuid')(advice_annex.UID())
         _check_catalog(step=-1)

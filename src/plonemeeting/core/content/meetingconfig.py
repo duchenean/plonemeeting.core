@@ -3332,8 +3332,7 @@ class MeetingConfig(Container):
                     # prepend configGroup full_label
                     title = u"{0} - {1}".format(
                         safe_unicode(self.getConfigGroup(True)['full_label']), title)
-        # Title returns utf-8
-        return title.encode('utf-8')
+        return safe_unicode(title)
 
 
     security.declarePrivate('setAllItemTagsField')
@@ -5672,7 +5671,7 @@ class MeetingConfig(Container):
         return translate(msgid='clone_to',
                          domain='PloneMeeting',
                          mapping={'meetingConfigTitle': safe_unicode(destMeetingConfigTitle)},
-                         context=self.REQUEST).encode('utf-8')
+                         context=self.REQUEST)
 
 
     security.declarePrivate('updateIsDefaultFields')

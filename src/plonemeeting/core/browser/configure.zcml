@@ -1278,6 +1278,13 @@
           class="plonemeeting.core.browser.overrides.PMCSSIconifiedCategory" />
     </configure>
 
+    <!-- P6 migration: replaces CPUtils folder_position_typeaware External Method -->
+    <browser:page
+      for="plonemeeting.core.interfaces.IMeetingItem"
+      name="folder_position_typeaware"
+      class=".annexposition.FolderPositionTypeawareView"
+      permission="zope2.View" />
+
     <!-- batchactions viewlet for categorized elements (annexes) -->
     <browser:viewlet
         name="collective.iconifiedcategory.belowcategorizedelements"

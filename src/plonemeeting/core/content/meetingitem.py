@@ -92,6 +92,8 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plonemeeting.core.browser.itemvotes import next_vote_is_linked
 from plonemeeting.core.config import AddAdvice
+from plonemeeting.core.config import AddAnnex
+from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.config import AUTO_COPY_GROUP_PREFIX
 from plonemeeting.core.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from plonemeeting.core.config import CONFIGURABLE_FIELD_NAMES
@@ -1446,6 +1448,16 @@ class MeetingItem(Container):
             return field.Vocabulary(self), False
         from plonemeeting.core.compat import DisplayList
         return DisplayList(), False
+
+    def displayValue(self, vocab, value, field_name=None):
+        """AT-compat: return the display label(s) for a vocabulary value.
+        Handles list/tuple values by joining them (mirrors AT BaseContent.displayValue).
+        """
+        if value is None:
+            return ""
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        return ", ".join(vocab.getValue(v, v) for v in value)
 
     security.declareProtected('View', 'widget')
 
@@ -2875,6 +2887,37 @@ class MeetingItem(Container):
         """ """
         addable_states = self.adapted()._annex_decision_addable_states_after_validation(cfg, item_state)
         return addable_states == "*" or item_state in addable_states
+
+    def folder_position_typeaware(self, position='', id=None):
+        """Move an annex up/down within this item, skipping items of a different portal_type.
+        Replaces the CPUtils folder_position_typeaware External Method (Plone 4).
+        Requires AddAnnex or AddAnnexDecision permission on this item.
+        """
+        if not _checkPermission(AddAnnex, self) and not _checkPermission(AddAnnexDecision, self):
+            raise Unauthorized
+        all_ids = self.objectIds()
+        pos = all_ids.index(id)
+        portal_type = getattr(self, id).portal_type
+        same_type_ids = [ob.id for ob in self.objectValues() if ob.portal_type == portal_type]
+        delta = 1
+        if position.lower() == 'up':
+            found = False
+            while not found and (pos - delta) > 0:
+                if all_ids[pos - delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsUp(id, delta=delta)
+        elif position.lower() == 'down':
+            found = False
+            while not found and (pos + delta) < len(all_ids):
+                if all_ids[pos + delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsDown(id, delta=delta)
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
