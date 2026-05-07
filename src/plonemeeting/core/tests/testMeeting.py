@@ -2492,7 +2492,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, date_error_msg)
+        self.assertEqual(errors[0].args[0], date_error_msg)
         data['date'] = datetime(2020, 1, 1, 10, 00)
         # pre_meeting_date must be > date
         data['pre_meeting_date'] = data['date'] + timedelta(days=1)
@@ -2503,7 +2503,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, pre_meeting_date_error_msg)
+        self.assertEqual(errors[0].args[0], pre_meeting_date_error_msg)
         data['pre_meeting_date'] = data['date'] - timedelta(days=1)
         # end_date must be >= start_date
         data['start_date'] = data['date'] + timedelta(days=2)
@@ -2515,7 +2515,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, start_end_dates_error_msg)
+        self.assertEqual(errors[0].args[0], start_end_dates_error_msg)
         data['start_date'] = data['date'] + timedelta(days=1)
         data['end_date'] = data['date'] + timedelta(days=2)
         self.assertEqual(invariants.validate(data), ())
@@ -3590,7 +3590,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
+        self.assertEqual(errors[0].args[0], error_msg)
         del self.request.form['meeting_signatories']
 
         # edit form
@@ -3648,7 +3648,7 @@ class testMeetingType(PloneMeetingTestCase):
             errors = invariants.validate(data)
             self.request.set('validate_attendees_done', False)
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0].message, tmp_error_msg)
+            self.assertEqual(errors[0].args[0], tmp_error_msg)
             index += 1
         # do work unselect attendee by attendee
         # item_absents
@@ -3702,7 +3702,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
+        self.assertEqual(errors[0].args[0], error_msg)
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

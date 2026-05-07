@@ -40,7 +40,9 @@ from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from zope.interface import implementer
+from plone.z3cform.interfaces import IDeferSecurityCheck
 
 
 def manage_fields(the_form):
@@ -134,7 +136,7 @@ def manage_committees(the_form):
     # hide widgets in rows
     for hidden_column_name in hidden_columns:
         for row in widget.widgets:
-            for wdt in row.subform.widgets.values():
+            for wdt in row.widgets.values():
                 if wdt.__name__ == hidden_column_name:
                     wdt.mode = HIDDEN_MODE
 
@@ -452,6 +454,8 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         reorder_groups(self)
 
     def update(self):
+        # Skip Plone 6 container type constraint check — PM controls access separately
+        alsoProvides(self.request, IDeferSecurityCheck)
         super(MeetingAddForm, self).update()
         # shortcut 'widget' dictionary for all fieldsets
         # like in plone.autoform

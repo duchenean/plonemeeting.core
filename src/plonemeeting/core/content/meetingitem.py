@@ -2788,7 +2788,7 @@ class MeetingItem(Container):
                 newLinkedUidsToStore = list(newLinkedUids)
                 if linkedItemUid in newLinkedUids:
                     newLinkedUidsToStore.remove(linkedItemUid)
-                newLinkedUidsToStore.sort(_sortByMeetingDate)
+                newLinkedUidsToStore.sort(key=cmp_to_key(_sortByMeetingDate))
                 linkedItem.manually_linked_items = newLinkedUidsToStore
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 linkedItem._p_changed = True
@@ -4374,17 +4374,18 @@ class MeetingItem(Container):
         elif len(item_votes) - 1 >= vote_number:
             votes.append(deepcopy(item_votes[vote_number]))
 
-        # include_unexisting
-        # secret votes
-        if self.get_vote_is_secret(meeting, vote_number):
-            if include_unexisting and not votes:
-                votes = self._build_unexisting_vote(True, vote_number, poll_type)
-        # public votes
-        else:
-            # add an empty vote in case nothing in itemVotes
-            # this is useful when no votes encoded, new voters selected, ...
-            if include_unexisting and not votes:
-                votes = self._build_unexisting_vote(False, vote_number, poll_type)
+        # include_unexisting — only meaningful for a specific vote_number, not 'all'
+        if vote_number != 'all':
+            # secret votes
+            if self.get_vote_is_secret(meeting, vote_number):
+                if include_unexisting and not votes:
+                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
+            # public votes
+            else:
+                # add an empty vote in case nothing in itemVotes
+                # this is useful when no votes encoded, new voters selected, ...
+                if include_unexisting and not votes:
+                    votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
         if include_voters:

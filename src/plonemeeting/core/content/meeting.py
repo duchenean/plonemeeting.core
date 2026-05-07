@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+from Acquisition import aq_base
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
@@ -110,7 +111,7 @@ def assembly_constraint(value):
                         domain='PloneMeeting',
                         context=request)
         # encode msg in utf-8 for restapi
-        raise Invalid(msg.encode('utf-8'))
+        raise Invalid(msg)
     return True
 
 
@@ -536,7 +537,7 @@ class IMeeting(IDXMeetingContent):
                 # avoid multiple call to this invariant
                 context.REQUEST.set("validate_dates_done", True)
                 # encode msg in utf-8 for restapi
-                raise Invalid(msg.encode('utf-8'))
+                raise Invalid(msg)
 
         # check pre_meeting_date
         if hasattr(data, 'pre_meeting_date') and \
@@ -548,7 +549,7 @@ class IMeeting(IDXMeetingContent):
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
         # check start_date/end_date
         # start_date must be before end_date
@@ -564,7 +565,7 @@ class IMeeting(IDXMeetingContent):
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_dates_done", True)
 
@@ -650,7 +651,7 @@ class IMeeting(IDXMeetingContent):
                         # avoid multiple call to this invariant
                         context.REQUEST.set("validate_attendees_done", True)
                         # encode msg in utf-8 for restapi
-                        raise Invalid(msg.encode('utf-8'))
+                        raise Invalid(msg)
                     elif highest_secret_votes > len(meeting_voters):
                         msg = translate(
                             'can_not_remove_secret_voter_voted_on_items',
@@ -659,7 +660,7 @@ class IMeeting(IDXMeetingContent):
                         # avoid multiple call to this invariant
                         context.REQUEST.set("validate_attendees_done", True)
                         # encode msg in utf-8 for restapi
-                        raise Invalid(msg.encode('utf-8'))
+                        raise Invalid(msg)
 
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
@@ -782,7 +783,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
         # in theory this is not possible thru the UI as unselecting an attendee
         # will disable the signatory field but this is possible thru the restapi
         removed_signatories = tuple(
@@ -797,7 +798,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
     # can not remove or add attendees on meeting when attendees order
     # was redefined on items
@@ -817,7 +818,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
 
 def _validate_attendees_signatories(context, signature_numbers):
@@ -829,7 +830,7 @@ def _validate_attendees_signatories(context, signature_numbers):
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
         # encode msg in utf-8 for restapi
-        raise Invalid(msg.encode('utf-8'))
+        raise Invalid(msg)
 
 
 ########################################################################
@@ -2289,7 +2290,7 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         for org_uid in cfg.getUsingGroups():
             for plone_group_id in get_plone_groups(
-                    org_uid, ids_only=True, verify_group_exist=False):
+                    org_uid, ids_only=True):
                 self.manage_addLocalRoles(plone_group_id, ('Reader', ))
 
     security.declarePublic('wfConditions')
@@ -2348,7 +2349,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.get_self. Check MeetingItem.py for more
            info.'''
         res = self
-        if type(self) is not Meeting:
+        if not isinstance(aq_base(self), Meeting):
             res = self.context
         return res
 

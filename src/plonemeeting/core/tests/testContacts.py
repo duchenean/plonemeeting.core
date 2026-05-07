@@ -2535,7 +2535,7 @@ class testContacts(PloneMeetingTestCase):
                      'hp_url': hp.absolute_url()},
             domain='PloneMeeting',
             context=self.request)
-        self.assertEqual(cm.exception.error.message, error_msg)
+        self.assertEqual(cm.exception.error.args[0], error_msg)
         # set back a value present in original_position_types
         hp.position_type = original_position_types[0]['token']
 
@@ -2565,7 +2565,7 @@ class testContacts(PloneMeetingTestCase):
                      'item_url': item.absolute_url()},
             domain='PloneMeeting',
             context=self.request)
-        self.assertEqual(cm.exception.error.message, error_msg)
+        self.assertEqual(cm.exception.error.args[0], error_msg)
 
         # adding new value or removing an unused one is ok
         position_types2 = position_types + [{'token': 'default4', 'name': u'D\xe9faut4'}]
@@ -2856,7 +2856,7 @@ class testContacts(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
+        self.assertEqual(errors[0].args[0], error_msg)
         # reinit attendees order then attendees of meeting may be changed
         reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
         reinit_view()
