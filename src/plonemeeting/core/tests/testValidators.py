@@ -299,7 +299,7 @@ class testValidators(PloneMeetingTestCase):
             for value in values:
                 with self.assertRaises(Invalid) as cm:
                     validator.validate(value)
-                self.assertEqual(cm.exception.args[0], validation_error_msg)
+                self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
 
         self.changeUser('siteadmin')
         # add a new suffix and play with it
@@ -362,7 +362,7 @@ class testValidators(PloneMeetingTestCase):
         functions_with_fct_orgs_advisers[0]['fct_orgs'] = [self.vendors_uid]
         with self.assertRaises(Invalid) as cm:
             validator.validate(functions_with_fct_orgs_advisers)
-        self.assertEqual(cm.exception.args[0], validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
         # but if disabling another level it is correct
         # disable level prereviewers for vendors
         functions_with_fct_orgs_prereviewers = deepcopy(functions)
@@ -393,7 +393,7 @@ class testValidators(PloneMeetingTestCase):
             validator.validate([organizations[0]])
         validation_error_msg = _('can_not_unselect_plone_group_org',
                                  mapping={'item_url': orgs[0].absolute_url()})
-        self.assertEqual(cm.exception.args[0], validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
         # but other could be unselected
         self.assertIsNone(validator.validate([organizations[1]]))
         # remove groups_in_charge so org may be unselected
@@ -405,7 +405,7 @@ class testValidators(PloneMeetingTestCase):
             validator.validate([organizations[0]])
         validation_error_msg = _('can_not_unselect_plone_group_meetingconfig',
                                  mapping={'cfg_title': cfg.Title()})
-        self.assertEqual(cm.exception.args[0], validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
         # remove usingGroups so org may be unselected
         cfg.setUsingGroups([])
 

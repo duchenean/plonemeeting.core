@@ -2348,11 +2348,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            (not acceptable_pos or not isPowerObserverForCfg(cfg, acceptable_pos)) and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
-            # do not return unicode as getDecision returns 'utf-8' usually
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG).encode('utf-8')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
 
     security.declarePublic('getMotivation')
 

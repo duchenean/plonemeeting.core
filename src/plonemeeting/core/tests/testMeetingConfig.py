@@ -1306,7 +1306,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             translate('can_not_delete_meetingconfig_meeting',
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.args[0], can_not_delete_meetingconfig_meeting)
+        self.assertEqual(str(cm.exception.args[0]), can_not_delete_meetingconfig_meeting)
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
 
         # fails if an item exists
@@ -1319,7 +1319,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             translate('can_not_delete_meetingconfig_meetingitem',
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.args[0], can_not_delete_meetingconfig_meetingitem)
+        self.assertEqual(str(cm.exception.args[0]), can_not_delete_meetingconfig_meetingitem)
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
 
         # fails if another element than searches_xxx folder exists in the pmFolders
@@ -1334,7 +1334,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             translate('can_not_delete_meetingconfig_meetingfolder',
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.args[0], can_not_delete_meetingconfig_meetingfolder)
+        self.assertEqual(str(cm.exception.args[0]), can_not_delete_meetingconfig_meetingfolder)
         self.portal.restrictedTraverse('@@delete_givenuid')(afile.UID())
 
         # fails if used in another MeetingConfig (meetingConfigsToCloneTo)
@@ -1345,7 +1345,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                       mapping={'other_config_title': cfg2.Title()},
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.args[0], can_not_delete_meetingconfig_meetingconfig)
+        self.assertEqual(str(cm.exception.args[0]), can_not_delete_meetingconfig_meetingconfig)
         cfg2.meeting_configs_to_clone_to = ()
 
         # fails if an annex_type is used by another MeetingConfig annex_type in other_mc_correspondences
@@ -1359,7 +1359,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                       mapping={'other_config_title': safe_unicode(cfg.Title())},
                       domain="plone",
                       context=self.request)
-        self.assertEqual(cm.exception.args[0], can_not_delete_meetingconfig_annex_types)
+        self.assertEqual(str(cm.exception.args[0]), can_not_delete_meetingconfig_annex_types)
         annex_types = _itemAnnexTypes(cfg)
         for annex_type in annex_types:
             annex_type.other_mc_correspondences = set()
@@ -1419,7 +1419,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         for createdFolder in createdFolders:
-            self.assertTrue(createdFolder in pmFolder.objectIds('ATFolder'))
+            self.assertTrue(createdFolder in pmFolder.objectIds('Folder'))
 
     def test_pm_GetRecurringItems(self):
         """Test the MeetingConfig.getRecurringItems method."""
@@ -2396,7 +2396,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         with self.assertRaises(WorkflowException) as cm:
             self.do(cfg2, 'deactivate')
         self.assertEqual(
-            translate(cm.exception.args[0]),
+            translate(str(cm.exception.args[0])),
             u'Can not disable a meeting configuration used in another, '
             'please check field "Meeting configs to clone items to" in meeting configuration "%s"!'
             % safe_unicode(cfg.Title()))

@@ -2536,7 +2536,7 @@ class testMeetingType(PloneMeetingTestCase):
         # wrong value
         with self.assertRaises(Invalid) as cm:
             assembly_constraint(richtextval(ASSEMBLY_WRONG_VALUE))
-        self.assertEqual(cm.exception.args[0], validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
@@ -2686,7 +2686,7 @@ class testMeetingType(PloneMeetingTestCase):
         transaction.begin()
         with self.assertRaises(Unauthorized) as cm:
             meetingParentFolder.manage_delObjects([meeting.getId()])
-        self.assertEqual(cm.exception.args[0], CAN_NOT_DELETE_MEETING_ERROR)
+        self.assertEqual(str(cm.exception.args[0]), CAN_NOT_DELETE_MEETING_ERROR)
         transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())

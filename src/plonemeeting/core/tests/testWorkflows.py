@@ -902,7 +902,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
-        self.assertEqual(cm.exception.args[0],
+        self.assertEqual(str(cm.exception.args[0]),
                          u'Can not set a meeting to Closed if it '
                          u'contains items returned to proposing group!')
         # if no item returned anymore, closable
@@ -935,7 +935,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.do(meeting, 'publish_decisions')
-        self.assertEqual(cm.exception.args[0],
+        self.assertEqual(str(cm.exception.args[0]),
                          u'Can not set a meeting to Decisions published if it '
                          u'contains items returned to proposing group!')
         # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'

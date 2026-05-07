@@ -3707,7 +3707,7 @@ class testMeetingItem(PloneMeetingTestCase):
             context=self.request)
         with self.assertRaises(Invalid) as cm:
             validate_item_assembly(ASSEMBLY_WRONG_VALUE)
-        self.assertEqual(cm.exception.args[0], validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
@@ -6838,7 +6838,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # raise ValueError because item is no more "itemcreated"
         with self.assertRaises(ValueError) as cm:
             item.aq_parent.manage_renameObject(item.getId(), 'new-id-2')
-        self.assertEqual(cm.exception.args[0], ITEM_MOVAL_PREVENTED)
+        self.assertEqual(str(cm.exception.args[0]), ITEM_MOVAL_PREVENTED)
 
     def test_pm_ItemTemplateImage(self):
         """We can use an image in an item template and when used,

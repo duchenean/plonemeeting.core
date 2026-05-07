@@ -8,7 +8,6 @@
 from __future__ import absolute_import, print_function
 
 import unittest
-import six
 
 from AccessControl import Unauthorized
 from collective.behavior.internalnumber.browser.settings import get_settings
@@ -1999,19 +1998,15 @@ class testWFAdaptations(PloneMeetingTestCase):
         # set a decision...
         item.motivation = richtextval('<p>Motivation adapted by pmManager</p>')
         item.decision = richtextval('<p>Decision adapted by pmManager</p>')
-        # getDecision must return 'utf-8' encoded string, make sure it is
         item.reindexObject()
-        self.assertTrue(isinstance(item.getDecision(), six.string_types))
-        self.assertFalse(isinstance(item.getDecision(), six.text_type))
+        self.assertTrue(isinstance(item.getDecision(), str))
         self.changeUser('pmCreator1')
         self.assertEqual(meeting.query_state(), 'decided')
         self.assertEqual(item.getMotivation(),
                          HIDE_DECISION_UNDER_WRITING_MSG)
         self.assertEqual(item.getDecision(),
                          HIDE_DECISION_UNDER_WRITING_MSG)
-        # getDecision must return 'utf-8' encoded string, make sure it is
-        self.assertTrue(isinstance(item.getDecision(), six.string_types))
-        self.assertFalse(isinstance(item.getDecision(), six.text_type))
+        self.assertTrue(isinstance(item.getDecision(), str))
 
         # special test, remove an annex, it is done as 'all_powerful_Oz' user
         # and broke when checking has_permission in MeetingItem._mayNotViewDecisionMsg

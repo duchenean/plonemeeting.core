@@ -157,6 +157,7 @@ import html
 import itertools
 import logging
 import os
+import re
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -5380,10 +5381,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # that is ignored by the workflowAdaptation
         # because leading_transition is "-"
         leading_transition_values = leading_transition_values and leading_transition_values[1:]
-        # we accept also "_"
-        if [sv for sv in state_values if not sv.replace("_", "").isalnum()] or \
-           [ltv for ltv in leading_transition_values if not ltv.replace("_", "").isalnum()] or \
-           [btv for btv in back_transition_values if not btv.replace("_", "").isalnum()]:
+        # ASCII-only identifiers (isalnum() accepts unicode letters in Py3; use explicit ASCII pattern)
+        _valid_id = re.compile(r'^[a-zA-Z0-9_]+$')
+        if [sv for sv in state_values if not _valid_id.match(sv)] or \
+           [ltv for ltv in leading_transition_values if not _valid_id.match(ltv)] or \
+           [btv for btv in back_transition_values if not _valid_id.match(btv)]:
             return translate('item_wf_val_states_wrong_identifier_format',
                              domain='PloneMeeting',
                              context=self.REQUEST)

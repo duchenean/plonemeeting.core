@@ -819,7 +819,7 @@ class testViews(PloneMeetingTestCase):
         template.mailing_lists = "list1;python:True;"
         with self.assertRaises(Exception) as cm:
             view()
-        self.assertEqual(cm.exception.args[0], view.MAILINGLIST_NO_RECIPIENTS)
+        self.assertEqual(str(cm.exception.args[0]), view.MAILINGLIST_NO_RECIPIENTS)
         self.assertRaises(Exception, view)
 
         # now when working as expected
@@ -3192,7 +3192,7 @@ class testViews(PloneMeetingTestCase):
     #     self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
     #     with self.assertRaises(Exception) as cm:
     #         helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
-    #     self.assertEqual(cm.exception.args[0], SEVERAL_SAME_BARCODE_ERROR)
+    #     self.assertEqual(str(cm.exception.args[0]), SEVERAL_SAME_BARCODE_ERROR)
     #     # new helper instantiation has empty printed_scan_id_barcode
     #     helper = view.get_generation_context_helper()
     #     self.assertEqual(helper.printed_scan_id_barcode, [])

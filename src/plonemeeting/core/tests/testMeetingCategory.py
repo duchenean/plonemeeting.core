@@ -222,7 +222,7 @@ class testMeetingCategory(PloneMeetingTestCase):
                               context=self.request)
         with self.assertRaises(Invalid) as cm:
             constraint(values)
-        self.assertEqual(cm.exception.args[0], error_msg)
+        self.assertEqual(str(cm.exception.args[0]), error_msg)
         # simulate a third meetingConfig, select one single value of existing meetingConfig2 and
         # one of unexisting meetingConfig3, the validation is ok...
         self.assertTrue(constraint([values[0], 'meeting-config-dummy.category_name']))
