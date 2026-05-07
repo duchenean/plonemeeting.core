@@ -67,6 +67,10 @@ def manage_fields(the_form):
                                         trusted=True):
             to_remove.append(field_name)
 
+    # place_other is always tied to place: hide it when place is hidden
+    if 'place' in to_remove and 'place_other' not in to_remove:
+        to_remove.append('place_other')
+
     # now remove fields
     for group in [the_form] + the_form.groups:
         for field_name in group.fields:
