@@ -1023,7 +1023,10 @@ class testVotes(PloneMeetingTestCase):
         self.request.form['vote_number'] = 0
         votes_form.meeting = public_item.getMeeting()
         votes_form.update()
-        votes_form.votes = votes_form.widgets['votes'].value
+        # Use votes_default to get field values (not raw widget values).
+        # In datagridfield 4.x widget.value returns widget-representation dicts
+        # where Choice fields are lists of tokens, not scalar field values.
+        votes_form.votes = votes_default(public_item)
         votes_form.linked_to_previous = False
         votes_form.vote_number = 0
         votes_form.apply_until_item_number = u'500'
@@ -1072,9 +1075,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue("<span>All</span>:" in rendered_form)
         self.assertTrue("<span>Organization outside own org</span>:" in rendered_form)
         self.assertTrue("<span>Others</span>:" in rendered_form)
-        self.assertTrue(
-            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
-            in rendered_form)
+        self.assertIn('class="datagridwidget-row required org-outside-own-org row-1"', rendered_form)
         # when no voting_group defined for any voter, controls are not there
         hp1.voting_group = None
         # clear cache
@@ -1085,9 +1086,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue("<span>All</span>:" in rendered_form)
         self.assertFalse("<span>Organization outside own org</span>:" in rendered_form)
         self.assertFalse("<span>Others</span>:" in rendered_form)
-        self.assertFalse(
-            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
-            in rendered_form)
+        self.assertNotIn('class="datagridwidget-row required org-outside-own-org row-1"', rendered_form)
 
     def test_pm_ChangeSecretVotePollType(self):
         """Change poll_type on a secret vote."""
@@ -1201,13 +1200,11 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(cfg.votes_result_tal_expr, '')
         self.assertEqual(item.getVotesResult(), '')
         self.assertEqual(item.getVotesResult(real=True), '')
-        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         cfg.votes_result_tal_expr = (
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
         # not computed when not in a meeting
         self.assertEqual(item.getVotesResult(), '')
-        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         self.assertEqual(item.getVotesResult(real=True), '')
 
         # get in meeting

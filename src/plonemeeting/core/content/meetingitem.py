@@ -4306,7 +4306,7 @@ class MeetingItem(Container):
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
-        if len(item_votes) - 1 >= vote_number:
+        if vote_number != 'all' and len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.poll_type)
         else:
             poll_type = self.poll_type
@@ -4415,18 +4415,17 @@ class MeetingItem(Container):
         elif len(item_votes) - 1 >= vote_number:
             votes.append(deepcopy(item_votes[vote_number]))
 
-        # include_unexisting — only meaningful for a specific vote_number, not 'all'
-        if vote_number != 'all':
-            # secret votes
-            if self.get_vote_is_secret(meeting, vote_number):
-                if include_unexisting and not votes:
-                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
-            # public votes
-            else:
-                # add an empty vote in case nothing in itemVotes
-                # this is useful when no votes encoded, new voters selected, ...
-                if include_unexisting and not votes:
-                    votes = self._build_unexisting_vote(False, vote_number, poll_type)
+        # include_unexisting
+        # secret votes
+        if self.get_vote_is_secret(meeting, vote_number):
+            if include_unexisting and not votes:
+                votes = self._build_unexisting_vote(True, vote_number, poll_type)
+        # public votes
+        else:
+            # add an empty vote in case nothing in itemVotes
+            # this is useful when no votes encoded, new voters selected, ...
+            if include_unexisting and not votes:
+                votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
         if include_voters:

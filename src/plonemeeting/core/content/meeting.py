@@ -2456,6 +2456,23 @@ class Meeting(Container):
                 break
         return res
 
+    security.declarePublic('validate')
+
+    def validate(self, REQUEST=None):
+        """Run IMeeting invariants; return {} if valid, {field: msg} if not.
+        Mirrors the AT Meeting.validate(REQUEST) interface used in tests."""
+        from z3c.form.validator import InvariantsValidator
+        request = REQUEST if REQUEST is not None else self.REQUEST
+        request.set('validate_dates_done', False)
+        request.set('validate_attendees_done', False)
+        invariants = InvariantsValidator(self, request, None, IMeeting, None)
+        errors = {}
+        for error in invariants.validate({}):
+            errors.setdefault('invariants', []).append(str(error.args[0]))
+        request.set('validate_dates_done', False)
+        request.set('validate_attendees_done', False)
+        return errors
+
     security.declarePublic('get_next_meeting')
 
     def get_next_meeting(self, cfg_id='', date_gap=0):

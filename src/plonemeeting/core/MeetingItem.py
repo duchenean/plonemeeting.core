@@ -4728,7 +4728,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
-        if len(item_votes) - 1 >= vote_number:
+        if vote_number != 'all' and len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
         else:
             poll_type = self.getPollType()

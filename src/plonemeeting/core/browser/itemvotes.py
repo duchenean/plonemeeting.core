@@ -44,6 +44,7 @@ def _build_voting_groups(context, caching=True):
     """Build voting groups informations that will be used to manage the votes by group."""
 
     # caching is done in the REQUEST because this is called 2 times
+    res = None
     if caching and hasattr(context, "REQUEST"):
         res = getattr(context.REQUEST, '_build_voting_groups', None)
 
@@ -335,6 +336,11 @@ class EncodeVotesForm(BaseAttendeeForm):
             if not hasattr(row, 'widgets') or 'voter_uid' not in row.widgets:
                 continue
             voter_uid = row.widgets['voter_uid'].value
+            if not voter_uid:
+                continue
+            # z3c.form SelectWidget.value is a list in Python 3
+            if isinstance(voter_uid, (list, tuple)):
+                voter_uid = voter_uid[0] if voter_uid else None
             if not voter_uid:
                 continue
             group_id = [group_id for group_id, values in groups.items()
