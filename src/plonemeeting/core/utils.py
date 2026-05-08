@@ -452,8 +452,8 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
     if attachments:
         msg = MIMEMultipart()
-        if isinstance(body, six.text_type):
-            body = body.encode('utf-8')
+        if isinstance(body, bytes):
+            body = body.decode('utf-8')
         msg.attach(MIMEText(body))
         body = msg
         for fileName, fileContent in attachments:
@@ -749,8 +749,8 @@ def sendMailIfRelevant(obj,
         # isPermission
         userIds = api.portal.get_tool('portal_memberdata')._members
 
-    # remove duplicate
-    userIds = list(set(userIds))
+    # remove duplicate and sort for deterministic mail recipient lists
+    userIds = sorted(set(userIds))
     currentUser = membershipTool.getAuthenticatedMember()
     for userId in userIds:
         user = membershipTool.getMemberById(userId)

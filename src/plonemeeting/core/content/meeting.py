@@ -18,6 +18,7 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
+from imio.pyutils.utils import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -30,6 +31,7 @@ from plone.app.contenttypes.behaviors.collection import Collection
 from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
@@ -991,6 +993,50 @@ class Meeting(Container):
             {'optional': True,
              'condition': "python:tool.isManager(cfg)"},
     }
+
+    _searchable_fields = (
+        'place',
+        'place_other',
+        'pre_meeting_place',
+        'assembly_observations',
+        'committees_observations',
+        'in_and_out_moves',
+        'notes',
+        'pre_observations',
+        'observations',
+        'votes_observations',
+        'public_meeting_observations',
+        'secret_meeting_observations',
+        'authority_notice',
+        'meetingmanagers_notes',
+    )
+
+    security.declarePublic('SearchableText')
+
+    def SearchableText(self):
+        """Include searchable RichText field contents in the catalog index."""
+        data = []
+        title = self.Title()
+        if title:
+            data.append(title)
+        transforms = api.portal.get_tool('portal_transforms')
+        for attr_name in self._searchable_fields:
+            value = getattr(self, attr_name, None)
+            if not value:
+                continue
+            if isinstance(value, RichTextValue):
+                raw = value.raw or ''
+                if raw:
+                    stream = transforms.convertTo(
+                        'text/plain', safe_encode(raw), mimetype='text/html')
+                    text = stream.getData() if stream else ''
+                    if isinstance(text, bytes):
+                        text = text.decode('utf-8', errors='replace')
+                    if text:
+                        data.append(text)
+            else:
+                data.append(str(value))
+        return ' '.join(data)
 
     security.declarePublic('get_pretty_link')
 
