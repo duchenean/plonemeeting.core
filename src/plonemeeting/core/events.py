@@ -1657,6 +1657,12 @@ def onCategoryWillBeMovedOrRemoved(category, event):
        IObjectWillBeAddedEvent.providedBy(event):
         return
 
+    # When called as a sublocation dispatch (e.g. during parent config deletion),
+    # event.object is the parent being deleted, not the category itself.
+    # The whole tree is being deleted together, so no constraint applies.
+    if category is not event.object:
+        return
+
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(category)
     catalog = api.portal.get_tool('portal_catalog')
@@ -1674,11 +1680,6 @@ def onCategoryWillBeMovedOrRemoved(category, event):
                 cfg.getItemTypeName(configType='MeetingItemRecurring'),
                 cfg.getItemTypeName(configType='MeetingItemTemplate')),
             getRawClassifier=category.getId())
-        # Exclude items that live inside the config itself (recurring/template
-        # items): they will be deleted together with the config, so they are
-        # never a blocking reason when the config is being removed.
-        config_path = '/'.join(cfg.getPhysicalPath())
-        brains = [b for b in brains if not b.getPath().startswith(config_path)]
         if brains:
             # linked to an existing item, we can not delete it
             msg = translate(
