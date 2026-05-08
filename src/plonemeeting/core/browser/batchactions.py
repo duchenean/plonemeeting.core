@@ -12,6 +12,7 @@ from collective.eeafaceted.batchactions.browser.views import TransitionBatchActi
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
@@ -354,6 +355,19 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
         # super() will check for self.available_permission
         return "delete" in self.cfg.enabled_annexes_batch_actions and \
             super(PMDeleteBatchActionForm, self).available()
+
+    def _get_deletable_elements(self):
+        """Use the IContentDeletable adapter so annex-specific mayDelete logic
+        (e.g. allow deletion when user can edit parent) is honoured, matching
+        the single-delete behaviour of @@delete_givenuid."""
+        return [obj for obj in self.objs if IContentDeletable(obj).mayDelete()]
+
+    def _apply(self, **data):
+        """Use unrestrictedRemoveGivenObject so deletion is not blocked by
+        DeleteObjects on the parent when IContentDeletable.mayDelete() already
+        validated the permission (mirrors @@delete_givenuid behaviour)."""
+        for obj in self.deletables:
+            unrestrictedRemoveGivenObject(obj)
 
 
 class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):

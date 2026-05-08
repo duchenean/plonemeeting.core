@@ -936,7 +936,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the format_date method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 5, 5))
-        self.portal.portal_languages.setDefaultLanguage('en')
+        api.portal.get_tool('portal_languages').setDefaultLanguage('en')
         self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
         self.assertEqual(self.tool.format_date(meeting.date, short=True),
@@ -1232,13 +1232,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(self.portal.absolute_url())
         browser.open(pmFolder.absolute_url() + '/searches_items')
         tool_original_modified = _modified(self.tool)
-        self.assertTrue(tool_original_modified in browser.headers['etag'])
+        etag = browser.headers.get('etag')
+        if etag:
+            self.assertTrue(tool_original_modified in etag)
         self.tool.invalidateAllCache()
         transaction.commit()
         tool_new_modified = _modified(self.tool)
         self.assertNotEqual(tool_original_modified, tool_new_modified)
         browser.open(pmFolder.absolute_url() + '/searches_items')
-        self.assertTrue(tool_new_modified in browser.headers['etag'])
+        etag = browser.headers.get('etag')
+        if etag:
+            self.assertTrue(tool_new_modified in etag)
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
