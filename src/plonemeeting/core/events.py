@@ -1674,6 +1674,11 @@ def onCategoryWillBeMovedOrRemoved(category, event):
                 cfg.getItemTypeName(configType='MeetingItemRecurring'),
                 cfg.getItemTypeName(configType='MeetingItemTemplate')),
             getRawClassifier=category.getId())
+        # Exclude items that live inside the config itself (recurring/template
+        # items): they will be deleted together with the config, so they are
+        # never a blocking reason when the config is being removed.
+        config_path = '/'.join(cfg.getPhysicalPath())
+        brains = [b for b in brains if not b.getPath().startswith(config_path)]
         if brains:
             # linked to an existing item, we can not delete it
             msg = translate(

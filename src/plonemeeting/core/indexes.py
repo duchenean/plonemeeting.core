@@ -50,6 +50,18 @@ def getConfigId(obj):
 
 
 @indexer(IMeetingItem)
+def getIcon_item(obj):
+    """Returns the icon filename for a MeetingItem (e.g. 'MeetingItem.png').
+    Needed because Plone 6's default getIcon returns True/False (image presence),
+    but plonemeeting.core uses getIcon metadata for item icon color display."""
+    fti = api.portal.get_tool('portal_types').get(obj.portal_type)
+    if fti and fti.icon_expr:
+        # icon_expr is like 'string:${portal_url}/MeetingItem.png'
+        return fti.icon_expr.split('/')[-1]
+    return 'MeetingItem.png'
+
+
+@indexer(IMeetingItem)
 def getTakenOverBy(obj):
     """
       Indexes the takenOverBy with a special value when empty,

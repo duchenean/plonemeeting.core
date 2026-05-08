@@ -60,6 +60,7 @@ class HeldPositionBackRefs(ViewletBase):
     def __init__(self, context, request, view, manager=None):
         super(HeldPositionBackRefs, self).__init__(context, request, manager)
         self.context_url = self.context.absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     def available(self):
         """ """

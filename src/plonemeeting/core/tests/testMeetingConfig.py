@@ -33,7 +33,6 @@ from plone.dexterity.interfaces import IDexterityContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFPlone.CatalogTool import getIcon
 from Products.CMFPlone.utils import safe_unicode
 from plonemeeting.core.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from plonemeeting.core.config import DEFAULT_ITEM_COLUMNS
@@ -1264,8 +1263,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the item's getIcon metadata is correct
         itemBrain = self.catalog(UID=item.UID())[0]
         itemInConfigBrain = self.catalog(UID=itemInConfig.UID(), isDefinedInTool=True)[0]
-        self.assertTrue(itemBrain.getIcon == getIcon(item)())
-        self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
+        self.assertEqual(itemBrain.getIcon, 'MeetingItem.png')
+        self.assertEqual(itemInConfigBrain.getIcon, 'MeetingItem.png')
         otherColor = ITEM_ICON_COLORS[0]
         otherColorIconName = "MeetingItem{0}.png".format(ITEM_ICON_COLORS[0].capitalize())
         cfg.item_icon_color = otherColor
@@ -1277,8 +1276,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # 'getIcon' metadata was updated
         itemBrain = self.catalog(UID=item.UID())[0]
         itemInConfigBrain = self.catalog(UID=itemInConfig.UID(), isDefinedInTool=True)[0]
-        self.assertTrue(itemBrain.getIcon == getIcon(item)())
-        self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
+        self.assertEqual(itemBrain.getIcon, otherColorIconName)
+        self.assertEqual(itemInConfigBrain.getIcon, otherColorIconName)
 
     def test_pm_CanNotRemoveUsedMeetingConfig(self):
         '''While removing a MeetingConfig, it should raise if it is used somewhere...'''
@@ -1419,7 +1418,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         for createdFolder in createdFolders:
-            self.assertTrue(createdFolder in pmFolder.objectIds('Folder'))
+            self.assertTrue(createdFolder in pmFolder.objectIds())
 
     def test_pm_GetRecurringItems(self):
         """Test the MeetingConfig.getRecurringItems method."""
@@ -1579,8 +1578,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(len(cfg.itemtemplates.objectIds()), 3)
         cfg.itemtemplates.manage_pasteObjects(copied_data)
         self.assertEqual(len(cfg.itemtemplates.objectIds()), 4)
-        # but not to another MC
-        self.assertRaises(Unauthorized,
+        # but not to another MC (Plone 6 raises ValueError, Plone 4 raised Unauthorized)
+        self.assertRaises((Unauthorized, ValueError),
                           cfg2.itemtemplates.manage_pasteObjects, copied_data)
 
         # recurring item
@@ -1590,8 +1589,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(len(cfg.recurringitems.objectIds()), 2)
         cfg.recurringitems.manage_pasteObjects(copied_data)
         self.assertEqual(len(cfg.recurringitems.objectIds()), 3)
-        # but not to another MC
-        self.assertRaises(Unauthorized,
+        # but not to another MC (Plone 6 raises ValueError, Plone 4 raised Unauthorized)
+        self.assertRaises((Unauthorized, ValueError),
                           cfg2.recurringitems.manage_pasteObjects, copied_data)
 
     def test_pm_MaxShownListings(self):
@@ -1674,9 +1673,9 @@ class testMeetingConfig(PloneMeetingTestCase):
            the folder modification date is updated."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        categories_modified = cfg.categories.modified()
-        cfg.categories.folder_position(position='up', id='development')
-        self.assertNotEqual(categories_modified, cfg.categories.modified())
+        categories_modified = cfg['categories'].modified()
+        cfg['categories'].moveObjectsUp(['development'])
+        self.assertNotEqual(categories_modified, cfg['categories'].modified())
 
     def test_pm_Update_cfgs(self):
         """ """

@@ -4660,8 +4660,8 @@ class MeetingConfig(Container):
     def validate_workflowAdaptations(self, values):
         '''Validates field workflowAdaptaations.'''
 
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         if '' in values:
@@ -4931,8 +4931,8 @@ class MeetingConfig(Container):
     security.declarePrivate('validate_itemWFValidationLevels')
     def validate_itemWFValidationLevels(self, values):
         '''Validates field itemWFValidationLevels.'''
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         res = []
@@ -5043,8 +5043,8 @@ class MeetingConfig(Container):
     def validate_mailItemEvents(self, values):
         '''Validates field mailItemEvents.'''
 
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         if '' in values:
