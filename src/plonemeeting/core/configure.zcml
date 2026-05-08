@@ -1,5 +1,6 @@
 <configure xmlns="http://namespaces.zope.org/zope"
            xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:cache="http://namespaces.zope.org/cache"
            xmlns:five="http://namespaces.zope.org/five"
            xmlns:i18n="http://namespaces.zope.org/i18n"
            xmlns:plone="http://namespaces.plone.org/plone"
@@ -499,6 +500,13 @@
            name="toolmodified" />
   <adapter factory=".etags.MessagesViewlet"
            name="messagesviewlet" />
+
+  <!-- Caching ruleset assignments for PloneMeeting content types.
+       IMeetingItem is still Archetypes so it has no IDexterityItem ruleset. -->
+  <cache:ruleset
+      for=".interfaces.IMeetingItem"
+      ruleset="plone.content.itemView"
+      />
 
   <include package="z3c.unconfigure" file="meta.zcml" />
 

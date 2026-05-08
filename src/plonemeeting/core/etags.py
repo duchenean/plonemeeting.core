@@ -42,7 +42,7 @@ class UserGroups(object):
         # as this list can be very long, we only returns it's crc32
         # indeed, if we return a too long value, it crashes the browser etags...
         # moreover, short etag save bandwidth
-        res = zlib.crc32(res)
+        res = zlib.crc32(res.encode('utf-8'))
         return 'ug_' + str(res)
 
 

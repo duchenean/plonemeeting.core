@@ -366,10 +366,11 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # 2 elements, and it is items
+        item_template_pt = cfg.getItemTypeName(configType='MeetingItemTemplate')
         templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 2)
-        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][0]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][1]['item'].portal_type, item_template_pt)
         self.assertFalse(view.displayShowHideAllLinks())
 
         # add an itemTemplate in a subFolder
@@ -383,10 +384,10 @@ class testViews(PloneMeetingTestCase):
         view()
         templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 3)
-        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][2]['item'].meta_type, 'ATFolder')
-        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][0]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][1]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][2]['item'].portal_type, 'Folder')
+        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].portal_type, item_template_pt)
         self.assertTrue(view.displayShowHideAllLinks())
 
         # an empty folder is not shown
@@ -1493,7 +1494,11 @@ class testViews(PloneMeetingTestCase):
             % self.external_image1
         set_field_from_ajax(meeting, "observations", text)
         image = meeting.objectValues()[0]
-        img_path = image.getFile().blob._p_blob_committed
+        # DX Image: use .image._blob instead of AT's .getFile().blob
+        import transaction
+        transaction.savepoint()
+        image.image._blob._p_activate()
+        img_path = image.image._blob._p_blob_committed
         # when using printXhtml, img url are turned to blob path
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
@@ -2620,7 +2625,7 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_get_all_items_dghv(self):
         self._setUpDashBoard()
-        brains = self.catalog(meta_type="MeetingItem")
+        brains = self.catalog(portal_type=self.meetingConfig.getItemTypeName())
         result = self.helper.get_all_items_dghv(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [view.real_context for view in result])
@@ -2629,7 +2634,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
 
         def compute_data(item, advisorUids=None):
-            brains = self.catalog(meta_type="MeetingItem")
+            brains = self.catalog(portal_type=cfg.getItemTypeName())
             result = self.helper.get_all_items_dghv_with_advice(brains, advisorUids)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
@@ -2650,7 +2655,7 @@ class testViews(PloneMeetingTestCase):
                 self.assertIsNone(result[index]['advice'])
 
         self._setUpDashBoard()
-        brains = self.catalog(meta_type="MeetingItem")
+        brains = self.catalog(portal_type=cfg.getItemTypeName())
         result = self.helper.get_all_items_dghv_with_advice(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
@@ -2861,37 +2866,48 @@ class testViews(PloneMeetingTestCase):
         tool_modified = ToolModified(self.tool, self.request)()
         pmFolder = self.getMeetingFolder()
         self.request['PUBLISHED'] = pmFolder
-        browser.open(pmFolder.absolute_url() + '/searches_items')
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        linked_meeting_modified = LinkedMeetingModified(pmFolder, self.request)()
-        self.assertNotEqual(linked_meeting_modified, 'lm_0')
-        # item
-        self.request['PUBLISHED'] = item
-        context_modified = ContextModified(item, self.request)()
-        browser.open(item.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
-        self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
-        self.assertTrue('msgviewlet_' in browser.headers['etag'])
-        # item in meeting
-        self.request['PUBLISHED'] = presented_item
-        context_modified = ContextModified(presented_item, self.request)()
-        linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
-        self.assertNotEqual(linked_meeting_modified, 'lm_0')
-        browser.open(presented_item.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
-        self.assertTrue(linked_meeting_modified in browser.headers['etag'])
-        # meeting
-        self.request['PUBLISHED'] = meeting
-        context_modified = ContextModified(meeting, self.request)()
-        browser.open(meeting.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
+        # plone.protect detects writes-on-read from eea.facetednavigation and
+        # redirects to @@confirm-action when there is no CSRF token (test browser
+        # uses HTTP Basic Auth, not a session cookie). Disable CSRF for the
+        # duration of the ETag browser requests; production is unaffected because
+        # real browsers carry a valid authenticator token.
+        import plone.protect.auto as _ppa
+        _ppa_csrf_disabled = _ppa.CSRF_DISABLED
+        _ppa.CSRF_DISABLED = True
+        try:
+            browser.open(pmFolder.absolute_url() + '/searches_items')
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            linked_meeting_modified = LinkedMeetingModified(pmFolder, self.request)()
+            self.assertNotEqual(linked_meeting_modified, 'lm_0')
+            # item
+            self.request['PUBLISHED'] = item
+            context_modified = ContextModified(item, self.request)()
+            browser.open(item.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+            self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
+            self.assertTrue('msgviewlet_' in browser.headers['etag'])
+            # item in meeting
+            self.request['PUBLISHED'] = presented_item
+            context_modified = ContextModified(presented_item, self.request)()
+            linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
+            self.assertNotEqual(linked_meeting_modified, 'lm_0')
+            browser.open(presented_item.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+            self.assertTrue(linked_meeting_modified in browser.headers['etag'])
+            # meeting
+            self.request['PUBLISHED'] = meeting
+            context_modified = ContextModified(meeting, self.request)()
+            browser.open(meeting.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+        finally:
+            _ppa.CSRF_DISABLED = _ppa_csrf_disabled
 
     def test_pm_FTWLabelsForEditors(self):
         """By default, labels are editable forever by proposing group operationnal roles.
@@ -3409,15 +3425,22 @@ class testViews(PloneMeetingTestCase):
         cfg_title = safe_unicode(cfg.Title())
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
+        # In Plone 6, DashboardCollection uses @@facetednavigation_view not 'base_view'
         self.assertTrue(u"<title>%s - Items" % cfg_title in
-                        pm_folder.searches_items.restrictedTraverse('base_view')())
+                        pm_folder.searches_items.restrictedTraverse('@@facetednavigation_view')())
         self.assertTrue(u"<title>%s - Decisions" % cfg_title in
-                        pm_folder.searches_decisions.restrictedTraverse('base_view')())
-        # but not on item
+                        pm_folder.searches_decisions.restrictedTraverse('@@facetednavigation_view')())
+        # but not on item (MeetingItem has base_view registered)
         item = self.create("MeetingItem")
-        portal_title = safe_unicode(self.portal.Title()) or u'Plone site'
+        # In Plone 6 the title viewlet reads site_title from the registry, not portal.Title()
+        from plone.base.interfaces import ISiteSchema
+        from plone.registry.interfaces import IRegistry
+        from zope.component import getUtility
+        registry = getUtility(IRegistry)
+        portal_title = registry.forInterface(
+            ISiteSchema, prefix='plone', check=False).site_title
         self.assertTrue(u"<title>o1 &mdash; %s</title>" % portal_title in
-                        item.restrictedTraverse('base_view')())
+                        item.restrictedTraverse('@@base_view')())
         # and not on meeting
         self.changeUser('pmManager')
         meeting = self.create("Meeting", date=datetime(2025, 3, 20))
@@ -3425,7 +3448,7 @@ class testViews(PloneMeetingTestCase):
                         meeting.restrictedTraverse('@@meeting_view')())
         # but also in config
         self.assertTrue(u"<title>%s - Items" % cfg_title in
-                        cfg.searches.searches_items.restrictedTraverse('base_view')())
+                        cfg.searches.searches_items.restrictedTraverse('@@facetednavigation_view')())
 
     def test_pm_deliberation_for_restapi(self):
         """Used by plonemeeting.restapi to render formatted data."""

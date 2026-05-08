@@ -548,8 +548,10 @@ class UpdateDelayAwareAdvicesView(BrowserView):
            If a p_query is given, it will be used by the portal_catalog query
            we do to restrict update of advices to some subsets of items...'''
         catalog = api.portal.get_tool('portal_catalog')
-        if 'meta_type' not in query:
-            query['meta_type'] = 'MeetingItem'
+        if 'portal_type' not in query and 'meta_type' not in query:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            query['portal_type'] = [cfg.getItemTypeName()
+                                    for cfg in tool.objectValues('MeetingConfig')]
         brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1

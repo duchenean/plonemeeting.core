@@ -640,6 +640,9 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
 class MeetingUpdateItemReferences(BrowserView):
     """Call Meeting.update_item_references from a meeting."""
 
+    def __call__(self):
+        return self.index()
+
     def index(self):
         """ """
         self.context.update_item_references()

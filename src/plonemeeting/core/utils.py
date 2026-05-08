@@ -2705,6 +2705,42 @@ def escape(text):
     return html.escape(safe_unicode(text), quote=True)
 
 
+def _pm_images_to_path(obj, xhtml):
+    """Plone 6-compatible replacement for imagesToPath from imio.helpers.
+    Handles resolveuid src directly via uuidToObject, avoiding the @@images
+    scaling URLs that ResolveUIDAndCaptionFilter produces and which
+    _img_from_src cannot traverse."""
+    if not xhtml or not xhtml.strip():
+        return xhtml
+    if 'resolveuid/' not in xhtml:
+        return imagesToPath(obj, xhtml)
+    wrapped = "<special_tag>%s</special_tag>" % xhtml
+    tree = lxml.html.fromstring(safe_unicode(wrapped))
+    imgs = tree.findall('.//img')
+    if not imgs:
+        return xhtml
+    changed = False
+    for img in imgs:
+        src = img.attrib.get('src', '')
+        if 'resolveuid/' not in src:
+            continue
+        uid = src.split('resolveuid/')[-1].split('/')[0]
+        image_obj = uuidToObject(uid)
+        if image_obj is None or not hasattr(image_obj, 'image') or not image_obj.image:
+            continue
+        blob = image_obj.image._blob
+        blob._p_activate()
+        blob_path = blob._p_blob_committed
+        if blob_path:
+            img.attrib['src'] = blob_path
+            changed = True
+    if not changed:
+        return imagesToPath(obj, xhtml)
+    result = [lxml.html.tostring(x, encoding='ascii', method='html').decode('utf-8')
+              for x in tree.iterchildren()]
+    return ''.join(result)
+
+
 def convert2xhtml(obj,
                   xhtmlContents,
                   image_src_to_paths=False,
@@ -2740,7 +2776,10 @@ def convert2xhtml(obj,
         xhtmlContents = [xhtmlContents]
     for xhtmlContent in xhtmlContents:
         if isinstance(xhtmlContent, RichTextValue):
-            xhtmlContent = xhtmlContent.output
+            if image_src_to_paths or image_src_to_data:
+                xhtmlContent = xhtmlContent.raw
+            else:
+                xhtmlContent = xhtmlContent.output
         if xhtmlContent is None:
             xhtmlContent = ''
         if xhtmlContent == 'separator':
@@ -2759,7 +2798,7 @@ def convert2xhtml(obj,
     # manage image_src_to_paths/image_src_to_data, exclusive parameters
     # turning http link to image to blob path will avoid unauthorized by appy.pod
     if image_src_to_paths:
-        xhtmlFinal = imagesToPath(obj, xhtmlFinal)
+        xhtmlFinal = _pm_images_to_path(obj, xhtmlFinal)
     elif image_src_to_data:
         # turning http link to image to data base64 value will make html "self-supporting"
         xhtmlFinal = imagesToData(obj, xhtmlFinal)
