@@ -2797,7 +2797,11 @@ class testContacts(PloneMeetingTestCase):
         newInteraction()
         add_form_instance.update()
         widget = add_form_instance.groups[0].widgets["position"]
-        self.assertEqual(widget.value, ["/".join(own_org.getPhysicalPath())])
+        # In Plone 6 the contenttree/contact widget stores UIDs; in older Plone it
+        # stored physical paths.  Either representation correctly selects own_org.
+        self.assertIn(widget.value,
+                      ([own_org.UID()],
+                       ["/".join(own_org.getPhysicalPath())]))
         endInteraction()
 
     def test_pm_ChangeAttendeeOrderView(self):

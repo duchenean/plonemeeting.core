@@ -70,4 +70,21 @@
     <adapter factory=".meeting.MeetingSearchableTextExtender"
              name="MeetingSearchableTextExtender" />
 
+    <!-- Plone 6-compatible INavigationQueryBuilder for ContactSource-based sources.
+         plone.formwidget.contenttree's QueryBuilder uses portal_properties which
+         was removed in Plone 6. -->
+    <adapter factory=".source.Plone6NavigationQueryBuilder" />
+
+    <!-- Fix object_provides catalog index for organizations after
+         collective.contact.plonegroup's mark_organization fires.
+         mark_organization calls reindexObject(idxs='object_provides') (a string),
+         which in Python 3 ZCatalog iterates over characters and updates nothing.
+         This subscriber fires after mark_organization (registration order) and
+         does the proper reindex with a list. -->
+    <subscriber
+        for="collective.contact.core.content.organization.IOrganization
+             zope.lifecycleevent.interfaces.IObjectMovedEvent"
+        handler=".source.fix_organization_object_provides"
+        />
+
 </configure>
