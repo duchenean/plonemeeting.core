@@ -29,6 +29,10 @@
   <!-- <include package="collective.datagridcolumns" /> -->
   <include package="collective.eeafaceted.collectionwidget" />
   <include package="collective.eeafaceted.dashboard" />
+  <!-- Plone 6: selectedViewFields() uses this name; register the dashboard override under it too -->
+  <utility
+      component="collective.eeafaceted.dashboard.vocabulary.DashboardMetaDataFieldsVocabularyFactory"
+      name="plone.app.vocabularies.MetadataFields" />
   <include package="collective.iconifieddocumentactions" />
   <include package="collective.iconifiedcategory" />
   <!-- P6 migration: collective.js.tablednd uses removed includeDependencies directive -->
