@@ -8,8 +8,8 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
-from App.class_init import InitializeClass
-from appy.gen import No
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -21,7 +21,7 @@ from plonemeeting.core.interfaces import IMeetingWorkflowConditions
 from plonemeeting.core.utils import fplog
 from plonemeeting.core.utils import get_annexes
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 import logging
 
@@ -29,9 +29,9 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 
+@implementer(IMeetingWorkflowConditions)
 class MeetingWorkflowConditions(object):
     '''Adapts a meeting to interface IMeetingWorkflowConditions.'''
-    implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
     def __init__(self, meeting):
@@ -113,9 +113,9 @@ class MeetingWorkflowConditions(object):
 InitializeClass(MeetingWorkflowConditions)
 
 
+@implementer(IMeetingWorkflowActions)
 class MeetingWorkflowActions(object):
     '''Adapts a meeting to interface IMeetingWorkflowActions.'''
-    implements(IMeetingWorkflowActions)
     security = ClassSecurityInfo()
 
     def __init__(self, meeting):

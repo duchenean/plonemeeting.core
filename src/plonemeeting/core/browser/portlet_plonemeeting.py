@@ -12,7 +12,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plonemeeting.core.content.meeting import IMeeting
 from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
-from zope.interface import implements
+from zope.interface import implementer
 
 
 _ = MessageFactory('PloneMeeting')
@@ -24,8 +24,8 @@ class IPloneMeetingPortlet(IPortletDataProvider):
     """
 
 
+@implementer(IPloneMeetingPortlet)
 class Assignment(base.Assignment):
-    implements(IPloneMeetingPortlet)
 
     def __init__(self):
         pass
@@ -35,7 +35,7 @@ class Assignment(base.Assignment):
         return _(u"PloneMeeting")
 
 
-class Renderer(base.Renderer, FacetedRenderer):
+class Renderer(FacetedRenderer):
 
     _template = ViewPageTemplateFile('templates/portlet_plonemeeting.pt')
 
@@ -61,9 +61,6 @@ class Renderer(base.Renderer, FacetedRenderer):
             if IFacetedNavigable.providedBy(parent) and not IMeeting.providedBy(parent):
                 return parent
             parent = parent.aq_inner.aq_parent
-
-    def render(self):
-        return self._template()
 
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''

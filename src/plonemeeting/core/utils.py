@@ -6,14 +6,14 @@ from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
-from appy.shared.diff import HtmlDiff
+from appy.utils.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.behavior.internalnumber.browser.settings import increment_nb_for
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
-from collective.contact.core.vocabulary import get_directory
+from collective.contact.core.vocabularies import get_directory
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -26,10 +26,10 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from dexterity.localroles.utils import add_fti_configuration
-from email import Encoders
-from email.MIMEBase import MIMEBase
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email import encoders as Encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
@@ -73,6 +73,7 @@ from plone.supermodel.utils import mergedTaggedValueDict
 from plonemeeting.core.compat import DisplayList
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
+from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
@@ -119,12 +120,12 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
-from zope.component.interfaces import ObjectEvent
+from zope.interface.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import alsoProvides
-from zope.interface import implements
+from zope.interface import implementer
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
@@ -184,23 +185,16 @@ def getInterface(interfaceName):
     elems = interfaceName.split('.')
     if len(elems) < 2:
         raise PloneMeetingError(WRONG_INTERFACE_NAME % interfaceName)
-    interfaceName = elems[len(elems) - 1]
-    packageName = ''
-    for elem in elems[:-1]:
-        if not packageName:
-            point = ''
-        else:
-            point = '.'
-        packageName += '%s%s' % (point, elem)
+    attrName = elems[-1]
+    packageName = '.'.join(elems[:-1])
     try:
-        res = None
-        exec 'import %s' % packageName
-        exec 'res = %s.%s' % (packageName, interfaceName)
-        return res
+        import importlib
+        mod = importlib.import_module(packageName)
+        return getattr(mod, attrName)
     except ImportError:
         raise PloneMeetingError(WRONG_INTERFACE_PACKAGE % packageName)
     except AttributeError:
-        raise PloneMeetingError(WRONG_INTERFACE % (interfaceName, packageName))
+        raise PloneMeetingError(WRONG_INTERFACE % (attrName, packageName))
 
 
 def getWorkflowAdapter(obj, conditions):
@@ -209,7 +203,8 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.getTagName()]['method']
+    tag_name = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
+    interfaceMethod = adaptables[tag_name]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
@@ -222,11 +217,40 @@ def getWorkflowAdapter(obj, conditions):
     return adapter
 
 
+def _resolve_adaptable_key(tag_name):
+    '''Resolve a portal_type like MeetingCollege to its base adaptables key (Meeting).
+       Handles case-insensitive exact matches (e.g. meetingadvice -> MeetingAdvice)
+       and prefix matches (e.g. MeetingCollege -> Meeting).'''
+    if not tag_name:
+        return tag_name
+    if tag_name in adaptables:
+        return tag_name
+    # Case-insensitive exact match (e.g. 'meetingadvice' -> 'MeetingAdvice')
+    tag_lower = tag_name.lower()
+    for base_name in adaptables:
+        if tag_lower == base_name.lower():
+            return base_name
+    # Prefix match (e.g. 'MeetingCollege' -> 'Meeting', 'meetingadvicefinances' -> 'MeetingAdvice')
+    # Sort longest-first so 'MeetingAdvice' is tested before 'Meeting'
+    for base_name in sorted(adaptables, key=len, reverse=True):
+        if tag_lower.startswith(base_name.lower()):
+            return base_name
+    return tag_name
+
+
 def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
+    # Already adapted — return as-is to avoid infinite recursion
+    if IMeetingCustom.providedBy(obj) or \
+       IMeetingItemCustom.providedBy(obj) or \
+       IMeetingConfigCustom.providedBy(obj):
+        return obj
     res = obj
-    theInterface = adaptables[obj.getTagName()]['interface']
+    tag_name = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
+    if not tag_name or tag_name not in adaptables:
+        return res
+    theInterface = adaptables[tag_name]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -282,7 +306,7 @@ def getCurrentMeetingObject(context):
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            obj.context.getTagName() == 'Meeting':
+            _resolve_adaptable_key(getattr(aq_base(obj.context), 'portal_type', None)) == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -295,7 +319,7 @@ def getCurrentMeetingObject(context):
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):
                 obj = obj.getParentNode()
-                if not (obj.getTagName() in ('Meeting', 'MeetingItem')):
+                if not (_resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None)) in ('Meeting', 'MeetingItem')):
                     obj = None
             else:
                 # It can be a method with attribute im_class
@@ -330,15 +354,9 @@ def cleanMemoize(portal, prefixes=[]):
 def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     '''This will create the PloneGroup that corresponds to me
        and p_groupSuffix, if group already exists, it will just update it's title.'''
-    properties = api.portal.get_tool('portal_properties')
-    enc = properties.site_properties.getProperty('default_charset')
-    groupTitle = u'%s (%s)' % (
+    groupTitle = '%s (%s)' % (
         safe_unicode(groupTitle),
         translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
-    # a default Plone group title is NOT unicode.  If a Plone group title is
-    # edited TTW, his title is no more unicode if it was previously...
-    # make sure we behave like Plone...
-    groupTitle = groupTitle.encode(enc)
     portal_groups = api.portal.get_tool('portal_groups')
     wasCreated = portal_groups.addGroup(groupId, title=groupTitle)
     if not wasCreated:
@@ -381,8 +399,8 @@ def get_datagridfield_column_value(value, column):
         return []
     value = [row[column] for row in value
              if row.get('orderindex_', None) != 'template_row_marker' and row[column]]
-    # merge lists and remove duplicates
-    if value and hasattr(value[0], "__iter__"):
+    # merge lists and remove duplicates (not strings — str has __iter__ in Py3)
+    if value and hasattr(value[0], "__iter__") and not isinstance(value[0], str):
         value = set(list(itertools.chain.from_iterable(value)))
     return value
 
@@ -434,8 +452,8 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
     if attachments:
         msg = MIMEMultipart()
-        if isinstance(body, six.text_type):
-            body = body.encode('utf-8')
+        if isinstance(body, bytes):
+            body = body.decode('utf-8')
         msg.attach(MIMEText(body))
         body = msg
         for fileName, fileContent in attachments:
@@ -568,11 +586,12 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                 wf_action['action'] in wf.transitions) else u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
-    if obj.getTagName() == 'Meeting':
+    _base_tag = _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))
+    if _base_tag == 'Meeting':
         translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
         translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
         translation_mapping['meetingState'] = get_state_infos(obj)['state_title']
-    elif obj.getTagName() == 'MeetingItem':
+    elif _base_tag == 'MeetingItem':
         translation_mapping['itemTitle'] = safe_unicode(obj.Title())
         translation_mapping['itemState'] = get_state_infos(obj)['state_title']
         meeting = obj.getMeeting()
@@ -635,6 +654,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                        tool.functional_admin_email)
     if not recipients:
         recipients = [adminFromAddress]
+    recipients = [r for r in recipients if r]
 
     # add a fingerpointing log message
     extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
@@ -729,8 +749,8 @@ def sendMailIfRelevant(obj,
         # isPermission
         userIds = api.portal.get_tool('portal_memberdata')._members
 
-    # remove duplicate
-    userIds = list(set(userIds))
+    # remove duplicate and sort for deterministic mail recipient lists
+    userIds = sorted(set(userIds))
     currentUser = membershipTool.getAuthenticatedMember()
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
@@ -1345,7 +1365,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         fieldContent = storeImagesLocally(obj, field_raw_value, force_resolve_uid=True)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
+        if ("%s.%s" % (_resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None)), field_name) in fieldsToTransform):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
         if IDexterityContent.providedBy(obj):
@@ -1399,7 +1419,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         # transform a field or execute the TAL expression
         if tal_expr and transform['transition'] == transitionId and \
            ('.' not in transform['field_name'] or
-                transform['field_name'].split('.')[0] == obj.getTagName()):
+                transform['field_name'].split('.')[0] == _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None))):
             try:
                 res = _evaluateExpression(
                     obj,
@@ -1929,7 +1949,7 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
 
 
 def _addManagedPermissions(obj):
-    """Manage the 'ATContentTypes: Add Image' and 'Add portal content' permission :
+    """Manage the 'plone.app.contenttypes: Add Image' and 'Add portal content' permission :
        - first compute permission to Add Image, give to users able to edit at least one
          XHTML field, this means every roles having the 'Modify portal content' or a RichText
          field.write_permission must be able to add images;
@@ -1985,13 +2005,18 @@ def _addManagedPermissions(obj):
         roles += modify_perm_roles
         # remove duplicates
         roles = tuple(set(roles))
-        obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+        try:
+            obj.manage_permission("plone.app.contenttypes: Add Image", roles, acquire=False)
+        except ValueError:
+            pass
+        return roles
 
-    def _addPortalContentPermission():
+    def _addPortalContentPermission(image_roles=()):
         # now manage the AddPortalContent permission
         # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
-        # if a role is able to add something, it also needs the AddPortalContent permission
-        roles = []
+        # if a role is able to add something, it also needs the AddPortalContent permission.
+        # In Plone 6, invokeFactory requires AddPortalContent, so also include image-adder roles.
+        roles = list(image_roles)
         for add_subcontent_permission in ADD_SUBCONTENT_PERMISSIONS:
             permission = Permission(add_subcontent_permission, {}, obj)
             roles += permission.getRoles()
@@ -2009,8 +2034,8 @@ def _addManagedPermissions(obj):
         roles += add_annex_decision_permission.getRoles()
         obj.manage_permission(ManageProperties, roles, acquire=True)
 
-    _addImagePermission()
-    _addPortalContentPermission()
+    image_roles = _addImagePermission()
+    _addPortalContentPermission(image_roles)
     _addManagePropertiesPermission()
 
 
@@ -2249,13 +2274,14 @@ def main_item_data(item):
     usedItemAttrs = cfg.used_item_attributes
     data = []
     data.append({'field_name': 'title',
-                 'field_content': item.Title()})
+                 'field_content': safe_unicode(item.Title())})
     for field in item.Schema().fields():
         fieldName = field.getName()
         if field.widget.getName() == 'RichWidget' and \
            (fieldName in usedItemAttrs or not field.optional):
+            value = field.get(item)
             data.append({'field_name': fieldName,
-                         'field_content': field.get(item)})
+                         'field_content': safe_unicode(value) if isinstance(value, bytes) else value})
     return data
 
 
@@ -2269,7 +2295,8 @@ def checkMayQuickEdit(obj,
     from plonemeeting.core.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
     res = False
-    meeting = obj.getTagName() == "Meeting" and obj or (
+    from plonemeeting.core.interfaces import IMeeting
+    meeting = IMeeting.providedBy(obj) and obj or (
         hasattr(obj, 'hasMeeting') and obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
@@ -2503,10 +2530,10 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
         getter = "/" in org_info and own_org.unrestrictedTraverse or own_org.get
         if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
-            org = getter(org_path.encode('utf-8'))
+            org = getter(org_path)
             return get_plone_group_id(org.UID(), suffix)
         else:
-            org = getter(org_info.encode('utf-8'))
+            org = getter(org_info)
             if org:
                 return org.UID()
     except Exception as exc:
@@ -2597,7 +2624,9 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
 
 def _base_extra_expr_ctx(obj, extra_ctx={}):
     """ """
-    tool = api.portal.get_tool('portal_plonemeeting')
+    # Use getToolByName (acquisition) instead of api.portal.get_tool to avoid
+    # CannotGetPortalError when called after ZCA registry manipulation (e.g. pushGlobalRegistry)
+    tool = getToolByName(obj, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by
     # collective.behavior.talcondition or collective.documentgenerator
@@ -2607,8 +2636,8 @@ def _base_extra_expr_ctx(obj, extra_ctx={}):
             'meetingConfig': cfg,
             'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
             # backward compatibility, "member" will be available by default
-            'user': api.user.get_current(),
-            'catalog': api.portal.get_tool('portal_catalog'),
+            'user': getToolByName(obj, 'portal_membership').getAuthenticatedMember(),
+            'catalog': getToolByName(obj, 'portal_catalog'),
             # give ability to access annexes some package safe utils
             'collective_iconifiedcategory_utils': SecureModuleImporter['collective.iconifiedcategory.safe_utils'],
             'contact_core_utils': SecureModuleImporter['collective.contact.core.safe_utils'],
@@ -2676,6 +2705,42 @@ def escape(text):
     return html.escape(safe_unicode(text), quote=True)
 
 
+def _pm_images_to_path(obj, xhtml):
+    """Plone 6-compatible replacement for imagesToPath from imio.helpers.
+    Handles resolveuid src directly via uuidToObject, avoiding the @@images
+    scaling URLs that ResolveUIDAndCaptionFilter produces and which
+    _img_from_src cannot traverse."""
+    if not xhtml or not xhtml.strip():
+        return xhtml
+    if 'resolveuid/' not in xhtml:
+        return imagesToPath(obj, xhtml)
+    wrapped = "<special_tag>%s</special_tag>" % xhtml
+    tree = lxml.html.fromstring(safe_unicode(wrapped))
+    imgs = tree.findall('.//img')
+    if not imgs:
+        return xhtml
+    changed = False
+    for img in imgs:
+        src = img.attrib.get('src', '')
+        if 'resolveuid/' not in src:
+            continue
+        uid = src.split('resolveuid/')[-1].split('/')[0]
+        image_obj = uuidToObject(uid)
+        if image_obj is None or not hasattr(image_obj, 'image') or not image_obj.image:
+            continue
+        blob = image_obj.image._blob
+        blob._p_activate()
+        blob_path = blob._p_blob_committed
+        if blob_path:
+            img.attrib['src'] = blob_path
+            changed = True
+    if not changed:
+        return imagesToPath(obj, xhtml)
+    result = [lxml.html.tostring(x, encoding='ascii', method='html').decode('utf-8')
+              for x in tree.iterchildren()]
+    return ''.join(result)
+
+
 def convert2xhtml(obj,
                   xhtmlContents,
                   image_src_to_paths=False,
@@ -2711,7 +2776,10 @@ def convert2xhtml(obj,
         xhtmlContents = [xhtmlContents]
     for xhtmlContent in xhtmlContents:
         if isinstance(xhtmlContent, RichTextValue):
-            xhtmlContent = xhtmlContent.output
+            if image_src_to_paths or image_src_to_data:
+                xhtmlContent = xhtmlContent.raw
+            else:
+                xhtmlContent = xhtmlContent.output
         if xhtmlContent is None:
             xhtmlContent = ''
         if xhtmlContent == 'separator':
@@ -2730,7 +2798,7 @@ def convert2xhtml(obj,
     # manage image_src_to_paths/image_src_to_data, exclusive parameters
     # turning http link to image to blob path will avoid unauthorized by appy.pod
     if image_src_to_paths:
-        xhtmlFinal = imagesToPath(obj, xhtmlFinal)
+        xhtmlFinal = _pm_images_to_path(obj, xhtmlFinal)
     elif image_src_to_data:
         # turning http link to image to data base64 value will make html "self-supporting"
         xhtmlFinal = imagesToData(obj, xhtmlFinal)
@@ -2773,7 +2841,11 @@ def convert2xhtml(obj,
         xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
 
     if use_appy_pod_preprocessor:
-        xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
+        xhtmlFinal = XhtmlPreprocessor.preprocess(xhtmlFinal, html=True)
+        # appy 1.0+ wraps the content in <p>...</p> for internal XML validity;
+        # strip the root wrapper so callers get back clean HTML
+        if xhtmlFinal.startswith('<p>') and xhtmlFinal.endswith('</p>'):
+            xhtmlFinal = xhtmlFinal[3:-4]
 
     return xhtmlFinal
 
@@ -2949,8 +3021,8 @@ def _add_advice(item,
     return advice
 
 
+@implementer(IAdvicesUpdatedEvent)
 class AdvicesUpdatedEvent(ObjectEvent):
-    implements(IAdvicesUpdatedEvent)
 
     def __init__(self, object, triggered_by_transition=None, old_adviceIndex={}):
         self.object = object
@@ -2958,108 +3030,108 @@ class AdvicesUpdatedEvent(ObjectEvent):
         self.old_adviceIndex = old_adviceIndex
 
 
+@implementer(IMeetingLocalRolesUpdatedEvent)
 class MeetingLocalRolesUpdatedEvent(ObjectEvent):
-    implements(IMeetingLocalRolesUpdatedEvent)
 
     def __init__(self, object, old_local_roles):
         self.object = object
         self.old_local_roles = old_local_roles
 
 
+@implementer(IMeetingAfterTransitionEvent)
 class MeetingAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onMeetingTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IMeetingAfterTransitionEvent)
 
 
+@implementer(IItemAfterTransitionEvent)
 class ItemAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IItemAfterTransitionEvent)
 
 
+@implementer(IAdviceAfterTransitionEvent)
 class AdviceAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onAdviceTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IAdviceAfterTransitionEvent)
 
 
+@implementer(IItemDuplicatedEvent)
 class ItemDuplicatedEvent(ObjectEvent):
-    implements(IItemDuplicatedEvent)
 
     def __init__(self, object, newItem):
         self.object = object
         self.newItem = newItem
 
 
+@implementer(IItemDuplicatedToOtherMCEvent)
 class ItemDuplicatedToOtherMCEvent(ObjectEvent):
-    implements(IItemDuplicatedToOtherMCEvent)
 
     def __init__(self, object, newItem):
         self.object = object
         self.newItem = newItem
 
 
+@implementer(IItemDuplicatedFromConfigEvent)
 class ItemDuplicatedFromConfigEvent(ObjectEvent):
-    implements(IItemDuplicatedFromConfigEvent)
 
     def __init__(self, object, usage):
         self.object = object
         self.usage = usage
 
 
+@implementer(IItemListTypeChangedEvent)
 class ItemListTypeChangedEvent(ObjectEvent):
-    implements(IItemListTypeChangedEvent)
 
     def __init__(self, object, old_listType):
         self.object = object
         self.old_listType = old_listType
 
 
+@implementer(IItemPollTypeChangedEvent)
 class ItemPollTypeChangedEvent(ObjectEvent):
-    implements(IItemPollTypeChangedEvent)
 
     def __init__(self, object, old_pollType):
         self.object = object
         self.old_pollType = old_pollType
 
 
+@implementer(IItemLocalRolesUpdatedEvent)
 class ItemLocalRolesUpdatedEvent(ObjectEvent):
-    implements(IItemLocalRolesUpdatedEvent)
 
     def __init__(self, object, old_local_roles):
         self.object = object
         self.old_local_roles = old_local_roles
 
 
+@implementer(IAdviceAfterAddEvent)
 class AdviceAfterAddEvent(ObjectEvent):
     '''
       Event triggered at the end of the onAdviceAdded,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
-    implements(IAdviceAfterAddEvent)
 
     def __init__(self, object):
         self.object = object
 
 
+@implementer(IAdviceAfterModifyEvent)
 class AdviceAfterModifyEvent(ObjectEvent):
     '''
       Event triggered at the end of the onAdviceModified,
       so we are sure that subplugins registering to this event
       will be called after onItemTransition.
     '''
-    implements(IAdviceAfterModifyEvent)
 
     def __init__(self, object):
         self.object = object

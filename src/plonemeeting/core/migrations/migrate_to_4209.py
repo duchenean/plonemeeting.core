@@ -8,7 +8,10 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.content.category import ICategory
 from collective.iconifiedcategory.content.subcategory import ISubcategory
 from imio.helpers.setup import load_type_from_package
-from plone.app.blob.interfaces import IATBlob
+try:
+    from plone.app.blob.interfaces import IATBlob
+except ImportError:
+    IATBlob = None
 from Products.CMFPlone.utils import base_hasattr
 from plonemeeting.core.migrations import logger
 from plonemeeting.core.migrations import Migrator

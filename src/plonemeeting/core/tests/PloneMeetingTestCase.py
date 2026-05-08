@@ -33,6 +33,8 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
+from plonemeeting.core.content.meeting import IMeeting
+from plonemeeting.core.interfaces import IMeetingItem as IMeetingItemIface
 from plonemeeting.core.content.meetingconfig import _camel_to_snake
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
@@ -211,11 +213,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
-        # log current test module and method name
-        test_num = self._resultForDoCleanups.testsRun
-        test_total = self._resultForDoCleanups.count
-        pm_logger.info('Executing [{0}/{1}] {2}:{3}'.format(
-            test_num, test_total, self.__class__.__name__, self._testMethodName))
+        pm_logger.info('Executing {0}:{1}'.format(
+            self.__class__.__name__, self._testMethodName))
         # necessary for MeetingItem.MeetingItemWorkflowConditions._check_required_data
         self.request.set('imio.actionspanel_portal_cachekey', True)
 
@@ -356,7 +355,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'Meeting' and attrs.get('date', None) is None:
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
-            if 'proposing_group' not in attrs:
+            if 'proposing_group' not in attrs and 'proposingGroup' not in attrs:
                 cleanRamCacheFor('plonemeeting.core.ToolPloneMeeting._get_org_uids_for_user')
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
@@ -480,14 +479,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.getTagName() == 'MeetingItem':
+            if IMeetingItemIface.providedBy(context):
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif context.getTagName() == 'Meeting':
+            elif IMeeting.providedBy(context):
                 annexType = self.annexFileTypeMeeting
 
         # get complete annexType id that is like
@@ -630,8 +629,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             org.groups_in_charge = []
         # unselect every organizations from plonegroup
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, [])
-        ids_to_remove = self.own_org.objectIds()
-        self.own_org.manage_delObjects(ids=ids_to_remove)
+        ids_to_remove = list(self.own_org.objectIds())
+        if ids_to_remove:
+            self.own_org.manage_delObjects(ids=ids_to_remove)
         self.cleanMemoize()
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):
@@ -656,7 +656,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                         api.content.transition(obj, 'deactivate')
                     continue
                 objectIds_to_remove.append(obj.getId())
-            subfolder.manage_delObjects(ids=objectIds_to_remove)
+            if objectIds_to_remove:
+                subfolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):
@@ -793,7 +794,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_convert = enable
         # False or every portal_type having a file is converted, like PODTemplate, ...
         gsettings.auto_select_layout = False
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        gsettings.auto_layout_file_types = list(CONVERTABLE_TYPES.keys())
         self.tool.at_post_edit_script()
         return gsettings
 
@@ -812,7 +813,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True, reload=False):
         """ """
-        if not hasattr(field_names, "__iter__"):
+        if isinstance(field_names, str):
             field_names = [field_names]
         cfg = cfg or self.meetingConfig
         for field_name in field_names:

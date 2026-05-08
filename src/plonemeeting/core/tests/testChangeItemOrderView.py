@@ -36,14 +36,14 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         """As self._setupOrderedItems is used in several test methods, we added a test for it."""
         self.changeUser('pmManager')
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
-        self.assertEquals(item6.getItemNumber(), 600)
-        self.assertEquals(item7.getItemNumber(), 700)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
+        self.assertEqual(item6.getItemNumber(), 600)
+        self.assertEqual(item7.getItemNumber(), 700)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
 
     def test_pm_ChangeItemOrderIllegalMove(self):
@@ -86,27 +86,27 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view = item1.restrictedTraverse('@@change-item-order')
         # move the item1 up, nothing changed...
         view('up')
-        self.assertEquals(item1.getItemNumber(), 100)
+        self.assertEqual(item1.getItemNumber(), 100)
         # move the item1 down, is position changed
         view('down')
-        self.assertEquals(item1.getItemNumber(), 200)
+        self.assertEqual(item1.getItemNumber(), 200)
         # and other items position are adapted
-        self.assertEquals(item2.getItemNumber(), 100)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
-        self.assertEquals(item6.getItemNumber(), 600)
-        self.assertEquals(item7.getItemNumber(), 700)
+        self.assertEqual(item2.getItemNumber(), 100)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
+        self.assertEqual(item6.getItemNumber(), 600)
+        self.assertEqual(item7.getItemNumber(), 700)
         # put back item1 to position 1
         view('up')
         # and other items position are adapted
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
-        self.assertEquals(item6.getItemNumber(), 600)
-        self.assertEquals(item7.getItemNumber(), 700)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
+        self.assertEqual(item6.getItemNumber(), 600)
+        self.assertEqual(item7.getItemNumber(), 700)
 
     def test_pm_ChangeItemOrderMoveUpDownWithSubnumbers(self):
         '''Test the ChangeItemOrderView :
@@ -118,38 +118,38 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view('number', '2.1')
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '2.2')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 300, 400, 500])
         # right, try to switch numbers 202 (item4) to 300
-        self.assertEquals(item4.getItemNumber(), 202)
+        self.assertEqual(item4.getItemNumber(), 202)
         view('down')
-        self.assertEquals(item4.getItemNumber(), 202)
+        self.assertEqual(item4.getItemNumber(), 202)
         # same while trying to change 201 with 200
         view = item3.restrictedTraverse('@@change-item-order')
-        self.assertEquals(item3.getItemNumber(), 201)
+        self.assertEqual(item3.getItemNumber(), 201)
         view('up')
-        self.assertEquals(item3.getItemNumber(), 201)
+        self.assertEqual(item3.getItemNumber(), 201)
 
         # may not switch neither 'interger' to 'subnumber'
         # trying to switch 300 and 202 will not change anything
         view = item5.restrictedTraverse('@@change-item-order')
-        self.assertEquals(item5.getItemNumber(), 300)
+        self.assertEqual(item5.getItemNumber(), 300)
         view('up')
-        self.assertEquals(item5.getItemNumber(), 300)
+        self.assertEqual(item5.getItemNumber(), 300)
         # no more trying to switch 200 and 201
         view = item2.restrictedTraverse('@@change-item-order')
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         view('down')
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
 
         # but switching subnumbers between them works
         # switch 201 and 202
         view = item3.restrictedTraverse('@@change-item-order')
-        self.assertEquals(item3.getItemNumber(), 201)
-        self.assertEquals(item4.getItemNumber(), 202)
+        self.assertEqual(item3.getItemNumber(), 201)
+        self.assertEqual(item4.getItemNumber(), 202)
         view('down')
-        self.assertEquals(item3.getItemNumber(), 202)
-        self.assertEquals(item4.getItemNumber(), 201)
+        self.assertEqual(item3.getItemNumber(), 202)
+        self.assertEqual(item4.getItemNumber(), 201)
 
     def test_pm_ChangeItemOrderMoveIntegerToInteger(self):
         '''Test while moving up or down an integer item to another
@@ -159,27 +159,27 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view = item4.restrictedTraverse('@@change-item-order')
         # move up
         view('number', '2')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 300)
-        self.assertEquals(item3.getItemNumber(), 400)
-        self.assertEquals(item4.getItemNumber(), 200)
-        self.assertEquals(item5.getItemNumber(), 500)
-        self.assertEquals(item6.getItemNumber(), 600)
-        self.assertEquals(item7.getItemNumber(), 700)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 300)
+        self.assertEqual(item3.getItemNumber(), 400)
+        self.assertEqual(item4.getItemNumber(), 200)
+        self.assertEqual(item5.getItemNumber(), 500)
+        self.assertEqual(item6.getItemNumber(), 600)
+        self.assertEqual(item7.getItemNumber(), 700)
         # ordered items are still right
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
         # move down
         view('number', '6')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 600)
-        self.assertEquals(item5.getItemNumber(), 400)
-        self.assertEquals(item6.getItemNumber(), 500)
-        self.assertEquals(item7.getItemNumber(), 700)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 600)
+        self.assertEqual(item5.getItemNumber(), 400)
+        self.assertEqual(item6.getItemNumber(), 500)
+        self.assertEqual(item7.getItemNumber(), 700)
         # ordered items are still right
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
 
     def test_pm_ChangeItemOrderMoveIntegerToSubnumber(self):
@@ -190,71 +190,71 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view = item4.restrictedTraverse('@@change-item-order')
         # move up
         view('number', '2.1')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 201)
-        self.assertEquals(item5.getItemNumber(), 400)
-        self.assertEquals(item6.getItemNumber(), 500)
-        self.assertEquals(item7.getItemNumber(), 600)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 201)
+        self.assertEqual(item5.getItemNumber(), 400)
+        self.assertEqual(item6.getItemNumber(), 500)
+        self.assertEqual(item7.getItemNumber(), 600)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 500, 600])
         # move down
         # move 3 to 6.1
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6.1')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
         # as we have less numbers, 6.1 is sent to 5.1 actually
-        self.assertEquals(item3.getItemNumber(), 501)
-        self.assertEquals(item4.getItemNumber(), 201)
-        self.assertEquals(item5.getItemNumber(), 300)
-        self.assertEquals(item6.getItemNumber(), 400)
-        self.assertEquals(item7.getItemNumber(), 500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item3.getItemNumber(), 501)
+        self.assertEqual(item4.getItemNumber(), 201)
+        self.assertEqual(item5.getItemNumber(), 300)
+        self.assertEqual(item6.getItemNumber(), 400)
+        self.assertEqual(item7.getItemNumber(), 500)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 500, 501])
         # move a "master number" down
         # move 2 to 4.1
         view = item2.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals(item1.getItemNumber(), 100)
+        self.assertEqual(item1.getItemNumber(), 100)
         # one masternumber less, so 4.1 became 3.1
-        self.assertEquals(item2.getItemNumber(), 401)
-        self.assertEquals(item3.getItemNumber(), 501)
+        self.assertEqual(item2.getItemNumber(), 401)
+        self.assertEqual(item3.getItemNumber(), 501)
         # does not have a master anymore, became master
-        self.assertEquals(item4.getItemNumber(), 200)
-        self.assertEquals(item5.getItemNumber(), 300)
-        self.assertEquals(item6.getItemNumber(), 400)
-        self.assertEquals(item7.getItemNumber(), 500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item4.getItemNumber(), 200)
+        self.assertEqual(item5.getItemNumber(), 300)
+        self.assertEqual(item6.getItemNumber(), 400)
+        self.assertEqual(item7.getItemNumber(), 500)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 401, 500, 501])
         # move a "master number" up
         # move 5 to 4.2
         view = item7.restrictedTraverse('@@change-item-order')
         view('number', '4.2')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 401)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 401)
         # does not have a master anymore, became master
-        self.assertEquals(item3.getItemNumber(), 500)
-        self.assertEquals(item4.getItemNumber(), 200)
-        self.assertEquals(item5.getItemNumber(), 300)
-        self.assertEquals(item6.getItemNumber(), 400)
-        self.assertEquals(item7.getItemNumber(), 402)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item3.getItemNumber(), 500)
+        self.assertEqual(item4.getItemNumber(), 200)
+        self.assertEqual(item5.getItemNumber(), 300)
+        self.assertEqual(item6.getItemNumber(), 400)
+        self.assertEqual(item7.getItemNumber(), 402)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 401, 402, 500])
 
         # move up between 2 subnumbers
         # move 5 to 4.1
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 401, 402, 403])
 
         # move down to an existing subnumber
         # move 2 to 4.1
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 301, 302, 303, 304])
 
     def test_pm_ChangeItemOrderMoveSubnumberToInteger(self):
@@ -267,35 +267,35 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(400)
         item6.setItemNumber(401)
         item7.setItemNumber(500)
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 201)
-        self.assertEquals(item4.getItemNumber(), 300)
-        self.assertEquals(item5.getItemNumber(), 400)
-        self.assertEquals(item6.getItemNumber(), 401)
-        self.assertEquals(item7.getItemNumber(), 500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 201)
+        self.assertEqual(item4.getItemNumber(), 300)
+        self.assertEqual(item5.getItemNumber(), 400)
+        self.assertEqual(item6.getItemNumber(), 401)
+        self.assertEqual(item7.getItemNumber(), 500)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 401, 500])
         # move up
         view = item6.restrictedTraverse('@@change-item-order')
         view('number', '2')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 300)
-        self.assertEquals(item3.getItemNumber(), 301)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
-        self.assertEquals(item6.getItemNumber(), 200)
-        self.assertEquals(item7.getItemNumber(), 600)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 300)
+        self.assertEqual(item3.getItemNumber(), 301)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
+        self.assertEqual(item6.getItemNumber(), 200)
+        self.assertEqual(item7.getItemNumber(), 600)
         # move down
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '5')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 300)
-        self.assertEquals(item3.getItemNumber(), 500)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 600)
-        self.assertEquals(item6.getItemNumber(), 200)
-        self.assertEquals(item7.getItemNumber(), 700)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 300)
+        self.assertEqual(item3.getItemNumber(), 500)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 600)
+        self.assertEqual(item6.getItemNumber(), 200)
+        self.assertEqual(item7.getItemNumber(), 700)
 
         # check with 2 groups of items with subnumbers
         item1.setItemNumber(100)
@@ -305,48 +305,48 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(400)
         item6.setItemNumber(500)
         item7.setItemNumber(501)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 500, 501])
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '3')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
 
         # move subnumber 300 to 602
         self.assertEqual(item3.getItemNumber(), 300)
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6.2')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 502])
         # trying to move 300 to 601 would do nothing
         self.assertEqual(item4.getItemNumber(), 300)
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '6.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 502])
         # trying to move 502 to 601 would do nothing
         self.assertEqual(item3.getItemNumber(), 502)
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 502])
         # trying to move 502 to 600 works
-        self.assertEqual(item.getItemNumber(), 502)
-        view = item.restrictedTraverse('@@change-item-order')
+        self.assertEqual(item3.getItemNumber(), 502)
+        view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 501, 600])
         # move 600 to 300
         self.assertEqual(item3.getItemNumber(), 600)
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '3')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
         # trying to move 300 to 603 would do nothing
         self.assertEqual(item3.getItemNumber(), 300)
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '6.3')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
         self.assertEqual(item3.getItemNumber(), 300)
 
@@ -355,24 +355,24 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEqual(item7.getItemNumber(), 601)
         view = item7.restrictedTraverse('@@change-item-order')
         view('number', '6.2')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
         # move 601 to 500 works
         self.assertEqual(item7.getItemNumber(), 601)
         view = item7.restrictedTraverse('@@change-item-order')
         view('number', '5')
         self.assertEqual(item7.getItemNumber(), 500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
         # now we will move 601 to 700
         self.assertEqual(item6.getItemNumber(), 700)
         item6.setItemNumber(601)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
         view = item6.restrictedTraverse('@@change-item-order')
         view('number', '7')
         self.assertEqual(item6.getItemNumber(), 700)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
 
     def test_pm_ChangeItemOrderMoveSubnumberToSubnumber(self):
@@ -385,49 +385,49 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(400)
         item6.setItemNumber(401)
         item7.setItemNumber(500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 401, 500])
         # move down
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 401)
-        self.assertEquals(item4.getItemNumber(), 300)
-        self.assertEquals(item5.getItemNumber(), 400)
-        self.assertEquals(item6.getItemNumber(), 402)
-        self.assertEquals(item7.getItemNumber(), 500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 401)
+        self.assertEqual(item4.getItemNumber(), 300)
+        self.assertEqual(item5.getItemNumber(), 400)
+        self.assertEqual(item6.getItemNumber(), 402)
+        self.assertEqual(item7.getItemNumber(), 500)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 400, 401, 402, 500])
         # move up
         # prepare, change '500' to '201'
         item7.setItemNumber(201)
         meeting.notifyModified()
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 400, 401, 402])
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '2.1')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 201)
-        self.assertEquals(item4.getItemNumber(), 300)
-        self.assertEquals(item5.getItemNumber(), 400)
-        self.assertEquals(item6.getItemNumber(), 401)
-        self.assertEquals(item7.getItemNumber(), 202)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 201)
+        self.assertEqual(item4.getItemNumber(), 300)
+        self.assertEqual(item5.getItemNumber(), 400)
+        self.assertEqual(item6.getItemNumber(), 401)
+        self.assertEqual(item7.getItemNumber(), 202)
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 300, 400, 401])
 
         # move 300 to 401
-        self.assertEquals(item4.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 300)
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 300, 301, 302])
         # move 201 to 302
-        self.assertEquals(item3.getItemNumber(), 201)
+        self.assertEqual(item3.getItemNumber(), 201)
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '3.2')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 300, 301, 302, 303])
 
     def test_pm_ChangeItemOrderMoveOutFromSubnumber(self):
@@ -441,27 +441,27 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(203)
         item6.setItemNumber(204)
         item7.setItemNumber(300)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 203, 204, 300])
         # move down 203 to 300
         view = item5.restrictedTraverse('@@change-item-order')
         view('number', '3')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 203, 300, 400])
-        self.assertEquals(item4.getItemNumber(), 202)
-        self.assertEquals(item5.getItemNumber(), 300)
-        self.assertEquals(item6.getItemNumber(), 203)
-        self.assertEquals(item7.getItemNumber(), 400)
+        self.assertEqual(item4.getItemNumber(), 202)
+        self.assertEqual(item5.getItemNumber(), 300)
+        self.assertEqual(item6.getItemNumber(), 203)
+        self.assertEqual(item7.getItemNumber(), 400)
 
         # move up 202 to 100
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 300, 301, 302, 400, 500])
-        self.assertEquals(item4.getItemNumber(), 100)
-        self.assertEquals(item1.getItemNumber(), 200)
-        self.assertEquals(item2.getItemNumber(), 300)
-        self.assertEquals(item6.getItemNumber(), 302)
+        self.assertEqual(item4.getItemNumber(), 100)
+        self.assertEqual(item1.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 300)
+        self.assertEqual(item6.getItemNumber(), 302)
 
     def test_pm_ChangeItemOrderMoveUpToFirstPositionWithSubnumbers(self):
         '''Test the ChangeItemOrderView :
@@ -478,11 +478,11 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(300)
         item6.setItemNumber(400)
         item7.setItemNumber(500)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 101, 102, 200, 300, 400, 500])
         view = item5.restrictedTraverse('@@change-item-order')
         view('number', '1')
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 200, 201, 202, 300, 400, 500])
 
     def test_pm_ReorderItemsWithSubnumbers(self):
@@ -496,13 +496,13 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(104)
         item6.setItemNumber(105)
         item7.setItemNumber(106)
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 101, 102, 103, 104, 105, 106])
         # move down 1.2 to 1.4
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '1.4')
         # values still correct
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 101, 102, 103, 104, 105, 106])
         self.assertEqual(item3.getItemNumber(), 104)
         self.assertEqual(item4.getItemNumber(), 102)
@@ -512,7 +512,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view = item3.restrictedTraverse('@@change-item-order')
         view('number', '1.2')
         # values still correct
-        self.assertEquals([item.getItemNumber() for item in meeting.get_items(ordered=True)],
+        self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                           [100, 101, 102, 103, 104, 105, 106])
         self.assertEqual(item3.getItemNumber(), 102)
         self.assertEqual(item4.getItemNumber(), 103)
@@ -524,59 +524,59 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # create a meetingWithItems and play
         self.changeUser('pmManager')
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
         view = item2.restrictedTraverse('@@change-item-order')
         # move the item2 to position 3
         view('number', '3')
-        self.assertEquals(item2.getItemNumber(), 300)
+        self.assertEqual(item2.getItemNumber(), 300)
         # and other items position are adapted
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item3.getItemNumber(), 200)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item3.getItemNumber(), 200)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
         # put the item2 back to position 2
         view('up')
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         # and other items position are adapted
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
         # no valid number does not cause crash
         view('number', '0')
         # nothing changed
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         view('number', '-4')
         # nothing changed
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         view('number', '99')
         # nothing changed
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         view('number', None)
         # nothing changed
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         # move 2 positions to far
         self.assertEqual(len(meeting.get_items()), 7)
         view('number', '9')
         # nothing changed
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         # move one of the last items upper
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '1')
-        self.assertEquals(item4.getItemNumber(), 100)
+        self.assertEqual(item4.getItemNumber(), 100)
         # and other items position are adapted
-        self.assertEquals(item1.getItemNumber(), 200)
-        self.assertEquals(item2.getItemNumber(), 300)
-        self.assertEquals(item3.getItemNumber(), 400)
-        self.assertEquals(item5.getItemNumber(), 500)
+        self.assertEqual(item1.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 300)
+        self.assertEqual(item3.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 500)
         # change the item to the same place, a message is displayed
         messages = IStatusMessage(self.request)
         view('number', _storedItemNumber_to_itemNumber(item4.getItemNumber()))
-        self.assertEquals(messages.show()[-1].message, translate('item_did_not_move', 'PloneMeeting'))
+        self.assertEqual(messages.show()[-1].message, translate('item_did_not_move', 'PloneMeeting'))
 
     def test_pm_MoveLateItemDoNotChangeNormalItems(self):
         """
@@ -613,26 +613,26 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item3 = meeting.get_items(ordered=True)[2]
         item4 = meeting.get_items(ordered=True)[3]
         # normal and late items manage their own order
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(late1.getItemNumber(), 500)
-        self.assertEquals(late2.getItemNumber(), 600)
-        self.assertEquals(late3.getItemNumber(), 700)
-        self.assertEquals(late4.getItemNumber(), 800)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(late1.getItemNumber(), 500)
+        self.assertEqual(late2.getItemNumber(), 600)
+        self.assertEqual(late3.getItemNumber(), 700)
+        self.assertEqual(late4.getItemNumber(), 800)
         # move a late item and check that normal items are not changed
         view = late2.restrictedTraverse('@@change-item-order')
         view('up')
         # late2 position changed but not normal items
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 200)
-        self.assertEquals(item3.getItemNumber(), 300)
-        self.assertEquals(item4.getItemNumber(), 400)
-        self.assertEquals(late1.getItemNumber(), 600)
-        self.assertEquals(late2.getItemNumber(), 500)
-        self.assertEquals(late3.getItemNumber(), 700)
-        self.assertEquals(late4.getItemNumber(), 800)
+        self.assertEqual(item1.getItemNumber(), 100)
+        self.assertEqual(item2.getItemNumber(), 200)
+        self.assertEqual(item3.getItemNumber(), 300)
+        self.assertEqual(item4.getItemNumber(), 400)
+        self.assertEqual(late1.getItemNumber(), 600)
+        self.assertEqual(late2.getItemNumber(), 500)
+        self.assertEqual(late3.getItemNumber(), 700)
+        self.assertEqual(late4.getItemNumber(), 800)
 
     def test_pm_MayChangeItemOrder(self):
         """

@@ -20,8 +20,8 @@ from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
-from collective.z3cform.datagridfield import DataGridField
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldWidget as DataGridField
+from collective.z3cform.datagridfield.row import DictRow
 from z3c.form.interfaces import IFieldWidget
 from z3c.form.interfaces import IFormLayer
 from z3c.form.widget import FieldWidget
@@ -105,16 +105,16 @@ from plonemeeting.core.interfaces import IMeetingWorkflowActions
 from plonemeeting.core.interfaces import IMeetingWorkflowConditions
 from plonemeeting.core.indexes import DELAYAWARE_ROW_ID_PATTERN
 from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
-from plonemeeting.core.MeetingConfig import CONFIGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import DUPLICATE_SHORT_NAME
-from plonemeeting.core.MeetingConfig import ITEM_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
-from plonemeeting.core.MeetingConfig import READERPREFIX
-from plonemeeting.core.MeetingConfig import SUFFIXPROFILEPREFIX
+from plonemeeting.core.config import CONFIGGROUPPREFIX
+from plonemeeting.core.config import DUPLICATE_SHORT_NAME
+from plonemeeting.core.config import ITEM_WF_STATE_ATTRS
+from plonemeeting.core.config import ITEM_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import MEETING_WF_STATE_ATTRS
+from plonemeeting.core.config import MEETING_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import POWEROBSERVERPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import READERPREFIX
+from plonemeeting.core.config import SUFFIXPROFILEPREFIX
 from plonemeeting.core.content.meeting import Meeting
 from plonemeeting.core.content.meetingitem import IMeetingItem
 from plonemeeting.core.model.adaptations import _getValidationReturnedStates
@@ -157,7 +157,6 @@ from zope.i18nmessageid.message import Message
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
 from zope.interface import implementer
-from zope.interface import implements
 from zope.interface import Interface
 from zope.schema.interfaces import IField
 from zope.schema.interfaces import IVocabularyFactory
@@ -2560,13 +2559,13 @@ def _camel_to_snake(name):
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
+@implementer(IMeetingConfig)
 class MeetingConfig(Container):
     """Meeting configuration content type (migrated from Archetypes OrderedBaseFolder).
 
     Business logic methods are being migrated progressively from MeetingConfig.py.
     """
 
-    implements(IMeetingConfig)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingConfig'
@@ -3333,8 +3332,7 @@ class MeetingConfig(Container):
                     # prepend configGroup full_label
                     title = u"{0} - {1}".format(
                         safe_unicode(self.getConfigGroup(True)['full_label']), title)
-        # Title returns utf-8
-        return title.encode('utf-8')
+        return safe_unicode(title)
 
 
     security.declarePrivate('setAllItemTagsField')
@@ -3782,9 +3780,9 @@ class MeetingConfig(Container):
                    if level['label_id'] in label_ids]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_label_id_singleton and len(label_ids) == 1:
             res = res and res[0] or res
         return res
@@ -3800,9 +3798,9 @@ class MeetingConfig(Container):
                    if level['name'] in names]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_name_singleton and len(names) == 1:
             res = res and res[0] or res
         return res
@@ -4588,8 +4586,8 @@ class MeetingConfig(Container):
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
-                # manage multivalued columns
-                if values and hasattr(values[0], "__iter__"):
+                # manage multivalued columns (str is iterable in Py3, exclude it)
+                if values and isinstance(values[0], (list, tuple)):
                     values = itertools.chain.from_iterable(values)
             crossed_states = [v for v in values
                               for r in removed_or_disabled_states
@@ -4662,8 +4660,8 @@ class MeetingConfig(Container):
     def validate_workflowAdaptations(self, values):
         '''Validates field workflowAdaptaations.'''
 
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         if '' in values:
@@ -4765,9 +4763,9 @@ class MeetingConfig(Container):
                 return msg
 
         # dependecies, some adaptations will complete already select ones
-        from plonemeeting.core.MeetingConfig import MeetingConfig as ATMeetingConfig
+        from plonemeeting.core.config import WF_ADAPTATIONS
         dependencies = {
-            'waiting_advices': [v for v in ATMeetingConfig.wfAdaptations
+            'waiting_advices': [v for v in WF_ADAPTATIONS
                                 if v.startswith('waiting_advices_')],
             'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
             'waiting_advices_given_advices_required_to_validate':
@@ -4933,8 +4931,8 @@ class MeetingConfig(Container):
     security.declarePrivate('validate_itemWFValidationLevels')
     def validate_itemWFValidationLevels(self, values):
         '''Validates field itemWFValidationLevels.'''
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         res = []
@@ -4987,10 +4985,11 @@ class MeetingConfig(Container):
         # that is ignored by the workflowAdaptation
         # because leading_transition is "-"
         leading_transition_values = leading_transition_values and leading_transition_values[1:]
-        # we accept also "_"
-        if [sv for sv in state_values if not sv.replace("_", "").isalnum()] or \
-           [ltv for ltv in leading_transition_values if not ltv.replace("_", "").isalnum()] or \
-           [btv for btv in back_transition_values if not btv.replace("_", "").isalnum()]:
+        # ASCII-only identifiers (isalnum() accepts unicode letters in Py3; use explicit ASCII pattern)
+        _valid_id = re.compile(r'^[a-zA-Z0-9_]+$')
+        if [sv for sv in state_values if not _valid_id.match(sv)] or \
+           [ltv for ltv in leading_transition_values if not _valid_id.match(ltv)] or \
+           [btv for btv in back_transition_values if not _valid_id.match(btv)]:
             return translate('item_wf_val_states_wrong_identifier_format',
                              domain='PloneMeeting',
                              context=self.REQUEST)
@@ -5044,8 +5043,8 @@ class MeetingConfig(Container):
     def validate_mailItemEvents(self, values):
         '''Validates field mailItemEvents.'''
 
-        # inline validation sends a string instead of a tuple... bypass it!
-        if not hasattr(values, '__iter__'):
+        # inline validation sends a string instead of a tuple/list... bypass it!
+        if isinstance(values, str) or not hasattr(values, '__iter__'):
             return
 
         if '' in values:
@@ -5433,18 +5432,15 @@ class MeetingConfig(Container):
         '''Registers, into portal_types, specific item and meeting types
            corresponding to this meeting config.'''
         i = -1
-        portal_factory = api.portal.get_tool('portal_factory')
-        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
+        portal_factory = getattr(api.portal.get(), 'portal_factory', None)
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys() if portal_factory else []
         factoryTypesToRegister = []
-        site_properties = api.portal.get_tool('portal_properties').site_properties
+        site_properties = getattr(
+            getattr(api.portal.get(), 'portal_properties', None), 'site_properties', None)
         portal_types = api.portal.get_tool('portal_types')
         for metaTypeName in self.metaTypes:
             i += 1
             portalTypeName = '%s%s' % (metaTypeName, self.short_name)
-            # If the portal type corresponding to the meta type is
-            # registered in portal_factory (in the model:
-            # use_portal_factory=True), we must also register the new
-            # portal_type we are currently creating.
             if metaTypeName in registeredFactoryTypes and \
                portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
@@ -5476,34 +5472,33 @@ class MeetingConfig(Container):
                     portalType.model_source = dxBaseFTI.model_source
                     portalType.filter_content_types = dxBaseFTI.filter_content_types
                     portalType.allowed_content_types = dxBaseFTI.allowed_content_types
+                    portalType.add_permission = dxBaseFTI.add_permission
 
-                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
-                    # Update the typesUseViewActionInListings property of site_properties
-                    # so MeetingItem types are in it, this is usefull when managing item templates
-                    # in the MeetingConfig because folders there have the 'folder_contents' layout
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring') and site_properties:
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
                         site_properties.typesUseViewActionInListings = \
                             site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self._updatePortalTypes()
-        # Update the factory tool with the list of types to register
-        portal_factory.manage_setPortalFactoryTypes(
-            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
+        if portal_factory:
+            portal_factory.manage_setPortalFactoryTypes(
+                listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
         # Perform workflow adaptations
         _performWorkflowAdaptations(self)
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
         typesTool = api.portal.get_tool('portal_types')
-        props = api.portal.get_tool('portal_properties').site_properties
+        props = getattr(
+            getattr(api.portal.get(), 'portal_properties', None), 'site_properties', None)
         wfTool = api.portal.get_tool('portal_workflow')
         for metaTypeName in self.metaTypes:
             portalTypeName = '%s%s' % (metaTypeName, self.short_name)
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
             portalType.title = "{0} {1}".format(
-                translate(metaTypeName, domain='plone', context=getRequest()).encode('utf-8'),
+                translate(metaTypeName, domain='plone', context=getRequest()),
                 self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
@@ -5545,7 +5540,7 @@ class MeetingConfig(Container):
                         i = i + 1
                     pghandler.finish()
                 # do not search item templates and recurring items
-                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring') and props:
                     nsTypes = props.getProperty('types_not_searched')
                     if portal_type not in nsTypes:
                         if not nsTypes:
@@ -5677,7 +5672,7 @@ class MeetingConfig(Container):
         return translate(msgid='clone_to',
                          domain='PloneMeeting',
                          mapping={'meetingConfigTitle': safe_unicode(destMeetingConfigTitle)},
-                         context=self.REQUEST).encode('utf-8')
+                         context=self.REQUEST)
 
 
     security.declarePrivate('updateIsDefaultFields')
@@ -5948,7 +5943,7 @@ class MeetingConfig(Container):
                 navPortlet = navigation.Assignment(bottomLevel=0,
                                                    topLevel=0,
                                                    includeTop=True,
-                                                   root='/portal_plonemeeting/%s/itemtemplates' % self.getId())
+                                                   root_uid=folder.UID())
                 nameChooser = INameChooser(portletAssignmentMapping)
                 name = nameChooser.chooseName(None, navPortlet)
                 portletAssignmentMapping[name] = navPortlet
@@ -6348,7 +6343,8 @@ class MeetingConfig(Container):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.getTagName() != 'MeetingConfig':
+        tag_name = getattr(self, 'getTagName', lambda: self.portal_type)()
+        if tag_name != 'MeetingConfig':
             return self.context
         return self
 
@@ -6720,7 +6716,8 @@ class MeetingConfig(Container):
             # remove searches_* folders from the given p_folder
             toDelete = [folderId for folderId in folder.objectIds()
                         if folderId.startswith('searches_')]
-            folder.manage_delObjects(toDelete)
+            if toDelete:
+                folder.manage_delObjects(toDelete)
 
             # create relevant folders and activate faceted on it
             for subFolderId, subFolderTitle in subFolderInfos:

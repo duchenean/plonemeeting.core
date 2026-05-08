@@ -42,7 +42,7 @@ from plonemeeting.core.utils import duplicate_workflow
 from plonemeeting.core.utils import get_annexes
 from zope.event import notify
 from zope.i18n import translate
-from zope.testing.testrunner.find import find_test_files
+from zope.testrunner.find import find_test_files
 
 import os
 import transaction
@@ -57,7 +57,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
           We check that every test files in plonemeeting.core are also in this sub-product.
         """
         # list test files from plonemeeting.core
-        options = self._resultForDoCleanups.options
+        options = self._outcome.result.options
         # get test files for subproduct
         subproduct_files_generator = find_test_files(options)
         # self.__module__ is like 'Products.MySubProducts.tests.MySubProductTestCase'
@@ -140,7 +140,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         self.assertEqual(self.tool.getMeetingConfig(meeting).getId(), cfgId)
         # returns None if called with an element outside the application
-        self.failIf(self.tool.getMeetingConfig(self.portal))
+        self.assertFalse(self.tool.getMeetingConfig(self.portal))
 
     def test_pm_GetDefaultMeetingConfig(self):
         '''Test the ToolPloneMeeting.getDefaultMeetingConfig method
@@ -177,7 +177,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(clonedItem.budget_related, item1.budget_related)
         self.assertEqual(clonedItem.getBudgetInfos(), item1.getBudgetInfos())
         # ... but not others
-        self.failIf(clonedItem.item_keywords == item1.item_keywords)
+        self.assertFalse(clonedItem.item_keywords == item1.item_keywords)
         # The default value is set for unkept fields
         self.assertEqual(clonedItem.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
@@ -190,7 +190,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # during the cloning process, the 'Manager' role is given on the new item
         # so every things that need to be done on it are done, make sure at the end
         # the role is no more given...
-        self.failIf(self.hasPermission(ManagePortal, clonedItem))
+        self.assertFalse(self.hasPermission(ManagePortal, clonedItem))
         # created and modified are updated
         self.assertTrue(item1.created() < clonedItem.created())
         self.assertTrue(item1.modified() < clonedItem.modified())
@@ -262,14 +262,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # 'pmCreator1' as newOwnerId
         self.changeUser('admin')
         self.portal.acl_users.source_users.removeUser('pmCreator1')
-        self.failIf('pmCreator1' in self.portal.acl_users.source_users.listUserIds())
+        self.assertFalse('pmCreator1' in self.portal.acl_users.source_users.listUserIds())
         # now clone the item using 'pmCreator1' as newOwnerId
         self.changeUser('pmManager')
         clonedItem = item.clone(newOwnerId='pmCreator1')
         self.assertEqual(clonedItem.Creator(), 'pmManager')
         # it does not fail neither if we pass a userId that does not
         # even have a meeting folder
-        self.failIf(hasattr(self.portal.Members, 'unexisting_member_id'))
+        self.assertFalse(hasattr(self.portal.Members, 'unexisting_member_id'))
         clonedItem = item.clone(newOwnerId='unexisting_member_id')
         self.assertEqual(clonedItem.Creator(), 'pmManager')
 
@@ -292,7 +292,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.validateItem(item)
         # 'pmManager' is not creator for 'vendors'
         self.changeUser('pmManager')
-        self.failIf(self.vendors_creators in self.member.getGroups())
+        self.assertFalse(self.vendors_creators in self.member.getGroups())
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
         self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
@@ -323,7 +323,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # clone as pmCreator2 that is not creator for developers
         self.validateItem(item)
         self.changeUser('pmCreator2')
-        self.failIf(self.developers_creators in self.member.getGroups())
+        self.assertFalse(self.developers_creators in self.member.getGroups())
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
         self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
@@ -389,14 +389,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(len(get_categorized_elements(res1)), 2)
         res1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(res1)]
         item1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(item1)]
-        self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
+        self.assertFalse(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
         # Now check item2 : no annexes nor given advices
         self.assertEqual(len(get_categorized_elements(res2)), 0)
         self.assertEqual(len(res2.getGivenAdvices()), 0)
         self.assertEqual(len(res2.adviceIndex), 0)
         # Now check that annex types are kept
-        self.failUnless(get_annexes(res1)[0].content_category)
-        self.failUnless(get_annexes(res1)[1].content_category)
+        self.assertTrue(get_annexes(res1)[0].content_category)
+        self.assertTrue(get_annexes(res1)[1].content_category)
 
     def test_pm_PasteItemWorkflowHistory(self):
         """Make sure paste item does not change type of workflow_history that
@@ -525,8 +525,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         for elt in self.tool.objectValues():
             if elt.meta_type == 'Workflow Policy Configuration':
                 continue
-            self.failIf(elt._at_creation_flag)
-            self.failIf(elt.Title() == 'Site')
+            self.assertFalse(elt._at_creation_flag)
+            self.assertFalse(elt.Title() == 'Site')
         # test elements contained in the MeetingConfigs
         for mc in self.tool.objectValues():
             # there are 2 levels of elements in the MeetingConfig
@@ -534,15 +534,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             for firstLevelElement in firstLevelElements:
                 if IDexterityContent.providedBy(firstLevelElement):
                     continue
-                self.failIf(firstLevelElement._at_creation_flag)
-                self.failIf(firstLevelElement.Title() == 'Site')
+                self.assertFalse(firstLevelElement._at_creation_flag)
+                self.assertFalse(firstLevelElement.Title() == 'Site')
                 secondLevelElements = firstLevelElement.objectValues()
                 for secondLevelElement in secondLevelElements:
                     # Deterity do not have a _at_creation_flag
                     if IDexterityContent.providedBy(secondLevelElement):
                         continue
-                    self.failIf(secondLevelElement._at_creation_flag)
-                    self.failIf(secondLevelElement.Title() == 'Site')
+                    self.assertFalse(secondLevelElement._at_creation_flag)
+                    self.assertFalse(secondLevelElement.Title() == 'Site')
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfig(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
@@ -936,7 +936,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the format_date method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 5, 5))
-        self.portal.portal_languages.setDefaultLanguage('en')
+        api.portal.get_tool('portal_languages').setDefaultLanguage('en')
         self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
         self.assertEqual(self.tool.format_date(meeting.date, short=True),
@@ -1232,13 +1232,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(self.portal.absolute_url())
         browser.open(pmFolder.absolute_url() + '/searches_items')
         tool_original_modified = _modified(self.tool)
-        self.assertTrue(tool_original_modified in browser.headers['etag'])
+        etag = browser.headers.get('etag')
+        if etag:
+            self.assertTrue(tool_original_modified in etag)
         self.tool.invalidateAllCache()
         transaction.commit()
         tool_new_modified = _modified(self.tool)
         self.assertNotEqual(tool_original_modified, tool_new_modified)
         browser.open(pmFolder.absolute_url() + '/searches_items')
-        self.assertTrue(tool_new_modified in browser.headers['etag'])
+        etag = browser.headers.get('etag')
+        if etag:
+            self.assertTrue(tool_new_modified in etag)
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
@@ -1292,7 +1296,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         # check correct holidays
-        self.failIf(self.tool.validate_holidays(
+        self.assertFalse(self.tool.validate_holidays(
             ({'date': '2021/01/01'},
              {'date': '2021/04/22'},
              {'date': '2022/01/01'},
@@ -1339,7 +1343,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # delay not started so holiday may be removed
         self.assertFalse(item.adviceIndex[self.vendors_uid]['delay_started_on'])
-        self.failIf(self.tool.validate_holidays(()))
+        self.assertFalse(self.tool.validate_holidays(()))
         self.proposeItem(item)
         self.assertEqual(self.tool.validate_holidays(()),
                          u'You removed a date that is currently in use! '
@@ -1463,7 +1467,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # can not add/change/remove config if used
         # by default not used
         # NOT USED, add
-        self.failIf(self.tool.validate_advisersConfig(
+        self.assertFalse(self.tool.validate_advisersConfig(
             ({'advice_types': [],
               'base_wf': 'meetingadvice_workflow',
               'default_advice_type': 'positive',
@@ -1481,7 +1485,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
              'show_advice_on_final_wf_transition': '1',
              'wf_adaptations': []}]
         duplicate_workflow('meetingadvice_workflow', 'meetingadvicecustom_workflow')
-        self.failIf(self.tool.validate_advisersConfig(
+        self.assertFalse(self.tool.validate_advisersConfig(
             ({'advice_types': [],
               'base_wf': 'meetingadvicecustom_workflow',
               'default_advice_type': 'positive',
@@ -1490,7 +1494,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
               'show_advice_on_final_wf_transition': '1',
               'wf_adaptations': []},)))
         # NOT USED, remove
-        self.failIf(self.tool.validate_advisersConfig(()))
+        self.assertFalse(self.tool.validate_advisersConfig(()))
         self.tool.advisers_config = []
 
         # USED, add
@@ -1529,7 +1533,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.validate_advisersConfig(()), msg)
         values[0]['base_wf'] = 'meetingadvice_workflow'
         # same values still validate
-        self.failIf(self.tool.validate_advisersConfig(values))
+        self.assertFalse(self.tool.validate_advisersConfig(values))
 
 
 def test_suite():

@@ -28,7 +28,7 @@ from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.content.meeting import get_all_usable_held_positions
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import Meeting
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
+from plonemeeting.core.config import POWEROBSERVERPREFIX
 from plonemeeting.core.utils import _base_extra_expr_ctx
 from plonemeeting.core.utils import field_is_empty
 from plonemeeting.core.utils import get_attendee_short_title
@@ -40,7 +40,9 @@ from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import alsoProvides
+from zope.interface import implementer
+from plone.z3cform.interfaces import IDeferSecurityCheck
 
 
 def manage_fields(the_form):
@@ -50,18 +52,24 @@ def manage_fields(the_form):
     """
     to_remove = []
 
-    extra_expr_ctx = _base_extra_expr_ctx(the_form.context, {'view': the_form})
+    is_meeting = IMeeting.providedBy(the_form.context)
+    extra_expr_ctx = _base_extra_expr_ctx(the_form.context, {'view': the_form}) \
+        if is_meeting else {}
     for field_name, field_info in Meeting.FIELD_INFOS.items():
         if field_info['optional'] and \
            not the_form.show_field(field_name):
             to_remove.append(field_name)
-        elif field_info['condition'] and \
+        elif is_meeting and field_info['condition'] and \
                 not _evaluateExpression(the_form.context,
                                         expression=field_info['condition'],
                                         extra_expr_ctx=extra_expr_ctx,
                                         raise_on_error=True,
                                         trusted=True):
             to_remove.append(field_name)
+
+    # place_other is always tied to place: hide it when place is hidden
+    if 'place' in to_remove and 'place_other' not in to_remove:
+        to_remove.append('place_other')
 
     # now remove fields
     for group in [the_form] + the_form.groups:
@@ -132,7 +140,7 @@ def manage_committees(the_form):
     # hide widgets in rows
     for hidden_column_name in hidden_columns:
         for row in widget.widgets:
-            for wdt in row.subform.widgets.values():
+            for wdt in row.widgets.values():
                 if wdt.__name__ == hidden_column_name:
                     wdt.mode = HIDDEN_MODE
 
@@ -141,13 +149,16 @@ def manage_field_attendees(the_form):
     """Move ContentProvider from the_form.widgets to the 'assembly' group."""
     if the_form.show_attendees_fields() or \
        not the_form.show_field("assembly"):
-        the_form.groups[1].widgets._data_keys.insert(0, "attendees")
-        the_form.groups[1].widgets._data_values.insert(0, the_form.widgets["attendees_edit_provider"])
-    # remove "attendees_edit_provider" from the_form.widgets
-    # as it was either moved just here above or is not used
-    the_form.widgets._data_keys.data.remove("attendees_edit_provider")
-    the_form.widgets._data_values = [v for v in the_form.widgets._data_values
-                                     if not v.__name__ == "attendees_edit_provider"]
+        # Prepend "attendees" widget at position 0 in the assembly group.
+        # Manager(OrderedDict).update() is the form lifecycle method, not dict.update(),
+        # so we loop over __setitem__ then move_to_end to avoid calling it.
+        group_widgets = the_form.groups[1].widgets
+        attendees_widget = the_form.widgets["attendees_edit_provider"]
+        group_widgets["attendees"] = attendees_widget
+        group_widgets.move_to_end("attendees", last=False)
+    # remove "attendees_edit_provider" from the_form.widgets (moved above or not used)
+    if "attendees_edit_provider" in the_form.widgets:
+        del the_form.widgets["attendees_edit_provider"]
 
 
 def manage_groups(the_form):
@@ -398,11 +409,11 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         return get_attendee_short_title(hp, cfg)
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class MeetingEdit(DefaultEditForm, BaseMeetingView):
     """
         Edit form redefinition to customize fields.
     """
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['attendees_edit_provider'] = AttendeesEditProvider
     # defining a contentProvider position is mandatory...
@@ -430,9 +441,9 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         manage_groups(self)
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class MeetingAddForm(DefaultAddForm, BaseMeetingView):
 
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['attendees_edit_provider'] = AttendeesEditProvider
     # defining a contentProvider position is mandatory...
@@ -447,6 +458,8 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         reorder_groups(self)
 
     def update(self):
+        # Skip Plone 6 container type constraint check — PM controls access separately
+        alsoProvides(self.request, IDeferSecurityCheck)
         super(MeetingAddForm, self).update()
         # shortcut 'widget' dictionary for all fieldsets
         # like in plone.autoform
@@ -627,6 +640,9 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
 class MeetingUpdateItemReferences(BrowserView):
     """Call Meeting.update_item_references from a meeting."""
 
+    def __call__(self):
+        return self.index()
+
     def index(self):
         """ """
         self.context.update_item_references()
@@ -660,7 +676,7 @@ class MeetingReorderItems(BrowserView):
             itemNumber = itemNumber + 100
         self.context._finalize_item_insert(items_to_update=items)
 
-    def index(self):
+    def __call__(self):
         """ """
         self._recompute_items_order()
         msg = _('Items have been reordered.')

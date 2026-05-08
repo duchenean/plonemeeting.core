@@ -83,6 +83,49 @@ setDefaultRoles(ManageOwnOrganizationFields, ())
 setDefaultRoles(ManageItemCategoryFields, ())
 MEETING_REMOVE_MOG_WFA = 'meeting_remove_global_access'
 
+WF_ADAPTATIONS = ('item_validation_shortcuts',
+                   'item_validation_no_validate_shortcuts',
+                   'itemdecided',
+                   'only_creator_may_delete',
+                   'no_freeze',
+                   'no_publication',
+                   'no_decide',
+                   'accepted_but_modified',
+                   'postpone_next_meeting',
+                   'postpone_next_meeting_keep_internal_number',
+                   'postpone_next_meeting_transfer_annex_scan_id',
+                   'mark_not_applicable',
+                   'removed',
+                   'removed_and_duplicated',
+                   'refused',
+                   'delayed',
+                   'pre_accepted',
+                   'reviewers_take_back_validated_item',
+                   'presented_item_back_to_validation_state',
+                   'return_to_proposing_group',
+                   'return_to_proposing_group_with_last_validation',
+                   'return_to_proposing_group_with_all_validations',
+                   'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
+                   'hide_decisions_when_under_writing',
+                   'hide_decisions_when_under_writing_check_returned_to_proposing_group',
+                   'waiting_advices',
+                   'waiting_advices_from_every_val_levels',
+                   'waiting_advices_from_before_last_val_level',
+                   'waiting_advices_from_last_val_level',
+                   'waiting_advices_adviser_send_back',
+                   'waiting_advices_proposing_group_send_back',
+                   'waiting_advices_adviser_may_validate',
+                   'waiting_advices_given_advices_required_to_validate',
+                   'waiting_advices_given_and_signed_advices_required_to_validate',
+                   'accepted_out_of_meeting',
+                   'accepted_out_of_meeting_and_duplicated',
+                   'accepted_out_of_meeting_emergency',
+                   'accepted_out_of_meeting_emergency_and_duplicated',
+                   'transfered',
+                   'transfered_and_duplicated',
+                   'meetingmanager_correct_closed_meeting',
+                   MEETING_REMOVE_MOG_WFA)
+
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
 setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributor'))
@@ -112,8 +155,7 @@ PRODUCT_DEPENDENCIES = []
 ADD_SUBCONTENT_PERMISSIONS = [
     AddAdvice,
     AddAnnex,
-    AddAnnexDecision,
-    'ATContentTypes: Add Image']
+    AddAnnexDecision]
 
 # base suffixes, if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 # or monkeypatch it if base values are not correct
@@ -431,3 +473,41 @@ def registerClasses():
 
 class PloneMeetingError(Exception):
     pass
+
+
+DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting configuration. Please choose another one.'
+CONFIGGROUPPREFIX = 'configgroup_'
+PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
+READERPREFIX = 'reader_'
+SUFFIXPROFILEPREFIX = 'suffix_profile_'
+POWEROBSERVERPREFIX = 'powerobserver__'
+
+ITEM_WF_STATE_ATTRS = [
+    'itemAdviceStates',
+    'itemAdviceEditStates',
+    'itemAdviceViewStates',
+    'itemAdviceInvalidateStates',
+    'itemAutoSentToOtherMCStates',
+    'itemBudgetInfosStates',
+    'itemCommitteesStates',
+    'itemCommitteesViewStates',
+    'itemCopyGroupsStates',
+    'itemGroupsInChargeStates',
+    'itemManualSentToOtherMCStates',
+    'itemObserversStates',
+    'recordItemHistoryStates',
+    'powerObservers/item_states']
+ITEM_WF_TRANSITION_ATTRS = [
+    'transitionsReinitializingDelays',
+    'transitionsToConfirm',
+    'mailItemEvents',
+    'onTransitionFieldTransforms/transition',
+    'onMeetingTransitionItemActionToExecute/item_action']
+MEETING_WF_STATE_ATTRS = [
+    'itemPreferredMeetingStates',
+    'meetingPresentItemWhenNoCurrentMeetingStates',
+    'powerObservers/meeting_states']
+MEETING_WF_TRANSITION_ATTRS = [
+    'transitionsToConfirm',
+    'mailMeetingEvents',
+    'onMeetingTransitionItemActionToExecute/meeting_transition']

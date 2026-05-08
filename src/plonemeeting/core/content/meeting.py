@@ -2,21 +2,23 @@
 
 from __future__ import absolute_import, print_function
 
+from Acquisition import aq_base
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.dexteritytextindexer.directives import searchable
-from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
-from collective.z3cform.datagridfield import BlockDataGridFieldFactory
-from collective.z3cform.datagridfield import DictRow
+from plone.app.dexterity.textindexer.directives import searchable
+from plone.app.dexterity.textindexer.interfaces import IDynamicTextIndexExtender
+from collective.z3cform.datagridfield.blockdatagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield.row import DictRow
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
+from imio.pyutils.utils import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -29,11 +31,12 @@ from plone.app.contenttypes.behaviors.collection import Collection
 from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
-from plone.formwidget.datetime.z3cform.widget import DateFieldWidget
-from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
+from plone.app.z3cform.widgets.datetime import DateFieldWidget
+from plone.app.z3cform.widgets.datetime import DatetimeFieldWidget
 from plone.formwidget.masterselect import MasterSelectField
 from plone.memoize import ram
 from plone.supermodel import model
@@ -82,7 +85,6 @@ from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import directlyProvides
 from zope.interface import implementer
-from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
@@ -111,7 +113,7 @@ def assembly_constraint(value):
                         domain='PloneMeeting',
                         context=request)
         # encode msg in utf-8 for restapi
-        raise Invalid(msg.encode('utf-8'))
+        raise Invalid(msg)
     return True
 
 
@@ -537,7 +539,7 @@ class IMeeting(IDXMeetingContent):
                 # avoid multiple call to this invariant
                 context.REQUEST.set("validate_dates_done", True)
                 # encode msg in utf-8 for restapi
-                raise Invalid(msg.encode('utf-8'))
+                raise Invalid(msg)
 
         # check pre_meeting_date
         if hasattr(data, 'pre_meeting_date') and \
@@ -549,7 +551,7 @@ class IMeeting(IDXMeetingContent):
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
         # check start_date/end_date
         # start_date must be before end_date
@@ -565,7 +567,7 @@ class IMeeting(IDXMeetingContent):
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_dates_done", True)
 
@@ -651,7 +653,7 @@ class IMeeting(IDXMeetingContent):
                         # avoid multiple call to this invariant
                         context.REQUEST.set("validate_attendees_done", True)
                         # encode msg in utf-8 for restapi
-                        raise Invalid(msg.encode('utf-8'))
+                        raise Invalid(msg)
                     elif highest_secret_votes > len(meeting_voters):
                         msg = translate(
                             'can_not_remove_secret_voter_voted_on_items',
@@ -660,7 +662,7 @@ class IMeeting(IDXMeetingContent):
                         # avoid multiple call to this invariant
                         context.REQUEST.set("validate_attendees_done", True)
                         # encode msg in utf-8 for restapi
-                        raise Invalid(msg.encode('utf-8'))
+                        raise Invalid(msg)
 
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
@@ -783,7 +785,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
         # in theory this is not possible thru the UI as unselecting an attendee
         # will disable the signatory field but this is possible thru the restapi
         removed_signatories = tuple(
@@ -798,7 +800,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
     # can not remove or add attendees on meeting when attendees order
     # was redefined on items
@@ -818,7 +820,7 @@ def _validate_attendees_removed_and_order(context, meeting_attendees, all_meetin
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_attendees_done", True)
             # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
+            raise Invalid(msg)
 
 
 def _validate_attendees_signatories(context, signature_numbers):
@@ -830,7 +832,7 @@ def _validate_attendees_signatories(context, signature_numbers):
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
         # encode msg in utf-8 for restapi
-        raise Invalid(msg.encode('utf-8'))
+        raise Invalid(msg)
 
 
 ########################################################################
@@ -856,10 +858,10 @@ def _validate_attendees_signatories(context, signature_numbers):
 ########################################################################
 
 
+@implementer(IMeeting)
 class Meeting(Container):
     """ """
 
-    implements(IMeeting)
 
     security = ClassSecurityInfo()
 
@@ -893,11 +895,11 @@ class Meeting(Container):
              'condition': ""},
         'validation_deadline':
             {'optional': True,
-             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+             'condition': "python:context.date and "
                 "cfg.show_meeting_manager_reserved_field('validation_deadline')"},
         'freeze_deadline':
             {'optional': True,
-             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+             'condition': "python:context.date and "
                 "cfg.show_meeting_manager_reserved_field('freeze_deadline')"},
         'place':
             {'optional': True,
@@ -992,6 +994,50 @@ class Meeting(Container):
              'condition': "python:tool.isManager(cfg)"},
     }
 
+    _searchable_fields = (
+        'place',
+        'place_other',
+        'pre_meeting_place',
+        'assembly_observations',
+        'committees_observations',
+        'in_and_out_moves',
+        'notes',
+        'pre_observations',
+        'observations',
+        'votes_observations',
+        'public_meeting_observations',
+        'secret_meeting_observations',
+        'authority_notice',
+        'meetingmanagers_notes',
+    )
+
+    security.declarePublic('SearchableText')
+
+    def SearchableText(self):
+        """Include searchable RichText field contents in the catalog index."""
+        data = []
+        title = self.Title()
+        if title:
+            data.append(title)
+        transforms = api.portal.get_tool('portal_transforms')
+        for attr_name in self._searchable_fields:
+            value = getattr(self, attr_name, None)
+            if not value:
+                continue
+            if isinstance(value, RichTextValue):
+                raw = value.raw or ''
+                if raw:
+                    stream = transforms.convertTo(
+                        'text/plain', safe_encode(raw), mimetype='text/html')
+                    text = stream.getData() if stream else ''
+                    if isinstance(text, bytes):
+                        text = text.decode('utf-8', errors='replace')
+                    if text:
+                        data.append(text)
+            else:
+                data.append(str(value))
+        return ' '.join(data)
+
     security.declarePublic('get_pretty_link')
 
     def get_pretty_link(self,
@@ -1039,7 +1085,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.getTagName() != 'Meeting':
+        if type(self) is not Meeting:
             res = self.context
         return res
 
@@ -2290,7 +2336,7 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         for org_uid in cfg.getUsingGroups():
             for plone_group_id in get_plone_groups(
-                    org_uid, ids_only=True, verify_group_exist=False):
+                    org_uid, ids_only=True):
                 self.manage_addLocalRoles(plone_group_id, ('Reader', ))
 
     security.declarePublic('wfConditions')
@@ -2349,7 +2395,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.get_self. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.getTagName() != 'Meeting':
+        if hasattr(aq_base(self), 'context'):
             res = self.context
         return res
 
@@ -2456,6 +2502,23 @@ class Meeting(Container):
                 break
         return res
 
+    security.declarePublic('validate')
+
+    def validate(self, REQUEST=None):
+        """Run IMeeting invariants; return {} if valid, {field: msg} if not.
+        Mirrors the AT Meeting.validate(REQUEST) interface used in tests."""
+        from z3c.form.validator import InvariantsValidator
+        request = REQUEST if REQUEST is not None else self.REQUEST
+        request.set('validate_dates_done', False)
+        request.set('validate_attendees_done', False)
+        invariants = InvariantsValidator(self, request, None, IMeeting, None)
+        errors = {}
+        for error in invariants.validate({}):
+            errors.setdefault('invariants', []).append(str(error.args[0]))
+        request.set('validate_dates_done', False)
+        request.set('validate_attendees_done', False)
+        return errors
+
     security.declarePublic('get_next_meeting')
 
     def get_next_meeting(self, cfg_id='', date_gap=0):
@@ -2511,9 +2574,9 @@ class MeetingCollection(Collection):
     query = property(_get_query, _set_query)
 
 
+@implementer(IDynamicTextIndexExtender)
 class MeetingSearchableTextExtender(object):
     adapts(IMeeting)
-    implements(IDynamicTextIndexExtender)
 
     def __init__(self, context):
         self.context = context
@@ -2543,8 +2606,8 @@ class UnicodeSimpleTerm(object):
             directlyProvides(self, ITitledTokenizedTerm)
 
 
+@implementer(IVocabularyFactory)
 class PlacesVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """XXX warning, we need unicode term value, so we use UnicodeSimpleTerm.
@@ -2556,7 +2619,7 @@ class PlacesVocabulary(object):
         places = [safe_unicode(place) for place in cfg.places.strip().split('\r\n')
                   if place.strip()]
         # history when context is a Meeting
-        if context.getTagName() == "Meeting" and \
+        if IMeeting.providedBy(context) and \
            context.place and \
            context.place not in places and \
            context.place != PLACE_OTHER:

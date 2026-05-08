@@ -27,7 +27,7 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 
 def item_signatures_default():
@@ -84,6 +84,7 @@ class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
         return self.template()
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class ManageItemSignaturesForm(form.Form):
     """
       This form will help MeetingManagers manage itemSignatures
@@ -91,7 +92,6 @@ class ManageItemSignaturesForm(form.Form):
       item without having to use the edit form and to apply
       redefined value until the item number he wants.
     """
-    implements(IFieldsAndContentProvidersForm)
 
     fields = field.Fields(IManageItemSignatures)
     ignoreContext = True  # don't use context to get widget data

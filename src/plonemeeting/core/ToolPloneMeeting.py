@@ -8,7 +8,7 @@ from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
-from App.class_init import InitializeClass
+from AccessControl.class_init import InitializeClass
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from collections import OrderedDict
@@ -74,7 +74,10 @@ from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import Meeting
 from plonemeeting.core.indexes import DELAYAWARE_ROW_ID_PATTERN
 from plonemeeting.core.interfaces import IMeetingItem
-from plonemeeting.core.MeetingItem import MeetingItem
+try:
+    from plonemeeting.core.MeetingItem import MeetingItem as ATMeetingItem
+except (ImportError, AttributeError):
+    ATMeetingItem = None
 from plonemeeting.core.model.adaptations import _performAdviceWorkflowAdaptations
 from plonemeeting.core.profiles import PloneMeetingConfiguration
 from plonemeeting.core.utils import configure_advice_dx_localroles_for
@@ -91,7 +94,7 @@ from Products.ZCatalog.ProgressHandler import ZLogHandler
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 from . import interfaces
 import OFS.Moniker
@@ -126,11 +129,11 @@ _TOOL_AT_TO_DX = {
 _TOOL_DROPPED_FIELDS = {'enableScanDocs': False}
 
 
+@implementer(interfaces.IToolPloneMeeting)
 class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
     """PloneMeeting portal tool -- singleton configuration manager."""
 
     security = ClassSecurityInfo()
-    implements(interfaces.IToolPloneMeeting)
 
     meta_type = 'ToolPloneMeeting'
     portal_type = 'ToolPloneMeeting'
@@ -204,7 +207,8 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
     def post_edit(self, is_created=False):
         self.configureAdvices()
         self.configureAutoConvert()
-        self.adapted().onEdit(isCreated=is_created)
+        if hasattr(self, 'getTagName'):
+            self.adapted().onEdit(isCreated=is_created)
 
     def at_post_edit_script(self):
         self.post_edit(is_created=False)
@@ -638,7 +642,23 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
            p_meetingConfigId. If this folder and its parent folder ("My
            meetings" folder) do not exist, they are created.'''
         portal = api.portal.get_tool('portal_url').getPortalObject()
-        home_folder = portal.portal_membership.getHomeFolder(userId)
+        mtool = portal.portal_membership
+        home_folder = mtool.getHomeFolder(userId)
+        if home_folder is None:
+            # Create member area on demand (Plone 6 no longer auto-creates)
+            member_id = userId or api.user.get_current().getId()
+            if member_id:
+                members = mtool.getMembersFolder()
+                if members is None:
+                    from plone.base.utils import unrestricted_construct_instance
+                    unrestricted_construct_instance('Folder', portal, 'Members')
+                was_enabled = mtool.getMemberareaCreationFlag()
+                if not was_enabled:
+                    mtool.setMemberareaCreationFlag()
+                mtool.createMemberArea(member_id)
+                if not was_enabled and mtool.getMemberareaCreationFlag():
+                    mtool.setMemberareaCreationFlag()
+                home_folder = mtool.getHomeFolder(userId)
         if home_folder is None:  # Necessary for the admin zope user
             return portal
         if not hasattr(aq_base(home_folder), ROOT_FOLDER):
@@ -646,9 +666,11 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
             home_folder.invokeFactory('Folder', ROOT_FOLDER,
                                       title=self.meeting_folder_title)
             rootFolder = getattr(home_folder, ROOT_FOLDER)
-            rootFolder.setConstrainTypesMode(1)
-            rootFolder.setLocallyAllowedTypes(['Folder'])
-            rootFolder.setImmediatelyAddableTypes(['Folder'])
+            from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+            constrains = ISelectableConstrainTypes(rootFolder)
+            constrains.setConstrainTypesMode(1)
+            constrains.setLocallyAllowedTypes(['Folder'])
+            constrains.setImmediatelyAddableTypes(['Folder'])
 
         root_folder = getattr(home_folder, ROOT_FOLDER)
         if not hasattr(aq_base(root_folder), meetingConfigId):
@@ -673,28 +695,26 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         # manage faceted nav
         cfg._synchSearches(mc_folder)
 
-        # constrain types
-        mc_folder.setConstrainTypesMode(1)
-        allowedTypes = [cfg.getItemTypeName(),
-                        cfg.getMeetingTypeName()] + ['File', 'Folder']
-        mc_folder.setLocallyAllowedTypes(allowedTypes)
-        mc_folder.setImmediatelyAddableTypes([])
-        # Define permissions on this folder. Some remarks:
-        # * We override here default permissions/roles mappings as initially
-        #   defined in config.py through calls to Products.CMFCore.permissions.
-        #   setDefaultRoles (as generated by ArchGenXML). Indeed,
-        #   setDefaultRoles may only specify the default Zope roles (Manager,
-        #   Owner, Member) but we need to specify PloneMeeting-specific roles.
-        # * By setting those permissions, we give "too much" permissions;
-        #   security will be more constraining thanks to workflows linked to
-        #   content types whose instances will be stored in this folder.
-        # * The "write_permission" on field "MeetingItem.annexes" is set on
-        #   "PloneMeeting: Add annex". It means that people having this
-        #   permission may also disassociate annexes from items.
+        # Set permissions BEFORE constraining types (Plone 6 validates
+        # addability of each type during setLocallyAllowedTypes)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
                                     ('Owner', 'Manager', ), acquire=0)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
                                     ('MeetingManager', 'Manager', ), acquire=0)
+        from Products.CMFCore.permissions import AddPortalContent
+        mc_folder.manage_permission(AddPortalContent,
+                                    ('Owner', 'MeetingManager', 'Manager'), acquire=0)
+
+        # constrain types — set attributes directly because Plone 6
+        # validates against isConstructionAllowed which fails for
+        # dynamically registered types
+        from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+        constrains = ISelectableConstrainTypes(mc_folder)
+        constrains.setConstrainTypesMode(1)
+        allowedTypes = [cfg.getItemTypeName(),
+                        cfg.getMeetingTypeName()] + ['File', 'Folder']
+        mc_folder.locally_allowed_types = allowedTypes
+        mc_folder.immediately_addable_types = []
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission('Modify constrain types', ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
@@ -998,7 +1018,8 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         wftool = api.portal.get_tool('portal_workflow')
         newItem = getattr(destFolder, pasteResult[0]['new_id'])
         # original item _at_rename_after_creation may have been changed
-        newItem._at_rename_after_creation = MeetingItem._at_rename_after_creation
+        if ATMeetingItem is not None:
+            newItem._at_rename_after_creation = ATMeetingItem._at_rename_after_creation
         # Get the copied item, we will need information from it
         copiedItem = None
         copiedId = CopySupport._cb_decode(copiedData)[1][0]
@@ -1353,10 +1374,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
-        # fmt can not be unicode
-        if isinstance(fmt, six.text_type):
-            fmt = fmt.encode('utf-8')
-        res = safe_unicode(date.strftime(fmt))
+        res = date.strftime(fmt)
         # Finally, prefix the date with p_prefix when required
         if prefixed:
             res = u"{0} {1}".format(

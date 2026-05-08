@@ -4,8 +4,12 @@ from __future__ import absolute_import, print_function
 
 from AccessControl import Unauthorized
 from Acquisition import aq_base
-from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
-from archetypes.referencebrowserwidget.utils import named_template_adapter
+try:
+    from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
+    from archetypes.referencebrowserwidget.utils import named_template_adapter
+except ImportError:
+    ReferenceBrowserPopup = object
+    named_template_adapter = None
 from collective.behavior.talcondition.utils import _evaluateExpression
 # P6 migration: CKEditor dropped, reimplement under TinyMCE in Stage D.
 # from collective.ckeditor.browser.ckeditorfinder import CKFinder
@@ -19,7 +23,9 @@ from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentG
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
-from collective.iconifiedcategory.browser.css import css_pattern
+css_pattern = (u".{0} {{ padding-left: 2em; background: "
+               u"transparent url('{1}') no-repeat top left; "
+               u"background-size: contain; }}")
 from collective.iconifiedcategory.browser.css import IconifiedCategory
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -38,12 +44,15 @@ from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.pyutils.system import get_git_tag
 from plone import api
 from plone import namedfile
-from plone.app.content.browser.foldercontents import FolderContentsView
-from plone.app.controlpanel.overview import OverviewControlPanel
-from plone.app.controlpanel.usergroups import GroupsOverviewControlPanel
-from plone.app.controlpanel.usergroups import UsersGroupsControlPanelView
-from plone.app.controlpanel.usergroups import UsersOverviewControlPanel
-from plone.app.layout.viewlets.common import ContentActionsViewlet
+from plone.app.content.browser.contents import FolderContentsView
+from Products.CMFPlone.controlpanel.browser.overview import OverviewControlPanel
+from Products.CMFPlone.controlpanel.browser.usergroups_groupsoverview import GroupsOverviewControlPanel
+from Products.CMFPlone.controlpanel.browser.usergroups import UsersGroupsControlPanelView
+from Products.CMFPlone.controlpanel.browser.usergroups_usersoverview import UsersOverviewControlPanel
+try:
+    from plone.app.layout.viewlets.common import ContentActionsViewlet
+except ImportError:
+    from zope.viewlet.viewlet import ViewletBase as ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
@@ -62,7 +71,7 @@ from plonemeeting.core.config import ITEM_SCAN_ID_NAME
 from plonemeeting.core.config import MEETINGMANAGERS_GROUP_SUFFIX
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.interfaces import IConfigElement
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
+from plonemeeting.core.config import POWEROBSERVERPREFIX
 from plonemeeting.core.utils import _base_extra_expr_ctx
 from plonemeeting.core.utils import extract_recipients
 from plonemeeting.core.utils import get_annexes
@@ -103,6 +112,12 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
       (in this case, the url of the tab does not correspond to the current url).
       See #4856
     '''
+
+    @property
+    def selected_portal_tab(self):
+        """Plone 6 dropped this attribute; re-expose it for tests and templates."""
+        result = self.selectedTabs(portal_tabs=self.portal_tabs)
+        return result.get('portal', 'index_html')
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
         plone_url = api.portal.get_tool('portal_url')()
@@ -215,7 +230,7 @@ class PMPlone(Plone):
 class PMContentActionsPanelViewlet(ActionsPanelViewlet):
     """Render actionspanel viewlet async for application content."""
 
-    async = True
+    is_async = True
 
 
 class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
@@ -370,15 +385,21 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
       Override the Overview control panel to add informations about
       PloneMeeting version at the bottom of @@overview-controlpanel.
     '''
+    def _get_pkg_version(self, package_name):
+        from importlib.metadata import version, PackageNotFoundError
+        try:
+            return version(package_name)
+        except PackageNotFoundError:
+            return 'unknown'
+
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
         # buildout tag version
         versions.insert(0, 'buildout tag %s' % get_git_tag('.'))
         # appy
-        appy_version = api.env.get_distribution('appy')._version
-        versions.insert(0, 'appy %s' % appy_version)
+        versions.insert(0, 'appy %s' % self._get_pkg_version('appy'))
         # PM
-        pm_version = api.env.get_distribution('plonemeeting.core')._version
+        pm_version = self._get_pkg_version('plonemeeting.core')
         ps = api.portal.get_tool('portal_setup')
         pm_ps_version = ps.getVersionForProfile('plonemeeting.core:default')
         pm_ps_last_version = u'.'.join(ps.getLastVersionForProfile('plonemeeting.core:default'))
@@ -393,14 +414,14 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
                 if real_package_name not in plugin_package_names:
                     plugin_package_names.append(real_package_name)
         for plugin_package_name in plugin_package_names:
-            plugin_version = api.env.get_distribution(plugin_package_name)._version
+            plugin_version = self._get_pkg_version(plugin_package_name)
             plugin_ps_version = ps.getVersionForProfile('%s:default' % plugin_package_name)
             versions.insert(1, "%s %s (%s)" % (plugin_package_name.split('.')[1],
                                                plugin_version,
                                                plugin_ps_version))
         # plonemeeting.restapi could be not found on older versions
         if HAS_RESTAPI:
-            ws_rest_version = api.env.get_distribution('plonemeeting.restapi')._version
+            ws_rest_version = self._get_pkg_version('plonemeeting.restapi')
             versions.insert(2, 'plonemeeting.restapi %s' % ws_rest_version)
         return versions
 
@@ -1393,19 +1414,20 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 #         self.openuploadwidgetdefault = True
 
 
-pm_default_popup_template = named_template_adapter(
-    ViewPageTemplateFile('templates/popup.pt'))
+if named_template_adapter is not None:
+    pm_default_popup_template = named_template_adapter(
+        ViewPageTemplateFile('templates/popup.pt'))
 
 
-class PMReferenceBrowserPopup(ReferenceBrowserPopup):
-    """ """
+    class PMReferenceBrowserPopup(ReferenceBrowserPopup):
+        """ """
 
-    def title_or_id(self, item):
-        assert self._updated
-        item = aq_base(item)
-        return getattr(item, 'title_or_id', '') or \
-            getattr(item, 'Title', '') or \
-            getattr(item, 'getId', '')
+        def title_or_id(self, item):
+            assert self._updated
+            item = aq_base(item)
+            return getattr(item, 'title_or_id', '') or \
+                getattr(item, 'Title', '') or \
+                getattr(item, 'getId', '')
 
 
 class PMContentHistoryView(IHContentHistoryView):

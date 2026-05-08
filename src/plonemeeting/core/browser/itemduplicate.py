@@ -37,7 +37,7 @@ def annex_ids_default(context):
     vocab = get_vocab(
         context,
         u"plonemeeting.core.vocabularies.item_duplication_contained_annexes_vocabulary")
-    return vocab.by_token.keys()
+    return list(vocab.by_token.keys())
 
 
 class IDuplicateItem(form.Schema):

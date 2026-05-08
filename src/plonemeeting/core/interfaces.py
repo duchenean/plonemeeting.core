@@ -4,14 +4,14 @@ from __future__ import absolute_import, print_function
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.row import DictRow
 from collective.z3cform.datagridfield.interfaces import IDataGridFieldLayer
 from ftw.labels.interfaces import ILabelSupport
 from imio.actionspanel.interfaces import IActionsPanelLayer
 from plone.dexterity.interfaces import IDexterityContent
 from plonemeeting.core.config import PMMessageFactory as _
 from zope import schema
-from zope.component.interfaces import IObjectEvent
+from zope.interface.interfaces import IObjectEvent
 from zope.interface import Interface
 
 

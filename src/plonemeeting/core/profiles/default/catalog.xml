@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<object name="portal_catalog">
+  <!-- scan_id: registered by collective.dms.scanbehavior in P4; added here for P6 -->
+  <index name="scan_id" meta_type="FieldIndex">
+    <indexed_attr value="scan_id"/>
+  </index>
+  <column value="scan_id"/>
+  <!-- labels: ftw.labels keyword index; setuphandler not reliable in P6 -->
+  <index name="labels" meta_type="KeywordIndex">
+    <indexed_attr value="labels"/>
+  </index>
+</object>

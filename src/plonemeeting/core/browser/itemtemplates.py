@@ -57,10 +57,10 @@ class ItemTemplateView(BrowserView):
     def _template_path_and_title(self, templateItem):
         """Return title of p_templateItem including name of
            subfolders until 'itemtemplates' folder."""
-        titles = [templateItem.Title()]
+        titles = [safe_unicode(templateItem.Title())]
         parent = templateItem.aq_parent
         while parent.getId() != TOOL_FOLDER_ITEM_TEMPLATES:
-            titles.insert(0, parent.Title())
+            titles.insert(0, safe_unicode(parent.Title()))
             parent = parent.aq_parent
         return ' / '.join(titles)
 

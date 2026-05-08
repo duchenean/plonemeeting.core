@@ -109,11 +109,6 @@ def extract(self, default=interfaces.NO_VALUE):
             value = (value,)
         # do some kind of validation, at least only use existing values
         for token in value:
-            # XXX begin do not encode to utf-8 for MasterSelectWidget
-            # as we use unicode values or validation fails with "field required"
-            if isinstance(token, six.text_type) and not self.__class__.__name__ == 'MasterSelectWidget':
-                token = token.encode('utf-8')
-            # XXX end
             if token == self.noValueToken:
                 continue
             try:
@@ -161,13 +156,12 @@ def getEntry(self, ob, key):
         self._misses[ob] += 1
         raise
     else:
-        data[2] += 1                    # increment access count
+        data.access_count += 1
         # XXX begin change by PM, update timestamp
-        timestamp = time()
-        data[1] = timestamp
+        data.ctime = time()
         # XXX end change by PM
 
-        return data[0]
+        return data.value
 
 
 Storage.getEntry = getEntry
@@ -178,15 +172,14 @@ Storage.__old_pm_getStatistics = Storage.getStatistics
 
 
 def getStatistics(self):
-    objects = self._data.keys()
-    objects.sort()
+    objects = sorted(self._data.keys())
     result = []
 
     for ob in objects:
         size = len(dumps(self._data[ob]))
-        hits = sum(entry[2] for entry in self._data[ob].values())
+        hits = sum(entry.access_count for entry in self._data[ob].values())
         from DateTime import DateTime
-        older_date = min(entry[1] for entry in self._data[ob].values())
+        older_date = min(entry.ctime for entry in self._data[ob].values())
         result.append({'path': ob,
                        'hits': hits,
                        'misses': self._misses.get(ob, 0),
@@ -203,10 +196,13 @@ logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")
 def Title(self):
     """Same code as dexterity's fti (DexterityFTI) for AT fti."""
     if self.title and self.i18n_domain:
-        try:
-            return Message(self.title.decode('utf8'), self.i18n_domain)
-        except UnicodeDecodeError:
-            return Message(self.title.decode('latin-1'), self.i18n_domain)
+        title = self.title
+        if isinstance(title, bytes):
+            try:
+                title = title.decode('utf8')
+            except UnicodeDecodeError:
+                title = title.decode('latin-1')
+        return Message(title, self.i18n_domain)
     else:
         return self.title or self.getId()
 

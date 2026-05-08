@@ -37,7 +37,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
-from Products.Five import zcml
+from Zope2.App.zcml import load_config as _load_zcml_config
 # P6 migration: AMQP integration to be reimplemented in Stage D.
 # from plonemeeting.core.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from plonemeeting.core.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -241,7 +241,7 @@ class testViews(PloneMeetingTestCase):
         itemTemplate.privacy = 'secret'
         # an itemTemplate can have no proposingGroup, it does validate
         itemTemplate.setProposingGroup('')
-        self.failIf(itemTemplate.validate_proposingGroup(''))
+        self.assertFalse(itemTemplate.validate_proposingGroup(''))
         # use this template
         self.changeUser('pmCreator1')
         newItem2 = itemTemplateView.createItemFromTemplate(itemTemplateUID)
@@ -366,10 +366,11 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # 2 elements, and it is items
+        item_template_pt = cfg.getItemTypeName(configType='MeetingItemTemplate')
         templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 2)
-        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][0]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][1]['item'].portal_type, item_template_pt)
         self.assertFalse(view.displayShowHideAllLinks())
 
         # add an itemTemplate in a subFolder
@@ -383,10 +384,10 @@ class testViews(PloneMeetingTestCase):
         view()
         templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 3)
-        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(templatesTree['children'][2]['item'].meta_type, 'ATFolder')
-        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][0]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][1]['item'].portal_type, item_template_pt)
+        self.assertEqual(templatesTree['children'][2]['item'].portal_type, 'Folder')
+        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].portal_type, item_template_pt)
         self.assertTrue(view.displayShowHideAllLinks())
 
         # an empty folder is not shown
@@ -477,23 +478,31 @@ class testViews(PloneMeetingTestCase):
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
-        zcml.load_config('tests/events.zcml', products_plonemeeting)
-        self.assertEqual(item.Title(), 'Item title')
-        view('normal')
-        self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.list_type, u'normal')
-        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
-        # if title is 'late - normal' call to subscriber will raise an error
-        # this way, we test that when an error occur in the event, the listType is not changed
-        view('late')
-        # not changed and a portal_message is added
-        self.assertEqual(item.Title(), 'late - normal')
-        self.assertEqual(item.list_type, u'normal')
-        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
-        messages = IStatusMessage(self.request).show()
-        self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
-        # cleanUp zmcl.load_config because it impact other tests
-        zcml.cleanUp()
+        from zope.component import getSiteManager
+        from zope.component import provideHandler
+        from plonemeeting.core.interfaces import IItemListTypeChangedEvent
+        from plonemeeting.core.interfaces import IMeetingItem
+        from plonemeeting.core.tests.events import onItemListTypeChanged
+        provideHandler(onItemListTypeChanged, adapts=(IMeetingItem, IItemListTypeChangedEvent))
+        try:
+            self.assertEqual(item.Title(), 'Item title')
+            view('normal')
+            self.assertEqual(item.Title(), 'late - normal')
+            self.assertEqual(item.list_type, u'normal')
+            self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
+            # if title is 'late - normal' call to subscriber will raise an error
+            # this way, we test that when an error occur in the event, the listType is not changed
+            view('late')
+            # not changed and a portal_message is added
+            self.assertEqual(item.Title(), 'late - normal')
+            self.assertEqual(item.list_type, u'normal')
+            self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
+            messages = IStatusMessage(self.request).show()
+            self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
+        finally:
+            getSiteManager().unregisterHandler(
+                onItemListTypeChanged,
+                required=(IMeetingItem, IItemListTypeChangedEvent))
 
     def test_pm_UpdateDelayAwareAdvices(self):
         '''
@@ -781,7 +790,7 @@ class testViews(PloneMeetingTestCase):
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
         self.assertEqual(template.mailing_lists, u'')
-        self.failIf(getAvailableMailingLists(item, template))
+        self.assertFalse(getAvailableMailingLists(item, template))
 
         # define mailing_lists
         # False condition
@@ -811,7 +820,7 @@ class testViews(PloneMeetingTestCase):
         template.mailing_lists = "list1;python:True;"
         with self.assertRaises(Exception) as cm:
             view()
-        self.assertEqual(cm.exception.message, view.MAILINGLIST_NO_RECIPIENTS)
+        self.assertEqual(str(cm.exception.args[0]), view.MAILINGLIST_NO_RECIPIENTS)
         self.assertRaises(Exception, view)
 
         # now when working as expected
@@ -824,7 +833,7 @@ class testViews(PloneMeetingTestCase):
                      "M. PMCreator One <pmcreator1@plonemeeting.org>, "
                      "M. PMCreator Two <pmcreator2@plonemeeting.org>"},
             context=self.request)
-        self.assertNotEquals(messages[-1].message, msg)
+        self.assertNotEqual(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, msg)
@@ -1134,9 +1143,9 @@ class testViews(PloneMeetingTestCase):
         """ """
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.motivation = richtextval('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
+        item.motivation = richtextval('<p>The motivation using UTF-8 characters : \xe8\xe0.</p>')
         motivation = item.getMotivation()
-        item.decision = richtextval('<p>The d\xc3\xa9cision using UTF-8 characters.</p>')
+        item.decision = richtextval('<p>The d\xe9cision using UTF-8 characters.</p>')
         decision = item.getDecision()
         template = self.meetingConfig.podtemplates.itemTemplate
         # call the document-generation view
@@ -1189,14 +1198,21 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_PrintXhtmlImageSrcToPaths(self):
         ''' '''
+        from plone.namedfile.file import NamedBlobImage
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use image_src_to_paths
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
-        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
-        img = getattr(item, img_id)
-        img_blob_path = img.getBlobWrapper().blob._p_blob_committed
+        with open(file_path, 'rb') as f:
+            img_data = f.read()
+        # DX Image requires setting the 'image' field with NamedBlobImage (not 'file')
+        img_id = item.invokeFactory('Image', id='img', title='Image')
+        img = item[img_id]
+        img.image = NamedBlobImage(data=img_data, filename='dot.gif')
+        # Commit the blob so _p_blob_committed is set
+        transaction.savepoint()
+        img.image._blob._p_activate()
+        img_blob_path = img.image._blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
         # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
         res = helper.printXhtml(
@@ -1216,13 +1232,17 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_PrintXhtmlImageSrcToData(self):
         ''' '''
+        from plone.namedfile.file import NamedBlobImage
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use image_src_to_data
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
-        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        with open(file_path, 'rb') as f:
+            img_data = f.read()
+        # DX Image requires setting the 'image' field with NamedBlobImage (not 'file')
+        img_id = item.invokeFactory('Image', id='img', title='Image')
         img = getattr(item, img_id)
+        img.image = NamedBlobImage(data=img_data, filename='dot.gif')
         pattern = '<p>Text with image <img src="{0}"/> and more text.</p>'
         text = pattern.format(img.absolute_url())
         # in tests the monkeypatch for safe_html.hasScript does not seem to be applied...
@@ -1262,7 +1282,7 @@ class testViews(PloneMeetingTestCase):
         # use_safe_html is True by default
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=True),
-            motivation + '<br />')
+            motivation + '<br>')
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>']),
             motivation + '<br>')
@@ -1294,14 +1314,14 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>')
         # anonymize=True
-        motivation += '<p>The motivation <span class="pm-anonymize">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        motivation += '<p>The motivation <span class="pm-anonymize">chars \xe8\xe0</span>.</p>'
         self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                          '<p>The motivation <span class="pm-anonymize"></span>.</p>')
 
         # anonymize may be a dict with some more config
         anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]"}
-        motivation += '<p>The motivation <span class="pm-hide">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        motivation += '<p>The motivation <span class="pm-hide">chars \xe8\xe0</span>.</p>'
         self.assertEqual(
             helper.printXhtml(item, motivation, anonymize=anonymize),
             '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
@@ -1343,7 +1363,7 @@ class testViews(PloneMeetingTestCase):
             "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xe9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
         # every advices given
         self.changeUser('pmReviewer2')
@@ -1359,7 +1379,7 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
             "<u>Advice comment :</u> -<p></p></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xe9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
     def test_pm_print_meeting_date(self):
         # Setup
@@ -1453,7 +1473,7 @@ class testViews(PloneMeetingTestCase):
         """Test the BaseDGHV.print_value that will print almost everything...
            For now, only working for DX elements (Meeting, MeetingAdvice)."""
         cfg = self.meetingConfig
-        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n'
+        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xe9cial place\r\n'
         self._enableField(
             ["convocation_date", "place", "notes", ],
             related_to='Meeting')
@@ -1474,7 +1494,11 @@ class testViews(PloneMeetingTestCase):
             % self.external_image1
         set_field_from_ajax(meeting, "observations", text)
         image = meeting.objectValues()[0]
-        img_path = image.getFile().blob._p_blob_committed
+        # DX Image: use .image._blob instead of AT's .getFile().blob
+        import transaction
+        transaction.savepoint()
+        image.image._blob._p_activate()
+        img_path = image.image._blob._p_blob_committed
         # when using printXhtml, img url are turned to blob path
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
@@ -1512,7 +1536,7 @@ class testViews(PloneMeetingTestCase):
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+            "python: here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDateStr() + '/' + "
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()
@@ -1597,6 +1621,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.item_reference for item in right_ordered_items], right_item_references)
 
+    def _normalize_gam(self, gam_result):
+        """Normalize _get_groups_and_members result to (index, id) tuples for stable comparison."""
+        return [(i, p.getId()) for i, p in gam_result]
+
     def test_pm_DisplayGroupUsersView(self):
         """This view returns member of a group but not 'Not found' ones,
            aka users that were in groups and that were deleted, a special user
@@ -1608,33 +1636,22 @@ class testViews(PloneMeetingTestCase):
         view(group_ids=[group_id])
         self.assertEqual(len(view.groups), 1)
         self.assertEqual(
-            view._get_groups_and_members(group),
-            [(0, api.user.get('pmCreator1')),
-             (0, api.user.get('pmCreator1b')),
-             (0, api.user.get('pmManager'))])
+            self._normalize_gam(view._get_groups_and_members(group)),
+            [(0, 'pmCreator1'), (0, 'pmCreator1b'), (0, 'pmManager')])
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
-            view._get_groups_and_members(group),
-            [(0, api.user.get('pmCreator1')),
-             (0, api.user.get('pmCreator1b')),
-             (0, api.user.get('pmManager'))])
+            self._normalize_gam(view._get_groups_and_members(group)),
+            [(0, 'pmCreator1'), (0, 'pmCreator1b'), (0, 'pmManager')])
 
     def _display_user_groups_sub_groups_false(self):
-        return [(1, api.user.get('pmCreator1')),
-                (1, api.user.get('pmCreator1b')),
-                (1, api.user.get('pmManager')),
-                (0, api.user.get('pmObserver1')),
-                (0, api.user.get('pmReviewer1'))]
+        return [(1, 'pmCreator1'), (1, 'pmCreator1b'), (1, 'pmManager'),
+                (0, 'pmObserver1'), (0, 'pmReviewer1')]
 
     def _display_user_groups_sub_groups_true(self):
-        return [(1, api.group.get(self.developers_creators)),
-                (2, api.user.get('pmCreator1')),
-                (2, api.user.get('pmCreator1b')),
-                (2, api.user.get('pmManager')),
-                (0, api.user.get('pmManager')),
-                (0, api.user.get('pmObserver1')),
-                (0, api.user.get('pmReviewer1'))]
+        return [(1, self.developers_creators),
+                (2, 'pmCreator1'), (2, 'pmCreator1b'), (2, 'pmManager'),
+                (0, 'pmManager'), (0, 'pmObserver1'), (0, 'pmReviewer1')]
 
     def test_pm_DisplayGroupUsersViewGroupsInGroups(self):
         """Subgroups are displayed with contained members.
@@ -1650,11 +1667,11 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.groups), 1)
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
-        self.assertListEqual(view._get_groups_and_members(group),
+        self.assertListEqual(self._normalize_gam(view._get_groups_and_members(group)),
                              self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
-        self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),
+        self.assertEqual(self._normalize_gam(view._get_groups_and_members(group, keep_subgroups=True)),
                          self._display_user_groups_sub_groups_true())
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
@@ -2335,11 +2352,11 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(self.request.get('pdf_file_content'))
         self.assertTrue(form())
         form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
+        self.assertTrue(b'Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
         # when using two_sided, a blank page is inserted
         self.request['form.widgets.two_sided'] = 'true'
         form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
+        self.assertTrue(b'Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
@@ -2366,7 +2383,7 @@ class testViews(PloneMeetingTestCase):
         labeljar.add('Label', 'green', False)
         self.cleanMemoize()
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
 
     def test_pm_ftw_labels_viewlet_available_item_template(self):
         """Available on item templates to Managers and item templates managers."""
@@ -2381,7 +2398,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # item templates manager can access every labels
         self.changeUser('templatemanager1')
@@ -2390,7 +2407,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # a user that would access it would access no labels
         self.changeUser('pmCreator1')
@@ -2399,7 +2416,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
         # MeetingManager
         self.changeUser('pmManager')
@@ -2408,7 +2425,7 @@ class testViews(PloneMeetingTestCase):
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertTrue(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
 
     def test_pm_ftw_labels_viewlet_can_edit(self):
@@ -2608,7 +2625,7 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_get_all_items_dghv(self):
         self._setUpDashBoard()
-        brains = self.catalog(meta_type="MeetingItem")
+        brains = self.catalog(portal_type=self.meetingConfig.getItemTypeName())
         result = self.helper.get_all_items_dghv(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [view.real_context for view in result])
@@ -2617,7 +2634,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
 
         def compute_data(item, advisorUids=None):
-            brains = self.catalog(meta_type="MeetingItem")
+            brains = self.catalog(portal_type=cfg.getItemTypeName())
             result = self.helper.get_all_items_dghv_with_advice(brains, advisorUids)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
@@ -2638,7 +2655,7 @@ class testViews(PloneMeetingTestCase):
                 self.assertIsNone(result[index]['advice'])
 
         self._setUpDashBoard()
-        brains = self.catalog(meta_type="MeetingItem")
+        brains = self.catalog(portal_type=cfg.getItemTypeName())
         result = self.helper.get_all_items_dghv_with_advice(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
@@ -2849,37 +2866,48 @@ class testViews(PloneMeetingTestCase):
         tool_modified = ToolModified(self.tool, self.request)()
         pmFolder = self.getMeetingFolder()
         self.request['PUBLISHED'] = pmFolder
-        browser.open(pmFolder.absolute_url() + '/searches_items')
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        linked_meeting_modified = LinkedMeetingModified(pmFolder, self.request)()
-        self.assertNotEqual(linked_meeting_modified, 'lm_0')
-        # item
-        self.request['PUBLISHED'] = item
-        context_modified = ContextModified(item, self.request)()
-        browser.open(item.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
-        self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
-        self.assertTrue('msgviewlet_' in browser.headers['etag'])
-        # item in meeting
-        self.request['PUBLISHED'] = presented_item
-        context_modified = ContextModified(presented_item, self.request)()
-        linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
-        self.assertNotEqual(linked_meeting_modified, 'lm_0')
-        browser.open(presented_item.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
-        self.assertTrue(linked_meeting_modified in browser.headers['etag'])
-        # meeting
-        self.request['PUBLISHED'] = meeting
-        context_modified = ContextModified(meeting, self.request)()
-        browser.open(meeting.absolute_url())
-        self.assertTrue(config_modified in browser.headers['etag'])
-        self.assertTrue(tool_modified in browser.headers['etag'])
-        self.assertTrue(context_modified in browser.headers['etag'])
+        # plone.protect detects writes-on-read from eea.facetednavigation and
+        # redirects to @@confirm-action when there is no CSRF token (test browser
+        # uses HTTP Basic Auth, not a session cookie). Disable CSRF for the
+        # duration of the ETag browser requests; production is unaffected because
+        # real browsers carry a valid authenticator token.
+        import plone.protect.auto as _ppa
+        _ppa_csrf_disabled = _ppa.CSRF_DISABLED
+        _ppa.CSRF_DISABLED = True
+        try:
+            browser.open(pmFolder.absolute_url() + '/searches_items')
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            linked_meeting_modified = LinkedMeetingModified(pmFolder, self.request)()
+            self.assertNotEqual(linked_meeting_modified, 'lm_0')
+            # item
+            self.request['PUBLISHED'] = item
+            context_modified = ContextModified(item, self.request)()
+            browser.open(item.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+            self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
+            self.assertTrue('msgviewlet_' in browser.headers['etag'])
+            # item in meeting
+            self.request['PUBLISHED'] = presented_item
+            context_modified = ContextModified(presented_item, self.request)()
+            linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
+            self.assertNotEqual(linked_meeting_modified, 'lm_0')
+            browser.open(presented_item.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+            self.assertTrue(linked_meeting_modified in browser.headers['etag'])
+            # meeting
+            self.request['PUBLISHED'] = meeting
+            context_modified = ContextModified(meeting, self.request)()
+            browser.open(meeting.absolute_url())
+            self.assertTrue(config_modified in browser.headers['etag'])
+            self.assertTrue(tool_modified in browser.headers['etag'])
+            self.assertTrue(context_modified in browser.headers['etag'])
+        finally:
+            _ppa.CSRF_DISABLED = _ppa_csrf_disabled
 
     def test_pm_FTWLabelsForEditors(self):
         """By default, labels are editable forever by proposing group operationnal roles.
@@ -3184,7 +3212,7 @@ class testViews(PloneMeetingTestCase):
     #     self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
     #     with self.assertRaises(Exception) as cm:
     #         helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
-    #     self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
+    #     self.assertEqual(str(cm.exception.args[0]), SEVERAL_SAME_BARCODE_ERROR)
     #     # new helper instantiation has empty printed_scan_id_barcode
     #     helper = view.get_generation_context_helper()
     #     self.assertEqual(helper.printed_scan_id_barcode, [])
@@ -3373,19 +3401,20 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         meeting = self.create('Meeting')
-        # working in Folder folder_contents
+        # working in Folder folder_contents — in Plone 6 the view renders a JS widget,
+        # no server-side path listing; just verify it renders without error
         folder = self.getMeetingFolder()
-        self.assertTrue(
-            '/'.join(item.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
-        self.assertTrue(
-            '/'.join(meeting.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
+        self.assertTrue(folder.restrictedTraverse('@@folder_contents')())
         # working with item or meeting related DashboardCollections
+        # verify via brains_results() which backs the @@folder_contents widget
         item_collection = self.meetingConfig.searches.searches_items.searchallitems
-        self.assertTrue(
-            '/'.join(item.getPhysicalPath()) in item_collection.restrictedTraverse('@@folder_contents')())
+        item_path = '/'.join(item.getPhysicalPath())
+        self.assertTrue(any(b.getPath() == item_path
+                            for b in item_collection.brains_results()))
         meeting_collection = self.meetingConfig.searches.searches_meetings.searchnotdecidedmeetings
-        self.assertTrue(
-            '/'.join(meeting.getPhysicalPath()) in meeting_collection.restrictedTraverse('@@folder_contents')())
+        meeting_path = '/'.join(meeting.getPhysicalPath())
+        self.assertTrue(any(b.getPath() == meeting_path
+                            for b in meeting_collection.brains_results()))
 
     def test_pm_title_viewlet(self):
         """Test that MeetingConfig title is displayed on pmFolders (faceted folders)
@@ -3396,15 +3425,22 @@ class testViews(PloneMeetingTestCase):
         cfg_title = safe_unicode(cfg.Title())
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
+        # In Plone 6, DashboardCollection uses @@facetednavigation_view not 'base_view'
         self.assertTrue(u"<title>%s - Items" % cfg_title in
-                        pm_folder.searches_items.restrictedTraverse('base_view')())
+                        pm_folder.searches_items.restrictedTraverse('@@facetednavigation_view')())
         self.assertTrue(u"<title>%s - Decisions" % cfg_title in
-                        pm_folder.searches_decisions.restrictedTraverse('base_view')())
-        # but not on item
+                        pm_folder.searches_decisions.restrictedTraverse('@@facetednavigation_view')())
+        # but not on item (MeetingItem has base_view registered)
         item = self.create("MeetingItem")
-        portal_title = safe_unicode(self.portal.Title()) or u'Plone site'
+        # In Plone 6 the title viewlet reads site_title from the registry, not portal.Title()
+        from plone.base.interfaces import ISiteSchema
+        from plone.registry.interfaces import IRegistry
+        from zope.component import getUtility
+        registry = getUtility(IRegistry)
+        portal_title = registry.forInterface(
+            ISiteSchema, prefix='plone', check=False).site_title
         self.assertTrue(u"<title>o1 &mdash; %s</title>" % portal_title in
-                        item.restrictedTraverse('base_view')())
+                        item.restrictedTraverse('@@base_view')())
         # and not on meeting
         self.changeUser('pmManager')
         meeting = self.create("Meeting", date=datetime(2025, 3, 20))
@@ -3412,7 +3448,7 @@ class testViews(PloneMeetingTestCase):
                         meeting.restrictedTraverse('@@meeting_view')())
         # but also in config
         self.assertTrue(u"<title>%s - Items" % cfg_title in
-                        cfg.searches.searches_items.restrictedTraverse('base_view')())
+                        cfg.searches.searches_items.restrictedTraverse('@@facetednavigation_view')())
 
     def test_pm_deliberation_for_restapi(self):
         """Used by plonemeeting.restapi to render formatted data."""

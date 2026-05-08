@@ -476,7 +476,7 @@ def _set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, pos
        changed to another signatory number."""
     # check if already redefined, if already redefined, remove it
     item_sigantories = meeting.item_signatories.get(item_uid, {})
-    for item_signature_number, item_signatory in item_sigantories.items():
+    for item_signature_number, item_signatory in list(item_sigantories.items()):
         if item_signatory['hp_uid'] == hp_uid:
             # remove redefined item signatory
             _remove_item_signatory(meeting, item_uid, item_signature_number)

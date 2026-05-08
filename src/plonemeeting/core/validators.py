@@ -15,13 +15,16 @@ from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
 from plonemeeting.core.utils import get_item_validation_wf_suffixes
 from plonemeeting.core.utils import getInterface
-from Products.validation.interfaces.IValidator import IValidator
+try:
+    from Products.validation.interfaces.IValidator import IValidator
+except ImportError:
+    from zope.interface import Interface as IValidator
 from z3c.form import validator
 from zope.component import getGlobalSiteManager
 from zope.component import provideAdapter
 from zope.component.hooks import getSite
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import Invalid
 
 
@@ -109,9 +112,9 @@ class DXCertifiedSignaturesValidator(validator.SimpleFieldValidator):
             raise Invalid(error)
 
 
+@implementer(IValidator)
 class ATCertifiedSignaturesValidator:
     ''' '''
-    implements(IValidator)
 
     def __init__(self, name, title='', description=''):
         self.name = name
@@ -128,10 +131,10 @@ WRONG_INTERFACE = 'You must specify here interface "%s" or a subclass of it.'
 NO_ADAPTER_FOUND = 'No adapter was found that provides "%s" for "%s".'
 
 
+@implementer(IValidator)
 class WorkflowInterfacesValidator:
     '''Checks that declared interfaces exist and that adapters were defined for it.'''
 
-    implements(IValidator)
 
     def __init__(self, baseInterface, baseWorkflowInterface):
         self.baseInterface = baseInterface

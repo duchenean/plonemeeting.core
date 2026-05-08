@@ -29,14 +29,16 @@ full punch list.
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
+from functools import cmp_to_key
 from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
+from zExceptions import Unauthorized as ZUnauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from Acquisition import aq_parent
-from App.class_init import InitializeClass
-from appy.gen import No
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -91,6 +93,8 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plonemeeting.core.browser.itemvotes import next_vote_is_linked
 from plonemeeting.core.config import AddAdvice
+from plonemeeting.core.config import AddAnnex
+from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.config import AUTO_COPY_GROUP_PREFIX
 from plonemeeting.core.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from plonemeeting.core.config import CONFIGURABLE_FIELD_NAMES
@@ -185,7 +189,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.schema import getFieldsInOrder as zope_getFieldsInOrder
 from zope.schema.interfaces import IVocabularyFactory
@@ -1055,8 +1059,6 @@ class _ATFieldStub(object):
             raw = value
         else:
             return value
-        if isinstance(raw, six.text_type):
-            raw = raw.encode('utf-8')
         return raw
 
     def getRaw(self, obj, **kwargs):
@@ -1227,6 +1229,7 @@ class _ATSchemaStub(object):
 # Content class skeleton
 # ---------------------------------------------------------------------------
 
+@implementer(IMeetingItem)
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
 
@@ -1235,7 +1238,6 @@ class MeetingItem(Container):
     in the source tree but is no longer instantiated at runtime.
     """
 
-    implements(IMeetingItem)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
@@ -1446,6 +1448,16 @@ class MeetingItem(Container):
         from plonemeeting.core.compat import DisplayList
         return DisplayList(), False
 
+    def displayValue(self, vocab, value, field_name=None):
+        """AT-compat: return the display label(s) for a vocabulary value.
+        Handles list/tuple values by joining them (mirrors AT BaseContent.displayValue).
+        """
+        if value is None:
+            return ""
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        return ", ".join(vocab.getValue(v, v) for v in value)
+
     security.declareProtected('View', 'widget')
 
     def widget(self, field_name, mode='view', field=None, **kwargs):
@@ -1614,8 +1626,8 @@ class MeetingItem(Container):
         data = []
         title = self.Title()
         if title:
-            if isinstance(title, six.text_type):
-                title = title.encode('utf-8')
+            if isinstance(title, bytes):
+                title = title.decode('utf-8', errors='replace')
             data.append(title)
         transforms = api.portal.get_tool('portal_transforms')
         for attr_name in self._searchable_fields:
@@ -1623,23 +1635,25 @@ class MeetingItem(Container):
             if not value:
                 continue
             if isinstance(value, RichTextValue):
-                raw = value.raw or u''
+                raw = value.raw or ''
                 if raw:
                     stream = transforms.convertTo(
                         'text/plain', safe_encode(raw),
                         mimetype='text/html')
                     text = stream.getData() if stream else ''
+                    if isinstance(text, bytes):
+                        text = text.decode('utf-8', errors='replace')
                     if text:
                         data.append(text)
             elif isinstance(value, (list, tuple)):
                 for v in value:
                     if v:
-                        if isinstance(v, six.text_type):
-                            v = v.encode('utf-8')
-                        data.append(v)
+                        if isinstance(v, bytes):
+                            v = v.decode('utf-8', errors='replace')
+                        data.append(str(v))
             else:
-                if isinstance(value, six.text_type):
-                    value = value.encode('utf-8')
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8', errors='replace')
                 data.append(str(value))
         return ' '.join(data)
 
@@ -1739,16 +1753,16 @@ class MeetingItem(Container):
                         title = title.decode('utf-8')
                     title = u"{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True))
-        if isinstance(title, six.text_type):
-            title = title.encode('utf-8')
+        if isinstance(title, bytes):
+            title = title.decode('utf-8')
         return title
 
     def Description(self):
         desc = self.description
         if isinstance(desc, RichTextValue):
-            return safe_encode(desc.output_relative_to(self) or u'')
-        if isinstance(desc, six.text_type):
-            return desc.encode('utf-8')
+            return safe_unicode(desc.output_relative_to(self) or u'')
+        if isinstance(desc, bytes):
+            return desc.decode('utf-8')
         return desc or ''
 
     security.declarePublic('getPrettyLink')
@@ -1785,11 +1799,10 @@ class MeetingItem(Container):
            (not acceptable_pos or not isPowerObserverForCfg(cfg, acceptable_pos)) and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
-            # do not return unicode as getDecision returns 'utf-8' usually
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG).encode('utf-8')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
 
     security.declarePublic('getMotivation')
 
@@ -2770,7 +2783,7 @@ class MeetingItem(Container):
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
             valueToStore = list(set(valueToStore).union(newLinkedUids))
-            valueToStore.sort(_sortByMeetingDate)
+            valueToStore.sort(key=cmp_to_key(_sortByMeetingDate))
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)
@@ -2785,7 +2798,7 @@ class MeetingItem(Container):
                 newLinkedUidsToStore = list(newLinkedUids)
                 if linkedItemUid in newLinkedUids:
                     newLinkedUidsToStore.remove(linkedItemUid)
-                newLinkedUidsToStore.sort(_sortByMeetingDate)
+                newLinkedUidsToStore.sort(key=cmp_to_key(_sortByMeetingDate))
                 linkedItem.manually_linked_items = newLinkedUidsToStore
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 linkedItem._p_changed = True
@@ -2872,6 +2885,37 @@ class MeetingItem(Container):
         """ """
         addable_states = self.adapted()._annex_decision_addable_states_after_validation(cfg, item_state)
         return addable_states == "*" or item_state in addable_states
+
+    def folder_position_typeaware(self, position='', id=None):
+        """Move an annex up/down within this item, skipping items of a different portal_type.
+        Replaces the CPUtils folder_position_typeaware External Method (Plone 4).
+        Requires AddAnnex or AddAnnexDecision permission on this item.
+        """
+        if not _checkPermission(AddAnnex, self) and not _checkPermission(AddAnnexDecision, self):
+            raise Unauthorized
+        all_ids = self.objectIds()
+        pos = all_ids.index(id)
+        portal_type = getattr(self, id).portal_type
+        same_type_ids = [ob.id for ob in self.objectValues() if ob.portal_type == portal_type]
+        delta = 1
+        if position.lower() == 'up':
+            found = False
+            while not found and (pos - delta) > 0:
+                if all_ids[pos - delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsUp(id, delta=delta)
+        elif position.lower() == 'down':
+            found = False
+            while not found and (pos + delta) < len(all_ids):
+                if all_ids[pos + delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsDown(id, delta=delta)
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
@@ -4262,7 +4306,7 @@ class MeetingItem(Container):
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
-        if len(item_votes) - 1 >= vote_number:
+        if vote_number != 'all' and len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.poll_type)
         else:
             poll_type = self.poll_type
@@ -7231,7 +7275,7 @@ class MeetingItem(Container):
                         self._at_creation_flag = False
         if not is_creation:
             self.at_post_edit_script(full_edit_form=True, reindex_local_roles=True)
-        self.reindexObject()
+        reindex_object(self)
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -7565,7 +7609,7 @@ class MeetingItem(Container):
         try:
             destFolder = tool.getPloneMeetingFolder(destMeetingConfigId,
                                                     self.Creator())
-        except ValueError:
+        except (ValueError, Unauthorized, ZUnauthorized):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(

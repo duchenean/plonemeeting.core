@@ -54,11 +54,11 @@ class testWorkflows(PloneMeetingTestCase):
         # Create an item as creator
         self.changeUser('pmCreator2')
         # Does the creator has the right to create an item ?
-        self.failUnless(self.tool.userIsAmong(['creators']))
+        self.assertTrue(self.tool.userIsAmong(['creators']))
         item = self.create('MeetingItem')
         # May the creator see his item ?
-        self.failUnless(self.hasPermission(View, item))
-        self.failUnless(self.hasPermission(AccessContentsInformation, item))
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(AccessContentsInformation, item))
         pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
         myItems = cfg.searches.searches_items.searchmyitems.results()
         self.assertEqual(len(myItems), 1)
@@ -73,7 +73,7 @@ class testWorkflows(PloneMeetingTestCase):
         numberOfFoundItems = 0
         if item.query_state() == 'validated':
             numberOfFoundItems = 1
-        self.failIf(len(allItems) != numberOfFoundItems)
+        self.assertFalse(len(allItems) != numberOfFoundItems)
 
     def test_pm_RemoveObjects(self):
         '''Tests objects removal (items, meetings, annexes...).'''
@@ -83,16 +83,16 @@ class testWorkflows(PloneMeetingTestCase):
         parentFolder = item.getParentNode()
         # test that we can remove an empty item...
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
+        self.assertFalse(len(parentFolder.objectValues('MeetingItem')) != 0)
         # test removal of an item with annexes
         item = self.create('MeetingItem')
         self.addAnnex(item)
         self.changeUser('pmCreator1b')
         annex2 = self.addAnnex(item)
-        self.failIf(len(item.objectValues()) != 2)
+        self.assertFalse(len(item.objectValues()) != 2)
         self.changeUser('pmCreator1')
         self.portal.restrictedTraverse('@@delete_givenuid')(annex2.UID())
-        self.failIf(len(item.objectValues()) != 1)
+        self.assertFalse(len(item.objectValues()) != 1)
         # Propose the item
         self.proposeItem(item)
         # Remove the item with annexes
@@ -102,7 +102,7 @@ class testWorkflows(PloneMeetingTestCase):
         # but a super user could
         self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
+        self.assertFalse(len(parentFolder.objectValues('MeetingItem')) != 0)
 
     def test_pm_RemoveContainer(self):
         '''We avoid a strange behaviour of Plone.  Removal of a container
@@ -142,7 +142,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(
             messages[0].message, can_not_delete_meetingitem_container + u' (BeforeDeleteException)')
         # The folder should not have been deleted...
-        self.failUnless(hasattr(pmManagerFolder, item.getId()))
+        self.assertTrue(hasattr(pmManagerFolder, item.getId()))
         # Try with a meeting in it now
         meeting = self.create('Meeting')
         self.assertRaises(BeforeDeleteException,
@@ -172,7 +172,7 @@ class testWorkflows(PloneMeetingTestCase):
         # Check that now that the pmManagerFolder is empty, we can remove it.
         pmManagerFolderParent = pmManagerFolder.getParentNode()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
-        self.failIf(pmManagerFolderParent.objectIds())
+        self.assertFalse(pmManagerFolderParent.objectIds())
 
     def test_pm_WholeDecisionProcess(self):
         '''This test covers the whole decision workflow. It begins with the
@@ -187,7 +187,7 @@ class testWorkflows(PloneMeetingTestCase):
         # The creator cannot add an annex, only a decision annex on proposed item
         self.assertRaises(Unauthorized, self.addAnnex, item1)
         self.addAnnex(item1, relatedTo='item_decision')
-        self.failIf(self.transitions(item1))  # He may trigger no more action
+        self.assertFalse(self.transitions(item1))  # He may trigger no more action
         # pmManager creates a meeting
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -221,13 +221,13 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmCreator2 cannot view the annex created by pmCreator1
         self.changeUser('pmCreator2')
-        self.failIf(self.hasPermission(View, someAnnex))
+        self.assertFalse(self.hasPermission(View, someAnnex))
         self.changeUser('pmManager')
         self.do(meeting, 'freeze')
         self.do(meeting, 'publish')
         # pmCreator2 can no more view the annex.
         self.changeUser('pmCreator2')
-        self.failIf(self.hasPermission(View, someAnnex))
+        self.assertFalse(self.hasPermission(View, someAnnex))
         # pmReviewer2 validates item2
         self.changeUser('pmReviewer2')
         self.do(item2, 'validate')
@@ -240,10 +240,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.addAnnex(item2)
         # So now I should have 5 normal items (do not forget the autoadded
         # recurring item) and no late item
-        self.failIf(len(meeting.get_items()) != 5)
+        self.assertFalse(len(meeting.get_items()) != 5)
         # Reviewers can't add annexes
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.assertFalse(self.hasPermission(AddAnnex, item2))
         self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, self.addAnnex, item1)
@@ -255,8 +255,8 @@ class testWorkflows(PloneMeetingTestCase):
         # Reviewers may still not add decision annexes or normal annexes
         self.changeUser('pmReviewer1')
         self.assertFalse(item1.is_decided(self.meetingConfig))
-        self.failIf(self.hasPermission(AddAnnex, item1))
-        self.failIf(self.hasPermission(AddAnnexDecision, item1))
+        self.assertFalse(self.hasPermission(AddAnnex, item1))
+        self.assertFalse(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1)
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmManager adds a decision for item2, decides and closes the meeting
@@ -271,29 +271,29 @@ class testWorkflows(PloneMeetingTestCase):
         duplicatedItem = item3.get_successor()
         self.assertEqual(duplicatedItem.get_predecessor(the_object=False), item3.UID())
         # When a meeting is decided, items are at least set to 'itempublished'
-        self.assertEquals(item1.query_state(), 'itempublished')
-        self.assertEquals(item2.query_state(), 'itempublished')
+        self.assertEqual(item1.query_state(), 'itempublished')
+        self.assertEqual(item2.query_state(), 'itempublished')
         # An already decided item keep his given decision
         self.assertEqual(item3.query_state(), 'delayed')
-        self.failIf(len(self.transitions(meeting)) != 2)
+        self.assertFalse(len(self.transitions(meeting)) != 2)
         # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
-        self.assertEquals(item1.query_state(), 'accepted')
-        self.assertEquals(item2.query_state(), 'accepted')
+        self.assertEqual(item1.query_state(), 'accepted')
+        self.assertEqual(item2.query_state(), 'accepted')
         # Reviewers may add decision annexes but not normal annexes
         self.changeUser('pmReviewer1')
-        self.failIf(self.hasPermission(AddAnnex, item1))
+        self.assertFalse(self.hasPermission(AddAnnex, item1))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1)
         self.addAnnex(item1, relatedTo='item_decision')
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.assertFalse(self.hasPermission(AddAnnex, item2))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item2))
         self.assertRaises(Unauthorized, self.addAnnex, item2)
         self.addAnnex(item2, relatedTo='item_decision')
         # MeetingManagers may add decision annexes
         self.changeUser('pmManager')
-        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.assertFalse(self.hasPermission(AddAnnex, item2))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item2))
         self.assertRaises(Unauthorized, self.addAnnex, item2)
         self.addAnnex(item2, relatedTo='item_decision')
@@ -313,21 +313,21 @@ class testWorkflows(PloneMeetingTestCase):
         # pmReviewer1 is _observers
         for userId in ('pmCreator1', 'pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission(View, (item1, annex1)))
+            self.assertTrue(self.hasPermission(View, (item1, annex1)))
         for userId in ('pmCreator2', 'pmReviewer2'):
             self.changeUser(userId)
-            self.failIf(self.hasPermission(View, (item1, annex1)))
+            self.assertFalse(self.hasPermission(View, (item1, annex1)))
         # pmCreator1 proposes the item
         self.changeUser('pmCreator1')
         self.do(item1, 'propose')
-        self.failIf(self.hasPermission(ModifyPortalContent, (item1, annex1)))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, (item1, annex1)))
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item1))
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item1))
         for userId in ('pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission(View, item1))
+            self.assertTrue(self.hasPermission(View, item1))
         # pmCreator1 goes from group "developers" to group "vendors" (still as
         # creator)
         self.changeUser('admin')
@@ -336,51 +336,51 @@ class testWorkflows(PloneMeetingTestCase):
         g = self.portal.portal_groups.getGroupById(self.vendors_creators)
         g.addMember('pmCreator1')
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item1))
         for userId in ('pmCreator1', 'pmCreator2', 'pmReviewer2'):
             # pmCreator1 is creator/owner but can't see the item anymore.
             self.changeUser(userId)
-            self.failIf(self.hasPermission(View, (item1, annex1)))
+            self.assertFalse(self.hasPermission(View, (item1, annex1)))
         for userId in ('pmCreator1b', 'pmReviewer1', 'pmManager'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission(View, (item1, annex1)))
+            self.assertTrue(self.hasPermission(View, (item1, annex1)))
         # pmReviewer1 validates the item
         self.changeUser('pmReviewer1')
         self.do(item1, 'validate')
         self.changeUser('pmManager')
-        self.failUnless(self.hasPermission(View, item1))
-        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item1))
         annex2 = self.addAnnex(item1)
         # Change proposing group for item1 (vendors)
         item1.setProposingGroup(self.vendors_uid)
         item1._update_after_edit()
         for userId in ('pmCreator1', 'pmReviewer2'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission(View, (item1, annex1, annex2)))
+            self.assertTrue(self.hasPermission(View, (item1, annex1, annex2)))
         for userId in ('pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failIf(self.hasPermission(View, (item1, annex1)))
+            self.assertFalse(self.hasPermission(View, (item1, annex1)))
         # pmCreator2 is added in group "developers" (create): it is both in
         # groups "developers" and "vendors".
         self.changeUser('pmCreator2')
-        self.failIf(self.hasPermission(View, (item2, annexItem2)))
+        self.assertFalse(self.hasPermission(View, (item2, annexItem2)))
         self.changeUser('admin')
         g = self.portal.portal_groups.getGroupById(self.developers_creators)
         g.addMember('pmCreator2')
         self.changeUser('pmCreator2')
         # Prevent Zope to cache the result of self.hasPermission
         del self.portal.REQUEST.__annotations__
-        self.failUnless(self.hasPermission(View, (item2, annexItem2)))
+        self.assertTrue(self.hasPermission(View, (item2, annexItem2)))
         # pmCreator2 creates an item as developer
         item3 = self.create('MeetingItem', title='A given item')
         annexItem3 = self.addAnnex(item3)
         self.changeUser('pmCreator1')
-        self.failIf(self.hasPermission(View, (item3, annexItem3)))
+        self.assertFalse(self.hasPermission(View, (item3, annexItem3)))
         # pmCreator2 proposes item3
         self.changeUser('pmCreator2')
         self.do(item3, 'propose')
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission(View, (item3, annexItem3)))
+        self.assertTrue(self.hasPermission(View, (item3, annexItem3)))
 
     def _setupRecurringItems(self):
         '''Setup some recurring items.'''
@@ -449,23 +449,23 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertEqual(item.getOwner().getId(), 'pmManager')
             # self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         # 1 recurring item is inserted at meeting creation
-        self.failIf(len(meeting.get_items()) != 3)
+        self.assertFalse(len(meeting.get_items()) != 3)
         # now freeze the meeting, future added items will be considered as late
         self.freezeMeeting(meeting)
-        self.failIf(len(meeting.get_items()) != 4)
+        self.assertFalse(len(meeting.get_items()) != 4)
         self.assertTrue(meeting.get_items(ordered=True)[-1].isLate())
         # meeting has not already been frozen, when publishing, the added recurring
         # item is considered as a late item
         self.publishMeeting(meeting)
-        self.failIf(len(meeting.get_items()) != 5)
+        self.assertFalse(len(meeting.get_items()) != 5)
         self.assertTrue(meeting.get_items(ordered=True)[-1].isLate())
         # Back to created: rec item 2 is inserted.
         self.backToState(meeting, 'created')
-        self.failIf(len(meeting.get_items()) != 6)
+        self.assertFalse(len(meeting.get_items()) != 6)
         # a recurring item can be added several times...
         self.publishMeeting(meeting)
         # one item added during freeze and one during publish
-        self.failIf(len(meeting.get_items()) != 8)
+        self.assertFalse(len(meeting.get_items()) != 8)
         self.assertTrue(meeting.get_items(ordered=True)[-2].isLate())
         self.assertTrue(meeting.get_items(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
@@ -473,7 +473,7 @@ class testWorkflows(PloneMeetingTestCase):
             item.decision = richtextval(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.get_items()) != 9)
+        self.assertFalse(len(meeting.get_items()) != 9)
         self.assertTrue(meeting.get_items(ordered=True)[-1].isLate())
 
     def test_pm_RecurringItemAddAnnexPermission(self):
@@ -902,7 +902,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(str(cm.exception.args[0]),
                          u'Can not set a meeting to Closed if it '
                          u'contains items returned to proposing group!')
         # if no item returned anymore, closable
@@ -935,7 +935,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.do(meeting, 'publish_decisions')
-        self.assertEqual(cm.exception.message,
+        self.assertEqual(str(cm.exception.args[0]),
                          u'Can not set a meeting to Decisions published if it '
                          u'contains items returned to proposing group!')
         # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'

@@ -4,8 +4,8 @@ from __future__ import absolute_import, print_function
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.z3cform.datagridfield import DataGridFieldFactory
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldFactory
+from collective.z3cform.datagridfield.row import DictRow
 from imio.helpers.content import get_vocab
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
@@ -32,7 +32,7 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
@@ -44,6 +44,7 @@ def _build_voting_groups(context, caching=True):
     """Build voting groups informations that will be used to manage the votes by group."""
 
     # caching is done in the REQUEST because this is called 2 times
+    res = None
     if caching and hasattr(context, "REQUEST"):
         res = getattr(context.REQUEST, '_build_voting_groups', None)
 
@@ -303,9 +304,9 @@ def display_item_numbers(numbers):
     return res
 
 
+@implementer(IFieldsAndContentProvidersForm)
 class EncodeVotesForm(BaseAttendeeForm):
     """ """
-    implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['select_all'] = DisplaySelectAllProvider
     contentProviders['select_all'].position = 2
@@ -332,16 +333,21 @@ class EncodeVotesForm(BaseAttendeeForm):
         self.widgets['votes'].auto_append = False
         self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
         for row in self.widgets['votes'].widgets:
-            if row.subform.context is None:
+            if not hasattr(row, 'widgets') or 'voter_uid' not in row.widgets:
                 continue
-            voter_uid = row.subform.context['voter_uid']
+            voter_uid = row.widgets['voter_uid'].value
+            if not voter_uid:
+                continue
+            # z3c.form SelectWidget.value is a list in Python 3
+            if isinstance(voter_uid, (list, tuple)):
+                voter_uid = voter_uid[0] if voter_uid else None
+            if not voter_uid:
+                continue
             group_id = [group_id for group_id, values in groups.items()
                         if voter_uid in values['uids']]
             if group_id:
                 row.addClass(group_id[0])
-            for wdt in row.subform.widgets.values():
-                if wdt.__name__ == 'voter_uid':
-                    wdt.mode = HIDDEN_MODE
+            row.widgets['voter_uid'].mode = HIDDEN_MODE
         # disable apply_until_item_number when using several votes
         # or if poll_type was redefined
         if _should_disable_apply_until_item_number(self.context):
@@ -558,11 +564,13 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         self.widgets['votes'].auto_append = False
         self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
         for row in self.widgets['votes'].widgets:
-            for wdt in row.subform.widgets.values():
+            if not hasattr(row, 'widgets'):
+                continue
+            for wdt in row.widgets.values():
                 if wdt.__name__ == 'vote_value_id':
                     wdt.mode = HIDDEN_MODE
                 elif wdt.__name__ == 'vote_value' and wdt.value:
-                    wdt.klass += " {0}".format(wdt.context['vote_value'])
+                    wdt.klass += " {0}".format(wdt.value)
         # disable apply_until_item_number when using several votes
         if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']

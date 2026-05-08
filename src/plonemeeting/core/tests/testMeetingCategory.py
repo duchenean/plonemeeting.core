@@ -213,7 +213,7 @@ class testMeetingCategory(PloneMeetingTestCase):
             dev_cat,
             u"plonemeeting.core.content.category."
             u"category_mapping_when_cloning_to_other_mc_vocabulary")
-        values = dev_cat_vocab.by_token.keys()
+        values = list(dev_cat_vocab.by_token.keys())
         # one value is ok
         self.assertTrue(constraint([values[0]]))
         # but not 2 for the same meetingConfig...
@@ -222,7 +222,7 @@ class testMeetingCategory(PloneMeetingTestCase):
                               context=self.request)
         with self.assertRaises(Invalid) as cm:
             constraint(values)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(str(cm.exception.args[0]), error_msg)
         # simulate a third meetingConfig, select one single value of existing meetingConfig2 and
         # one of unexisting meetingConfig3, the validation is ok...
         self.assertTrue(constraint([values[0], 'meeting-config-dummy.category_name']))

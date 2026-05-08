@@ -12,6 +12,7 @@ from collective.eeafaceted.batchactions.browser.views import TransitionBatchActi
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
@@ -355,6 +356,19 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
         return "delete" in self.cfg.enabled_annexes_batch_actions and \
             super(PMDeleteBatchActionForm, self).available()
 
+    def _get_deletable_elements(self):
+        """Use the IContentDeletable adapter so annex-specific mayDelete logic
+        (e.g. allow deletion when user can edit parent) is honoured, matching
+        the single-delete behaviour of @@delete_givenuid."""
+        return [obj for obj in self.objs if IContentDeletable(obj).mayDelete()]
+
+    def _apply(self, **data):
+        """Use unrestrictedRemoveGivenObject so deletion is not blocked by
+        DeleteObjects on the parent when IContentDeletable.mayDelete() already
+        validated the permission (mirrors @@delete_givenuid behaviour)."""
+        for obj in self.deletables:
+            unrestrictedRemoveGivenObject(obj)
+
 
 class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
     """ """
@@ -403,6 +417,37 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
 
     def _filter_labels_vocabulary(self, jar):
         return filter_access_global_labels(jar, mode='edit')
+
+    def get_labels_vocabulary(self):
+        """Override to filter global labels to only those editable by current user."""
+        try:
+            from ftw.labels.interfaces import ILabelJar
+            from zope.schema.vocabulary import SimpleVocabulary
+            from Products.CMFPlone.utils import safe_unicode
+        except ImportError:
+            return super(PMLabelsBatchActionForm, self).get_labels_vocabulary()
+        context = self.get_labeljar_context()
+        try:
+            jar = ILabelJar(context)
+        except Exception:
+            return SimpleVocabulary([]), [], []
+        self.can_change_labels = self._can_change_labels()
+        terms, p_labels, g_labels = [], [], []
+        filtered_labels = self._filter_labels_vocabulary(jar)
+        for label in filtered_labels:
+            if label['by_user']:
+                p_labels.append(label['label_id'])
+                terms.append(SimpleVocabulary.createTerm(
+                    '%s:' % label['label_id'],
+                    label['label_id'],
+                    u'{} (*)'.format(safe_unicode(label['title']))))
+            else:
+                g_labels.append(label['label_id'])
+                if self.can_change_labels:
+                    terms.append(SimpleVocabulary.createTerm(
+                        label['label_id'], label['label_id'],
+                        safe_unicode(label['title'])))
+        return SimpleVocabulary(terms), set(p_labels), g_labels
 
     def _can_change_labels(self):
         view = None

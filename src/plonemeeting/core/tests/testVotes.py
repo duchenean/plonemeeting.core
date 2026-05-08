@@ -66,7 +66,7 @@ class testVotes(PloneMeetingTestCase):
             self.presentItem(no_vote_item)
         voters = meeting.get_voters()
         # public votes
-        public_votes = public_item.get_item_votes()[0]
+        public_votes = public_item.get_item_votes(vote_number=0)
         public_votes['voters'][voters[0]] = "yes"
         public_votes['voters'][voters[1]] = "yes"
         public_votes['voters'][voters[2]] = "no"
@@ -74,7 +74,7 @@ class testVotes(PloneMeetingTestCase):
         meeting.set_item_public_vote(public_item, public_votes, 0)
         transaction.commit()
         # encode secret votes
-        secret_votes = secret_item.get_item_votes()[0]
+        secret_votes = secret_item.get_item_votes(vote_number=0)
         secret_votes['votes']['abstain'] = 2
         secret_votes['votes']['no'] = 1
         secret_votes['votes']['yes'] = 1
@@ -441,7 +441,7 @@ class testVotes(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, public_error_msg)
+        self.assertEqual(errors[0].args[0], public_error_msg)
         meeting_voters.insert(0, voter0)
         self.assertEqual(invariants.validate(data), ())
         self.request.set('validate_attendees_done', False)
@@ -463,7 +463,7 @@ class testVotes(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, secret_error_msg)
+        self.assertEqual(errors[0].args[0], secret_error_msg)
         self.request.set('validate_attendees_done', False)
         meeting_voters.insert(0, voter0)
         self.assertEqual(invariants.validate(data), ())
@@ -810,7 +810,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(str(cm.exception.args[0]), error_msg)
 
         # linked vote
         self.request.form['form.widgets.linked_to_previous'] = True
@@ -823,7 +823,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes, vote_number=1)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(str(cm.exception.args[0]), error_msg)
 
         # when used in an overlay, the PMNumberWidget number brower validation
         # is not correctly done, we could get values other than integers...
@@ -837,7 +837,7 @@ class testVotes(PloneMeetingTestCase):
         data = DummyData(secret_item, votes)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(str(cm.exception.args[0]), error_msg)
 
     def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
         """Ensure Meeting.item_votes correctly wiped out when item removed from meeting."""
@@ -935,7 +935,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(secret_item.poll_type, original_poll_type)
         self.assertTrue(secret_item.validate_pollType("freehand"))
         # but can change to a vote is same mode, "secret"
-        self.failIf(secret_item.validate_pollType("secret_separated"))
+        self.assertFalse(secret_item.validate_pollType("secret_separated"))
         change_pt_view("secret_separated")
         self.assertNotEqual(secret_item.poll_type, original_poll_type)
         self.assertEqual(secret_item.poll_type, "secret_separated")
@@ -1023,7 +1023,10 @@ class testVotes(PloneMeetingTestCase):
         self.request.form['vote_number'] = 0
         votes_form.meeting = public_item.getMeeting()
         votes_form.update()
-        votes_form.votes = votes_form.widgets['votes'].value
+        # Use votes_default to get field values (not raw widget values).
+        # In datagridfield 4.x widget.value returns widget-representation dicts
+        # where Choice fields are lists of tokens, not scalar field values.
+        votes_form.votes = votes_default(public_item)
         votes_form.linked_to_previous = False
         votes_form.vote_number = 0
         votes_form.apply_until_item_number = u'500'
@@ -1072,9 +1075,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue("<span>All</span>:" in rendered_form)
         self.assertTrue("<span>Organization outside own org</span>:" in rendered_form)
         self.assertTrue("<span>Others</span>:" in rendered_form)
-        self.assertTrue(
-            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
-            in rendered_form)
+        self.assertIn('class="datagridwidget-row required org-outside-own-org row-1"', rendered_form)
         # when no voting_group defined for any voter, controls are not there
         hp1.voting_group = None
         # clear cache
@@ -1085,9 +1086,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue("<span>All</span>:" in rendered_form)
         self.assertFalse("<span>Organization outside own org</span>:" in rendered_form)
         self.assertFalse("<span>Others</span>:" in rendered_form)
-        self.assertFalse(
-            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
-            in rendered_form)
+        self.assertNotIn('class="datagridwidget-row required org-outside-own-org row-1"', rendered_form)
 
     def test_pm_ChangeSecretVotePollType(self):
         """Change poll_type on a secret vote."""
@@ -1201,13 +1200,11 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(cfg.votes_result_tal_expr, '')
         self.assertEqual(item.getVotesResult(), '')
         self.assertEqual(item.getVotesResult(real=True), '')
-        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         cfg.votes_result_tal_expr = (
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
         # not computed when not in a meeting
         self.assertEqual(item.getVotesResult(), '')
-        self.assertFalse(isinstance(item.getVotesResult(), six.text_type))
         self.assertEqual(item.getVotesResult(real=True), '')
 
         # get in meeting
@@ -1223,7 +1220,7 @@ class testVotes(PloneMeetingTestCase):
             'et une abstention,</p>')
         self.assertEqual(
             yes_public_item.getVotesResult(),
-            "<p>Il y a 4 votants.</p><p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+            "<p>Il y a 4 votants.</p><p>\xc0 l'unanimit\xe9,</p>")
         self.assertEqual(
             secret_item.getVotesResult(),
             '<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
@@ -1231,7 +1228,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(
             yes_secret_item.getVotesResult(),
             "<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>"
-            "<p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+            "<p>\xc0 l'unanimit\xe9,</p>")
 
         # freeze the meeting and set values
         self.freezeMeeting(meeting)

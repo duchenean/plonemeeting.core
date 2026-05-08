@@ -101,10 +101,8 @@
        <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
-    <!-- plone.app.caching -->
-    <record name="plone.app.caching.interfaces.IPloneCacheSettings.enableCompression">
-        <value>True</value>
-    </record>
+    <!-- plone.app.caching configuration.
+         Note: IPloneCacheSettings.enableCompression was dropped in plone.app.caching 4.x. -->
 
     <record name="plone.caching.interfaces.ICacheSettings.operationMapping">
       <value purge="False">
@@ -119,10 +117,7 @@
 
     <!-- plone.app.caching templateRulesetMapping -->
     <record name="plone.app.caching.interfaces.IPloneCacheSettings.templateRulesetMapping">
-        <!-- purge to be able to remove the image_view_fullscreen that have security advisory
-             See https://github.com/plone/Products.CMFPlone/security/advisories/GHSA-8w54-22w9-3g8f -->
         <value purge="True">
-          <!-- added our @@categorized-annexes view -->
           <element key="categorized-annexes">plone.content.folderView</element>
           <element key="search_rss">plone.content.feed</element>
           <element key="RSS">plone.content.feed</element>
@@ -133,11 +128,14 @@
           <element key="accessibility-info">plone.content.itemView</element>
           <element key="file_view">plone.content.itemView</element>
           <element key="image_view">plone.content.itemView</element>
-          <!-- element key="image_view_fullscreen">plone.content.itemView</element-->
+          <!-- PloneMeeting dashboard views on meeting folders -->
+          <element key="searches_items">plone.content.folderView</element>
+          <element key="searches_meetings">plone.content.folderView</element>
+          <element key="searches_decisions">plone.content.folderView</element>
         </value>
     </record>
 
-    <!-- plone.app.caching strongCaching -->
+    <!-- strongCaching defaults (field definitions already exist from plone.app.caching) -->
     <record name="plone.app.caching.strongCaching.anonOnly">
         <value>False</value>
     </record>
@@ -155,51 +153,51 @@
         <value>True</value>
     </record>
 
-  <!-- plone.content.file -->
-  <record name="plone.app.caching.strongCaching.plone.content.file.etags">
-      <field ref="plone.app.caching.strongCaching.etags" />
-      <value purge="True">
-        <element>userid</element>
-        <element>usergroups</element>
-        <element>gzip</element>
-        <element>locked</element>
-        <element>resourceRegistries</element>
-        <element>contextmodified</element>
-        <element>configmodified</element>
-        <element>toolmodified</element>
-      </value>
-  </record>
-  <!-- plone.content.folderView -->
-  <record name="plone.app.caching.strongCaching.plone.content.folderView.etags">
-      <field ref="plone.app.caching.strongCaching.etags" />
-      <value purge="True">
-        <element>userid</element>
-        <element>usergroups</element>
-        <element>gzip</element>
-        <element>locked</element>
-        <element>resourceRegistries</element>
-        <element>contextmodified</element>
-        <element>parentmodified</element>
-        <element>configmodified</element>
-        <element>toolmodified</element>
-        <element>linkedmeetingmodified</element>
-        <element>messagesviewlet</element>
-      </value>
-  </record>
-  <!-- plone.content.itemView -->
-  <record name="plone.app.caching.strongCaching.plone.content.itemView.etags">
-      <field ref="plone.app.caching.strongCaching.etags" />
-      <value purge="True">
-        <element>userid</element>
-        <element>usergroups</element>
-        <element>gzip</element>
-        <element>locked</element>
-        <element>resourceRegistries</element>
-        <element>contextmodified</element>
-        <element>configmodified</element>
-        <element>toolmodified</element>
-        <element>messagesviewlet</element>
-      </value>
-  </record>
+    <!-- plone.content.file -->
+    <record name="plone.app.caching.strongCaching.plone.content.file.etags">
+        <field ref="plone.app.caching.strongCaching.etags" />
+        <value purge="True">
+            <element>userid</element>
+            <element>usergroups</element>
+            <element>locked</element>
+            <element>resourceRegistries</element>
+            <element>contextmodified</element>
+            <element>configmodified</element>
+            <element>toolmodified</element>
+        </value>
+    </record>
+
+    <!-- plone.content.folderView -->
+    <record name="plone.app.caching.strongCaching.plone.content.folderView.etags">
+        <field ref="plone.app.caching.strongCaching.etags" />
+        <value purge="True">
+            <element>userid</element>
+            <element>usergroups</element>
+            <element>locked</element>
+            <element>resourceRegistries</element>
+            <element>contextmodified</element>
+            <element>parentmodified</element>
+            <element>configmodified</element>
+            <element>toolmodified</element>
+            <element>linkedmeetingmodified</element>
+            <element>messagesviewlet</element>
+        </value>
+    </record>
+
+    <!-- plone.content.itemView -->
+    <record name="plone.app.caching.strongCaching.plone.content.itemView.etags">
+        <field ref="plone.app.caching.strongCaching.etags" />
+        <value purge="True">
+            <element>userid</element>
+            <element>usergroups</element>
+            <element>locked</element>
+            <element>resourceRegistries</element>
+            <element>contextmodified</element>
+            <element>configmodified</element>
+            <element>toolmodified</element>
+            <element>linkedmeetingmodified</element>
+            <element>messagesviewlet</element>
+        </value>
+    </record>
 
 </registry>

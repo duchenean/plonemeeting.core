@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import Unauthorized
+from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -12,7 +13,6 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from fnmatch import fnmatch
@@ -56,12 +56,14 @@ from plonemeeting.core.utils import get_dx_widget
 from plonemeeting.core.utils import get_item_validation_wf_suffixes
 from plonemeeting.core.utils import getAvailableMailingLists
 from plonemeeting.core.utils import may_view_field
+from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
 from zope.annotation import IAnnotations
+from zope.component import getMultiAdapter
 from zope.i18n import translate
 
-import cgi
+import html as cgi  # cgi.escape removed in Py3; html.escape is the replacement
 import json
 import lxml
 import operator
@@ -546,8 +548,10 @@ class UpdateDelayAwareAdvicesView(BrowserView):
            If a p_query is given, it will be used by the portal_catalog query
            we do to restrict update of advices to some subsets of items...'''
         catalog = api.portal.get_tool('portal_catalog')
-        if 'meta_type' not in query:
-            query['meta_type'] = 'MeetingItem'
+        if 'portal_type' not in query and 'meta_type' not in query:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            query['portal_type'] = [cfg.getItemTypeName()
+                                    for cfg in tool.objectValues('MeetingConfig')]
         brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
@@ -742,9 +746,9 @@ class BaseDGHV(object):
 
     def print_history(self):
         """Return the history view for templates. """
-        historyView = self.context.restrictedTraverse('@@historyview')()
-        historyViewRendered = lxml.html.fromstring(historyView)
-        return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
+        from plone.app.layout.viewlets.content import ContentHistoryView
+        view = ContentHistoryView(self.context, self.request)
+        return view()
 
     def get_contact_infos(self, position_types=[], userid=None):
         """Return informations for given userid, if not given, we take current element creator,
@@ -859,7 +863,7 @@ class BaseDGHV(object):
         if not itemAdvicesByType:
             res += "<p class='pmAdvices'>-</p>"
 
-        return res.encode('utf-8')
+        return res
 
     def get_scan_id(self):
         """Return the stored annex scan_id when available, else None.
@@ -959,7 +963,7 @@ class BaseDGHV(object):
         if committee_id:
             meeting = self.context
             attendees = self.context.get_committee_attendees(committee_id)
-        elif self.context.getTagName() == 'Meeting':
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
             meeting = self.context
             attendees = meeting.get_attendees()
             item_non_attendees = meeting.get_item_non_attendees()
@@ -984,7 +988,7 @@ class BaseDGHV(object):
             else:
                 # when context is an item, make sure we have correct order in case
                 # attendees order was redefined
-                if self.context.getTagName() == 'MeetingItem':
+                if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'MeetingItem':
                     contacts = self.context.get_all_attendees(the_objects=True, ordered=True)
                 else:
                     contacts = meeting.get_all_attendees(the_objects=True)
@@ -1077,7 +1081,7 @@ class BaseDGHV(object):
                 (is_voter is True and contact_uid not in voters)):
                 continue
             forced_position_type_value = None
-            if self.context.getTagName() == "MeetingItem":
+            if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == "MeetingItem":
                 forced_position_type_value = meeting.get_attendee_position_for(
                     context_uid, contact_uid)
             contact_short_title = contact.get_short_title(
@@ -1189,7 +1193,7 @@ class BaseDGHV(object):
                                 is_voter=None):
 
         context_uid = self.context.UID()
-        is_item = self.context.getTagName() == "MeetingItem"
+        is_item = _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == "MeetingItem"
 
         def _buildContactsValue(meeting, contacts):
             """ """
@@ -1472,9 +1476,9 @@ class BaseDGHV(object):
         signatures = None
         if committee_id:
             signatures = self.context.get_committee_signatures(committee_id)
-        elif self.context.getTagName() == 'Meeting' and self.context.get_signatures():
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting' and self.context.get_signatures():
             signatures = self.context.get_signatures()
-        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
+        elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
         if signatures:
@@ -1527,7 +1531,7 @@ class BaseDGHV(object):
             if committee_id:
                 signatories = self.context.get_committee_signatories(
                     committee_id, the_objects=True, by_signature_number=True)
-            elif self.context.getTagName() == 'Meeting':
+            elif _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
                 signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
             else:
                 signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
@@ -1595,7 +1599,7 @@ class BaseDGHV(object):
         return signature_lines
 
 
-class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
+class FolderDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -1836,7 +1840,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         return res
 
 
-class MeetingDocumentGenerationHelperView(DXDocumentGenerationHelperView, FolderDocumentGenerationHelperView):
+class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
     def _print_special_value(self, field_name, empty_marker='', **kwargs):
@@ -1963,7 +1967,7 @@ def print_votes(item,
         res = []
         for voter in voters:
             forced_position_type_value = None
-            if item.getTagName() == "MeetingItem":
+            if _resolve_adaptable_key(getattr(aq_base(item), 'portal_type', None)) == "MeetingItem":
                 forced_position_type_value = meeting.get_attendee_position_for(
                     item.UID(), voter.UID())
             if include_hp:
@@ -2108,7 +2112,7 @@ def print_votes(item,
     return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
-class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
+class ItemDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def deliberation_for_restapi(self, deliberation_types=[]):
@@ -2302,7 +2306,26 @@ class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGH
     """ """
 
 
-class PMDisplayGroupUsersView(DisplayGroupUsersView):
+class PMDisplayGroupUsersViewBase(DisplayGroupUsersView):
+    """Plone 6 compatible base: deduplicates group members by ID (not object identity)."""
+
+    def _get_groups_and_members(self, group, index=0, keep_subgroups=False):
+        from Products.CMFPlone.utils import base_hasattr
+        members = []
+        if keep_subgroups and index != 0:
+            members.append((index, group))
+            index += 1
+        for principal in group.getAllGroupMembers():
+            isGroup = base_hasattr(principal, 'isGroup') and principal.isGroup() or 0
+            if isGroup:
+                members += self._get_groups_and_members(principal, index + 1, keep_subgroups)
+            else:
+                if keep_subgroups or principal.getId() not in [p.getId() for i, p in members]:
+                    members.append((index, principal))
+        return members
+
+
+class PMDisplayGroupUsersView(PMDisplayGroupUsersViewBase):
     """
       View that display the users of a Plone group.
     """
@@ -2460,7 +2483,7 @@ class DisplayMeetingItemChangedAttendeesOrder(BrowserView):
 
     def _get_items(self):
         """Returns the list of items the attendees were changed for."""
-        uids = self.context._get_item_attendees_order().keys()
+        uids = list(self.context._get_item_attendees_order().keys())
         ordered_items = []
         if uids:
             ordered_items = [

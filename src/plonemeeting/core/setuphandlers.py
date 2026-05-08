@@ -116,22 +116,23 @@ def setupHideToolsFromNavigation(context):
     """hide tools"""
     if isNotPloneMeetingProfile(context):
         return
-    # uncatalog tools
     site = context.getSite()
     toolnames = ['portal_plonemeeting']
-    portal_properties = api.portal.get_tool('portal_properties')
-    navtree_properties = getattr(portal_properties, 'navtree_properties')
-    if navtree_properties.hasProperty('idsNotToList'):
-        for toolname in toolnames:
-            try:
-                site[toolname].unindexObject()
-            except Exception:
-                pass
-            current = list(navtree_properties.getProperty('idsNotToList') or [])
-            if toolname not in current:
-                current.append(toolname)
-                kwargs = {'idsNotToList': current}
-                navtree_properties.manage_changeProperties(**kwargs)
+    for toolname in toolnames:
+        try:
+            site[toolname].unindexObject()
+        except Exception:
+            pass
+    if base_hasattr(site, 'portal_properties'):
+        portal_properties = api.portal.get_tool('portal_properties')
+        navtree_properties = getattr(portal_properties, 'navtree_properties', None)
+        if navtree_properties and navtree_properties.hasProperty('idsNotToList'):
+            for toolname in toolnames:
+                current = list(navtree_properties.getProperty('idsNotToList') or [])
+                if toolname not in current:
+                    current.append(toolname)
+                    kwargs = {'idsNotToList': current}
+                    navtree_properties.manage_changeProperties(**kwargs)
 
 
 def setupCatalogMultiplex(context):
@@ -143,7 +144,9 @@ def setupCatalogMultiplex(context):
 def postInstall(context):
     """Called at the end of the setup process. """
     if isNotPloneMeetingProfile(context):
+        logger.info("postInstall: skipping, not a PloneMeeting profile")
         return
+    logger.info("postInstall: starting for PloneMeeting profile")
     site = context.getSite()
     tool = site.portal_plonemeeting
 
@@ -192,10 +195,13 @@ def postInstall(context):
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
     pol.setChain('DashboardCollection', ('',))
-    pol.setChainForPortalTypes(
-        ('MeetingConfig', ), ('plonemeeting_activity_workflow',))
+    if 'MeetingConfig' in site.portal_types:
+        pol.setChainForPortalTypes(
+            ('MeetingConfig', ), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs
-    pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
+    wft = api.portal.get_tool('portal_workflow')
+    if wft.getWorkflowById('plonemeeting_onestate_workflow'):
+        pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
     pc = getattr(tool, WorkflowPolicyConfig_id)
     pc.setPolicyIn('')
     pc.setPolicyBelow('portal_plonemeeting_policy')
@@ -203,36 +209,30 @@ def postInstall(context):
     # We must be able to choose a user password on user creation.
     site.manage_changeProperties(validate_email=0)
 
-    tool.at_post_create_script()
+    if hasattr(tool, 'at_post_create_script') and hasattr(tool, 'getTagName'):
+        tool.at_post_create_script()
 
-    # Do not generate an action (tab) for each root folder
-    site.portal_properties.site_properties.manage_changeProperties(
-        disable_folder_sections=True)
+    if base_hasattr(site, 'portal_properties'):
+        site.portal_properties.site_properties.manage_changeProperties(
+            disable_folder_sections=True)
+        many_users = False
+        if HAS_LDAP or len(site.acl_users.source_users.listUserIds()) > 400:
+            many_users = True
+        site.portal_properties.site_properties.manage_changeProperties(
+            many_users=many_users)
+        site.portal_properties.site_properties.manage_changeProperties(
+            many_groups=True)
 
-    # Display the search box for groups and users
-    # when using LDPA or having more that 400 users, we set many_users=True
-    many_users = False
-    if HAS_LDAP or len(site.acl_users.source_users.listUserIds()) > 400:
-        many_users = True
-    site.portal_properties.site_properties.manage_changeProperties(
-        many_users=many_users)
-    site.portal_properties.site_properties.manage_changeProperties(
-        many_groups=True)
-
-    # portal_quickinstaller removes some installed elements when reinstalling...
-    # re-add them manually here...
     for cfg in tool.objectValues('MeetingConfig'):
         cfg.registerPortalTypes()
 
-    # Check if the personal folder creation of users is enabled
-    # check if the creation flag is set to 0, change it if necessary
     if not site.portal_membership.getMemberareaCreationFlag():
         site.portal_membership.setMemberareaCreationFlag()
 
-    # Disable KSS completely
-    pjs = site.portal_javascripts
-    pjs.unregisterResource('++resource++kukit.js')
-    pjs.unregisterResource('++resource++kukit-devel.js')
+    if base_hasattr(site, 'portal_javascripts'):
+        pjs = site.portal_javascripts
+        pjs.unregisterResource('++resource++kukit.js')
+        pjs.unregisterResource('++resource++kukit-devel.js')
 
     # Disable content indexation, we have our own.
     pt = site.portal_transforms
@@ -249,10 +249,9 @@ def postInstall(context):
 
     _configureWebspellchecker(site)
 
-    # manage safe_html
-    _congfigureSafeHtml(site)
+    if base_hasattr(site, 'portal_transforms'):
+        _congfigureSafeHtml(site)
 
-    # adapt front-page
     _adaptFrontPage(site)
 
     # P6 migration: AMQP integration to be reimplemented in Stage D.
@@ -320,14 +319,13 @@ def postInstall(context):
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
-    # configure MailHost
     mail_host = get_mail_host()
-    mail_host.force_tls = True
-    mail_host.smtp_queue = True
-    mail_host.smtp_queue_directory = "tmp"
-    # (re)start the mail queue
-    mail_host._stopQueueProcessorThread()
-    mail_host._startQueueProcessorThread()
+    if hasattr(mail_host, 'smtp_queue'):
+        mail_host.force_tls = True
+        mail_host.smtp_queue = True
+        mail_host.smtp_queue_directory = "tmp"
+        mail_host._stopQueueProcessorThread()
+        mail_host._startQueueProcessorThread()
 
     # create contacts directory and plonegroup-organization
     if not base_hasattr(site, 'contacts'):
@@ -377,12 +375,15 @@ def postInstall(context):
     api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
 
     # disable RSS, it does useless catalog search sometimes...
-    api.portal.set_registry_record(
-        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.allowed',
-        value=False)
-    api.portal.set_registry_record(
-        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.search_rss_enabled',
-        value=False)
+    try:
+        api.portal.set_registry_record(
+            name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.allowed',
+            value=False)
+        api.portal.set_registry_record(
+            name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.search_rss_enabled',
+            value=False)
+    except api.exc.InvalidParameterError:
+        pass
 
     # configure portal_repository
     _configurePortalRepository()
@@ -390,8 +391,8 @@ def postInstall(context):
     # configure dexterity localrolesfield
     _configureDexterityLocalRolesField()
 
-    # reorder css
-    _reorderCSS(site)
+    if base_hasattr(site, 'portal_css'):
+        _reorderCSS(site)
 
 
 def activate_solr_and_reindex_if_available(site):
@@ -399,7 +400,8 @@ def activate_solr_and_reindex_if_available(site):
         """ activate solr indexing and reindex the existing content """
         from collective.solr.utils import activate
         from collective.solr.utils import getConfig
-        if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
+        qi = getattr(site, 'portal_quickinstaller', None)
+        if qi and not qi.isProductInstalled('collective.solr'):
             site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
 
         solr_activated = api.portal.get_registry_record('collective.solr.active')
@@ -599,25 +601,29 @@ def _configureWebspellchecker(site):
 
 def _congfigureSafeHtml(site):
     '''Add some values to safe_html.'''
+    safe_html = getattr(site.portal_transforms, 'safe_html', None)
+    if safe_html is None:
+        return
+    config = getattr(safe_html, '_config', {})
+    if 'nasty_tags' not in config or 'valid_tags' not in config:
+        logger.info('safe_html config has no nasty_tags/valid_tags, skipping (Plone 6)')
+        return
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
-    if u'colgroup' not in site.portal_transforms.safe_html._config['nasty_tags']:
-        site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
-    # make sure 'colgroup' and 'col' are not in 'valid_tags'...
-    if 'colgroup' in site.portal_transforms.safe_html._config['valid_tags']:
-        del site.portal_transforms.safe_html._config['valid_tags']['colgroup']
-    if 'col' in site.portal_transforms.safe_html._config['valid_tags']:
-        del site.portal_transforms.safe_html._config['valid_tags']['col']
+    if u'colgroup' not in config['nasty_tags']:
+        config['nasty_tags'][u'colgroup'] = '1'
+    if 'colgroup' in config['valid_tags']:
+        del config['valid_tags']['colgroup']
+    if 'col' in config['valid_tags']:
+        del config['valid_tags']['col']
     logger.info('Adding \'strike\' and \'s\' to the list of valid_tags in safe_html...')
-    if u'strike' not in site.portal_transforms.safe_html._config['valid_tags']:
-        site.portal_transforms.safe_html._config['valid_tags'][u'strike'] = '1'
-    if u's' not in site.portal_transforms.safe_html._config['valid_tags']:
-        site.portal_transforms.safe_html._config['valid_tags'][u's'] = '1'
-    # make sure it was not in 'nasty_tags'...
-    if 'strike' in site.portal_transforms.safe_html._config['nasty_tags']:
-        del site.portal_transforms.safe_html._config['nasty_tags']['strike']
-    if 's' in site.portal_transforms.safe_html._config['nasty_tags']:
-        del site.portal_transforms.safe_html._config['nasty_tags']['s']
-    # reload transforms so changes are taken into account
+    if u'strike' not in config['valid_tags']:
+        config['valid_tags'][u'strike'] = '1'
+    if u's' not in config['valid_tags']:
+        config['valid_tags'][u's'] = '1'
+    if 'strike' in config['nasty_tags']:
+        del config['nasty_tags']['strike']
+    if 's' in config['nasty_tags']:
+        del config['nasty_tags']['s']
     site.portal_transforms.reloadTransforms()
 
 
@@ -635,10 +641,6 @@ def _adaptFrontPage(site):
     logger.info('Adapting front-page...')
     # make sure we only adapt it at install time, so when creation and modification date are almost equal
     if front_page.modified() - front_page.created() < 0.000005:
-        # disable presentation mode
-        front_page.setPresentation(False)
-        # there is a difference of less than 0.5 seconds between last modification and creation date
-        # it means that practically, the front page was not adapted...
         front_page_title = translate('front_page_title',
                                      domain='PloneMeeting',
                                      context=site.REQUEST)
@@ -650,7 +652,11 @@ def _adaptFrontPage(site):
         front_page_body = translate('front_page_body',
                                     domain='PloneMeeting',
                                     context=site.REQUEST)
-        front_page.setText(front_page_body)
+        if hasattr(front_page, 'setText'):
+            front_page.setText(front_page_body)
+        else:
+            from imio.helpers.content import richtextval
+            front_page.text = richtextval(front_page_body)
         front_page.reindexObject()
     logger.info('Done.')
 

@@ -6,9 +6,12 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
-from App.class_init import InitializeClass
-from appy.gen import No
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
+try:
+    from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+except ImportError:
+    ReferenceBrowserWidget = lambda **kw: None
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -47,24 +50,45 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
-from Products.Archetypes.atapi import BaseFolder
-from Products.Archetypes.atapi import BooleanField
-from Products.Archetypes.atapi import DateTimeField
-from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import IntegerField
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
-from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import ReferenceField
-from Products.Archetypes.atapi import registerType
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import SelectionWidget
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import StringWidget
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
+try:
+    from Products.Archetypes.atapi import BaseFolder
+    from Products.Archetypes.atapi import BooleanField
+    from Products.Archetypes.atapi import DateTimeField
+    from Products.Archetypes.atapi import DisplayList
+    from Products.Archetypes.atapi import IntegerField
+    from Products.Archetypes.atapi import LinesField
+    from Products.Archetypes.atapi import MultiSelectionWidget
+    from Products.Archetypes.atapi import OrderedBaseFolder
+    from Products.Archetypes.atapi import OrderedBaseFolderSchema
+    from Products.Archetypes.atapi import ReferenceField
+    from Products.Archetypes.atapi import registerType
+    from Products.Archetypes.atapi import RichWidget
+    from Products.Archetypes.atapi import Schema
+    from Products.Archetypes.atapi import SelectionWidget
+    from Products.Archetypes.atapi import StringField
+    from Products.Archetypes.atapi import StringWidget
+    from Products.Archetypes.atapi import TextAreaWidget
+    from Products.Archetypes.atapi import TextField
+except ImportError:
+    class _ATStub:
+        """Stub for AT schema objects so module-level code doesn't crash."""
+        _properties = {'widget': lambda **kw: _ATStub()}
+        def __init__(self, *a, **kw): pass
+        def __call__(self, *a, **kw): return self
+        def __getitem__(self, k): return self
+        def __getattr__(self, k): return self
+        def __setattr__(self, k, v): pass
+        def __add__(self, other): return self
+        def copy(self): return self
+    BaseFolder = OrderedBaseFolder = object
+    BooleanField = DateTimeField = IntegerField = LinesField = _ATStub()
+    ReferenceField = StringField = TextField = _ATStub()
+    DisplayList = MultiSelectionWidget = RichWidget = _ATStub
+    Schema = _ATStub
+    OrderedBaseFolderSchema = _ATStub()
+    SelectionWidget = StringWidget = _ATStub()
+    TextAreaWidget = _ATStub()
+    def registerType(*a, **kw): pass
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -168,7 +192,7 @@ from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 
 import html
@@ -206,9 +230,9 @@ INSERT_ITEM_ERROR = 'There was an error when inserting the item, ' \
                     'please contact system administrator!'
 
 
+@implementer(IMeetingItemWorkflowConditions)
 class MeetingItemWorkflowConditions(object):
     '''Adapts a MeetingItem to interface IMeetingItemWorkflowConditions.'''
-    implements(IMeetingItemWorkflowConditions)
     security = ClassSecurityInfo()
 
     def __init__(self, item):
@@ -800,9 +824,9 @@ class MeetingItemWorkflowConditions(object):
 InitializeClass(MeetingItemWorkflowConditions)
 
 
+@implementer(IMeetingItemWorkflowActions)
 class MeetingItemWorkflowActions(object):
     '''Adapts a meeting item to interface IMeetingItemWorkflowActions.'''
-    implements(IMeetingItemWorkflowActions)
     security = ClassSecurityInfo()
 
     def __init__(self, item):
@@ -2249,11 +2273,11 @@ MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
 MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
 
 
+@implementer(IMeetingItem)
 class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(IMeetingItem)
 
     meta_type = 'MeetingItem'
     _at_rename_after_creation = True
@@ -2324,11 +2348,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            (not acceptable_pos or not isPowerObserverForCfg(cfg, acceptable_pos)) and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
-            # do not return unicode as getDecision returns 'utf-8' usually
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG).encode('utf-8')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
 
     security.declarePublic('getMotivation')
 
@@ -4264,18 +4287,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    def attribute_is_used_cachekey(method, self, name):
-        '''cachekey method for self.attribute_is_used.'''
-        return "{0}.{1}".format(self.portal_type, name)
-
     security.declarePublic('attribute_is_used')
 
-    @ram.cache(attribute_is_used_cachekey)
     def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (name in cfg.used_item_attributes)
+        used = cfg.used_item_attributes
+        if name in used:
+            return True
+        # used_item_attributes stores snake_case names; also check the
+        # snake_case version when a camelCase name is passed (DX migration)
+        from plonemeeting.core.content.meetingconfig import _at_to_dx
+        return _at_to_dx(name) in used
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''
@@ -4705,7 +4729,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
-        if len(item_votes) - 1 >= vote_number:
+        if vote_number != 'all' and len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
         else:
             poll_type = self.getPollType()

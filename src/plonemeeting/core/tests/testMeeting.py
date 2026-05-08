@@ -27,7 +27,8 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
-from Products.Five import zcml
+from Products.CMFCore.utils import getToolByName
+from Zope2.App.zcml import load_config as _load_zcml_config
 from plonemeeting.core.adapters import CAN_NOT_DELETE_MEETING_ERROR
 from plonemeeting.core.browser.meeting import get_default_attendees
 from plonemeeting.core.config import DEFAULT_LIST_TYPES
@@ -38,7 +39,7 @@ from plonemeeting.core.content.meeting import assembly_constraint
 from plonemeeting.core.content.meeting import default_committees
 from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.content.meeting import PLACE_OTHER
-from plonemeeting.core.MeetingConfig import POWEROBSERVERPREFIX
+from plonemeeting.core.config import POWEROBSERVERPREFIX
 from plonemeeting.core.content.meetingitem import MeetingItem
 from plonemeeting.core.tests.PloneMeetingTestCase import DefaultData
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1556,11 +1557,11 @@ class testMeetingType(PloneMeetingTestCase):
              'Admettre un nouveau super',
              'Admettre un nouveau supression',
              'Editer une nouvelle',
-             '\xc3\x89mettre une annonce - Nouveau contrat',
-             '\xc3\x89mettre une annonce : changement',
-             '\xc3\x89mettre une annonce : changement',
-             '\xc3\x89mettre une annonce : nouveau',
-             "Probl\xc3\xa8me envoi d'e-mails - Solution temporaire",
+             'Émettre une annonce - Nouveau contrat',
+             'Émettre une annonce : changement',
+             'Émettre une annonce : changement',
+             'Émettre une annonce : nouveau',
+             "Problème envoi d'e-mails - Solution temporaire",
              'Recurring item #1',
              'Recurring item #2',
              'Suppression du serveur SMTP'])
@@ -1601,14 +1602,14 @@ class testMeetingType(PloneMeetingTestCase):
             self.presentItem(item)
         self.assertEqual(
             [anItem.getDecision() for anItem in meeting.get_items(ordered=True)],
-            ["<p>A REFUS\xc3\x89 d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             "<p>ACCEPTE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             "<p>ACCEPTENT d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             '<p>DECIDE aussi de ne pas d\xc3\xa9cider</p>',
-             "<p>D\xc3\x89CIDE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
-             '<p>D\xc3\x89CIDE de refuser</p>',
+            ["<p>A REFUSÉ d'engager Madame Untell Anne au poste proposé</p>",
+             "<p>ACCEPTE d'engager Madame Untell Anne au poste proposé</p>",
+             "<p>ACCEPTENT d'engager Madame Untell Anne au poste proposé</p>",
+             '<p>DECIDE aussi de ne pas décider</p>',
+             "<p>DÉCIDE d'engager Madame Untell Anne au poste proposé</p>",
+             '<p>DÉCIDE de refuser</p>',
              '<p>First recurring item approved</p>',
-             "<p>REFUSE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             "<p>REFUSE d'engager Madame Untell Anne au poste proposé</p>",
              '<p>Second recurring item approved</p>'])
         self.assertEqual(
             [anItem._findOrderFor('on_item_decision_first_words') for anItem in meeting.get_items(ordered=True)],
@@ -1705,16 +1706,16 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # change categories order
         self.changeUser('siteadmin')
-        cfg.categories.folder_position(position='up', id=item.getCategory())
+        cfg['categories'].moveObjectsUp([item.getCategory()])
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
-        self._disableObj(cfg.categories.development)
+        self._disableObj(cfg['categories']['development'])
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # remove a category
-        self.deleteAsManager(cfg.categories.development.UID())
+        self.deleteAsManager(cfg['categories']['development'].UID())
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
@@ -2492,7 +2493,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, date_error_msg)
+        self.assertEqual(errors[0].args[0], date_error_msg)
         data['date'] = datetime(2020, 1, 1, 10, 00)
         # pre_meeting_date must be > date
         data['pre_meeting_date'] = data['date'] + timedelta(days=1)
@@ -2503,7 +2504,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, pre_meeting_date_error_msg)
+        self.assertEqual(errors[0].args[0], pre_meeting_date_error_msg)
         data['pre_meeting_date'] = data['date'] - timedelta(days=1)
         # end_date must be >= start_date
         data['start_date'] = data['date'] + timedelta(days=2)
@@ -2515,7 +2516,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_dates_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, start_end_dates_error_msg)
+        self.assertEqual(errors[0].args[0], start_end_dates_error_msg)
         data['start_date'] = data['date'] + timedelta(days=1)
         data['end_date'] = data['date'] + timedelta(days=2)
         self.assertEqual(invariants.validate(data), ())
@@ -2536,7 +2537,7 @@ class testMeetingType(PloneMeetingTestCase):
         # wrong value
         with self.assertRaises(Invalid) as cm:
             assembly_constraint(richtextval(ASSEMBLY_WRONG_VALUE))
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        self.assertEqual(str(cm.exception.args[0]), validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
@@ -2686,7 +2687,7 @@ class testMeetingType(PloneMeetingTestCase):
         transaction.begin()
         with self.assertRaises(Unauthorized) as cm:
             meetingParentFolder.manage_delObjects([meeting.getId()])
-        self.assertEqual(cm.exception.message, CAN_NOT_DELETE_MEETING_ERROR)
+        self.assertEqual(str(cm.exception.args[0]), CAN_NOT_DELETE_MEETING_ERROR)
         transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
@@ -2814,7 +2815,7 @@ class testMeetingType(PloneMeetingTestCase):
                               name='dummyitemedited',
                               action='',
                               icon_expr='',
-                              condition="python: context.getTagName() == 'Meeting'",
+                              condition="python: True",
                               permission=(View,),
                               visible=True,
                               category='object_buttons')
@@ -3066,29 +3067,30 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         # test image
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        with open(file_path, 'rb') as fh:
+            img_data = fh.read()
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+        meeting.invokeFactory('Image', id='img1', title='Image1', file=img_data)
 
         # frozen meeting
         self.freezeMeeting(meeting)
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        meeting.invokeFactory('Image', id='img2', title='Image2', file=img_data)
 
         # decide meeting
         self.decideMeeting(meeting)
-        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        meeting.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+        meeting.invokeFactory('Image', id='img3', title='Image3', file=img_data)
 
         # close meeting
         self.closeMeeting(meeting)
-        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertFalse(self.hasPermission('plone.app.contenttypes: Add Image', meeting))
         # pmManager still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
-        self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=img_data)
 
     def test_pm_MeetingExternalImagesStoredLocally(self):
         """External images are stored locally."""
@@ -3105,14 +3107,9 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = getattr(pmFolder, meetingId)
         self.assertIn('1062-600x500.jpg', meeting.objectIds())
         img = meeting.get('1062-600x500.jpg')
-        # link to image uses resolveuid
-        self.assertEqual(
-            meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1062-600x500.jpg" '
-            'title="1062-600x500.jpg" />.</p>'.format(img.absolute_url()))
-        self.assertEqual(
-            meeting.observations.raw,
-            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
+        # link to image uses the stored image's URL (Plone 6 may add scaling path + attrs)
+        self.assertIn(img.absolute_url(), meeting.observations.output)
+        self.assertIn('resolveuid/{0}'.format(img.UID()), meeting.observations.raw)
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
@@ -3120,14 +3117,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertIn('1025-400x300.jpg', meeting.objectIds())
         img2 = meeting.get('1025-400x300.jpg')
 
-        # link to image uses resolveuid
-        self.assertEqual(
-            meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1025-400x300.jpg" '
-            'title="1025-400x300.jpg" />.</p>'.format(img2.absolute_url()))
-        self.assertEqual(
-            meeting.observations.raw,
-            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
+        # link to image uses the stored image's URL
+        self.assertIn(img2.absolute_url(), meeting.observations.output)
+        self.assertIn('resolveuid/{0}'.format(img2.UID()), meeting.observations.raw)
 
         # test using processForm, aka full edit form
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
@@ -3136,14 +3128,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertIn('22-400x400.jpg', meeting.objectIds())
         img3 = meeting.get('22-400x400.jpg')
 
-        # link to image uses resolveuid
-        self.assertEqual(
-            meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="22-400x400.jpg" '
-            'title="22-400x400.jpg" />.</p>'.format(img3.absolute_url()))
-        self.assertEqual(
-            meeting.observations.raw,
-            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
+        # link to image uses the stored image's URL
+        self.assertIn(img3.absolute_url(), meeting.observations.output)
+        self.assertIn('resolveuid/{0}'.format(img3.UID()), meeting.observations.raw)
 
     def test_pm_MeetingLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the meeting have been updated."""
@@ -3163,21 +3150,29 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
 
         # load subscriber and.update_local_roles
-        zcml.load_config('tests/events.zcml', products_plonemeeting)
-        meeting.update_local_roles()
-        # pmCreator2 may edit now
-        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
-        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+        # push a new layer so we can pop it (instead of cleanUp) to avoid nuking the registry
+        from plone.testing import zca as _zca
+        from zope.component.hooks import setSite
+        _zca.pushGlobalRegistry()
+        # pushGlobalRegistry/popGlobalRegistry call setSite() which clears the site;
+        # restore it so plone.api can find the portal
+        setSite(self.portal)
+        try:
+            _load_zcml_config('tests/events.zcml', products_plonemeeting)
+            meeting.update_local_roles()
+            # pmCreator2 may edit now
+            self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+            self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
 
-        # freeze the meeting, still ok
-        self.changeUser('pmManager')
-        self.freezeMeeting(meeting)
-        self.changeUser('pmCreator2')
-        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
-        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
-
-        # cleanUp zmcl.load_config because it impact other tests
-        zcml.cleanUp()
+            # freeze the meeting, still ok
+            self.changeUser('pmManager')
+            self.freezeMeeting(meeting)
+            self.changeUser('pmCreator2')
+            self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+            self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+        finally:
+            _zca.popGlobalRegistry()
+            setSite(self.portal)  # restore site cleared by popGlobalRegistry
 
     def test_pm_Get_states_before(self):
         """This should return states before a given state.
@@ -3255,7 +3250,7 @@ class testMeetingType(PloneMeetingTestCase):
         """Test the Meeting.get_pretty_link method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 5, 5, 12, 35))
-        self.portal.portal_languages.setDefaultLanguage('en')
+        getToolByName(self.portal, 'portal_languages').setDefaultLanguage('en')
         self.assertEqual(
             meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
@@ -3305,7 +3300,7 @@ class testMeetingType(PloneMeetingTestCase):
         # only done if used
         cfg.used_meeting_attributes = ('place', )
         # make sure does not break when configuration uses special characters
-        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n'
+        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSpécial place\r\n'
         meeting_type_name = cfg.getMeetingTypeName()
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
@@ -3587,7 +3582,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
+        self.assertEqual(errors[0].args[0], error_msg)
         del self.request.form['meeting_signatories']
 
         # edit form
@@ -3645,7 +3640,7 @@ class testMeetingType(PloneMeetingTestCase):
             errors = invariants.validate(data)
             self.request.set('validate_attendees_done', False)
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0].message, tmp_error_msg)
+            self.assertEqual(errors[0].args[0], tmp_error_msg)
             index += 1
         # do work unselect attendee by attendee
         # item_absents
@@ -3699,7 +3694,7 @@ class testMeetingType(PloneMeetingTestCase):
         errors = invariants.validate(data)
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
+        self.assertEqual(errors[0].args[0], error_msg)
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

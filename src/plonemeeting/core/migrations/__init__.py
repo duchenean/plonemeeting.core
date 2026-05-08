@@ -26,10 +26,10 @@ from plone import api
 from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFPlone.utils import base_hasattr
 from plonemeeting.core.content.meeting import IMeeting
-from plonemeeting.core.MeetingConfig import ITEM_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_STATE_ATTRS
-from plonemeeting.core.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import ITEM_WF_STATE_ATTRS
+from plonemeeting.core.config import ITEM_WF_TRANSITION_ATTRS
+from plonemeeting.core.config import MEETING_WF_STATE_ATTRS
+from plonemeeting.core.config import MEETING_WF_TRANSITION_ATTRS
 from plonemeeting.core.setuphandlers import columnInfos
 from plonemeeting.core.setuphandlers import indexInfos
 from plonemeeting.core.utils import forceHTMLContentTypeForEmptyRichFields

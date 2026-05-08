@@ -35,7 +35,7 @@ from plonemeeting.core.utils import createOrUpdatePloneGroup
 from plonemeeting.core.utils import getCustomAdapter
 from plonemeeting.core.utils import listifySignatures
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 from . import interfaces
 import six
@@ -193,11 +193,11 @@ for field in MeetingGroup_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 
 
+@implementer(interfaces.IMeetingGroup)
 class MeetingGroup(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeetingGroup)
 
     meta_type = 'MeetingGroup'
     _at_rename_after_creation = True

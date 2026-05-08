@@ -5,7 +5,10 @@ from __future__ import absolute_import, print_function
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.catalog import reindexIndexes
 from plone import api
-from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
+try:
+    from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
+except ImportError:
+    migrate_base_class_to_new_class = None
 from plone.namedfile.file import NamedBlobFile
 from plonemeeting.core.content.organization import PMOrganization
 from plonemeeting.core.migrations import logger
