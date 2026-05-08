@@ -231,7 +231,8 @@ def _resolve_adaptable_key(tag_name):
         if tag_lower == base_name.lower():
             return base_name
     # Prefix match (e.g. 'MeetingCollege' -> 'Meeting', 'meetingadvicefinances' -> 'MeetingAdvice')
-    for base_name in adaptables:
+    # Sort longest-first so 'MeetingAdvice' is tested before 'Meeting'
+    for base_name in sorted(adaptables, key=len, reverse=True):
         if tag_lower.startswith(base_name.lower()):
             return base_name
     return tag_name

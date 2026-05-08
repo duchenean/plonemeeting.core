@@ -673,7 +673,7 @@ class MeetingReorderItems(BrowserView):
             itemNumber = itemNumber + 100
         self.context._finalize_item_insert(items_to_update=items)
 
-    def index(self):
+    def __call__(self):
         """ """
         self._recompute_items_order()
         msg = _('Items have been reordered.')

@@ -1203,8 +1203,10 @@ class testViews(PloneMeetingTestCase):
         file_path = path.join(path.dirname(__file__), 'dot.gif')
         data = open(file_path, 'rb')
         img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
-        img = getattr(item, img_id)
-        img_blob_path = img.getBlobWrapper().blob._p_blob_committed
+        img = item[img_id]
+        # DX Image stores blob at img.image._blob; AT used getBlobWrapper().blob
+        img_blob = getattr(img, 'image', None) or getattr(img, 'getBlobWrapper', lambda: None)()
+        img_blob_path = img_blob._blob._p_blob_committed if hasattr(img_blob, '_blob') else img_blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
         # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
         res = helper.printXhtml(
@@ -2343,11 +2345,11 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(self.request.get('pdf_file_content'))
         self.assertTrue(form())
         form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
+        self.assertTrue(b'Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
         # when using two_sided, a blank page is inserted
         self.request['form.widgets.two_sided'] = 'true'
         form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
+        self.assertTrue(b'Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""

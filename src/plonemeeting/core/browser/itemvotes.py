@@ -332,16 +332,16 @@ class EncodeVotesForm(BaseAttendeeForm):
         self.widgets['votes'].auto_append = False
         self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
         for row in self.widgets['votes'].widgets:
-            if row.subform.context is None:
+            if not hasattr(row, 'widgets') or 'voter_uid' not in row.widgets:
                 continue
-            voter_uid = row.subform.context['voter_uid']
+            voter_uid = row.widgets['voter_uid'].value
+            if not voter_uid:
+                continue
             group_id = [group_id for group_id, values in groups.items()
                         if voter_uid in values['uids']]
             if group_id:
                 row.addClass(group_id[0])
-            for wdt in row.subform.widgets.values():
-                if wdt.__name__ == 'voter_uid':
-                    wdt.mode = HIDDEN_MODE
+            row.widgets['voter_uid'].mode = HIDDEN_MODE
         # disable apply_until_item_number when using several votes
         # or if poll_type was redefined
         if _should_disable_apply_until_item_number(self.context):
@@ -558,11 +558,13 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         self.widgets['votes'].auto_append = False
         self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
         for row in self.widgets['votes'].widgets:
-            for wdt in row.subform.widgets.values():
+            if not hasattr(row, 'widgets'):
+                continue
+            for wdt in row.widgets.values():
                 if wdt.__name__ == 'vote_value_id':
                     wdt.mode = HIDDEN_MODE
                 elif wdt.__name__ == 'vote_value' and wdt.value:
-                    wdt.klass += " {0}".format(wdt.context['vote_value'])
+                    wdt.klass += " {0}".format(wdt.value)
         # disable apply_until_item_number when using several votes
         if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']

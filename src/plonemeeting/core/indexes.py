@@ -264,10 +264,14 @@ def SearchableText(obj):
     """
       Contained annex title and scan_id are indexed in the SearchableText.
     """
-    from plone.app.dexterity.textindexer.indexer import dynamic_searchable_text_indexer
     res = []
-    # Use the DX text indexer to collect searchable() marked fields
-    base = dynamic_searchable_text_indexer(obj)()
+    # Prefer the object's own SearchableText() method (MeetingItem, Meeting).
+    # Fall back to the DX text indexer for other content types.
+    if callable(getattr(obj, 'SearchableText', None)):
+        base = obj.SearchableText()
+    else:
+        from plone.app.dexterity.textindexer.indexer import dynamic_searchable_text_indexer
+        base = dynamic_searchable_text_indexer(obj)()
     if base:
         res.append(base)
     for annex in get_annexes(obj):

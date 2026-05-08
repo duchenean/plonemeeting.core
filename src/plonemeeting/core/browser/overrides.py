@@ -113,6 +113,12 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
       See #4856
     '''
 
+    @property
+    def selected_portal_tab(self):
+        """Plone 6 dropped this attribute; re-expose it for tests and templates."""
+        result = self.selectedTabs(portal_tabs=self.portal_tabs)
+        return result.get('portal', 'index_html')
+
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
         plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
