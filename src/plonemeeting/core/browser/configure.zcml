@@ -385,6 +385,14 @@
           template="templates/display_group_users.pt"
           class="plonemeeting.core.browser.views.PMDisplayGroupUsersView"
           permission="zope2.View" />
+        <!-- Override site-root registration for Plone 6 ID-based member deduplication -->
+        <browser:page
+          for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+          name="display-group-users"
+          template="templates/display_group_users.pt"
+          class="plonemeeting.core.browser.views.PMDisplayGroupUsersViewBase"
+          layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
+          permission="zope2.View" />
     </configure>
 
     <browser:page

@@ -1197,16 +1197,21 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_PrintXhtmlImageSrcToPaths(self):
         ''' '''
+        from plone.namedfile.file import NamedBlobImage
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use image_src_to_paths
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'rb')
-        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        with open(file_path, 'rb') as f:
+            img_data = f.read()
+        # DX Image requires setting the 'image' field with NamedBlobImage (not 'file')
+        img_id = item.invokeFactory('Image', id='img', title='Image')
         img = item[img_id]
-        # DX Image stores blob at img.image._blob; AT used getBlobWrapper().blob
-        img_blob = getattr(img, 'image', None) or getattr(img, 'getBlobWrapper', lambda: None)()
-        img_blob_path = img_blob._blob._p_blob_committed if hasattr(img_blob, '_blob') else img_blob._p_blob_committed
+        img.image = NamedBlobImage(data=img_data, filename='dot.gif')
+        # Commit the blob so _p_blob_committed is set
+        transaction.savepoint()
+        img.image._blob._p_activate()
+        img_blob_path = img.image._blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
         # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
         res = helper.printXhtml(
@@ -1226,13 +1231,17 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_PrintXhtmlImageSrcToData(self):
         ''' '''
+        from plone.namedfile.file import NamedBlobImage
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use image_src_to_data
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'rb')
-        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        with open(file_path, 'rb') as f:
+            img_data = f.read()
+        # DX Image requires setting the 'image' field with NamedBlobImage (not 'file')
+        img_id = item.invokeFactory('Image', id='img', title='Image')
         img = getattr(item, img_id)
+        img.image = NamedBlobImage(data=img_data, filename='dot.gif')
         pattern = '<p>Text with image <img src="{0}"/> and more text.</p>'
         text = pattern.format(img.absolute_url())
         # in tests the monkeypatch for safe_html.hasScript does not seem to be applied...
@@ -1607,6 +1616,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.item_reference for item in right_ordered_items], right_item_references)
 
+    def _normalize_gam(self, gam_result):
+        """Normalize _get_groups_and_members result to (index, id) tuples for stable comparison."""
+        return [(i, p.getId()) for i, p in gam_result]
+
     def test_pm_DisplayGroupUsersView(self):
         """This view returns member of a group but not 'Not found' ones,
            aka users that were in groups and that were deleted, a special user
@@ -1618,33 +1631,22 @@ class testViews(PloneMeetingTestCase):
         view(group_ids=[group_id])
         self.assertEqual(len(view.groups), 1)
         self.assertEqual(
-            view._get_groups_and_members(group),
-            [(0, api.user.get('pmCreator1')),
-             (0, api.user.get('pmCreator1b')),
-             (0, api.user.get('pmManager'))])
+            self._normalize_gam(view._get_groups_and_members(group)),
+            [(0, 'pmCreator1'), (0, 'pmCreator1b'), (0, 'pmManager')])
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
-            view._get_groups_and_members(group),
-            [(0, api.user.get('pmCreator1')),
-             (0, api.user.get('pmCreator1b')),
-             (0, api.user.get('pmManager'))])
+            self._normalize_gam(view._get_groups_and_members(group)),
+            [(0, 'pmCreator1'), (0, 'pmCreator1b'), (0, 'pmManager')])
 
     def _display_user_groups_sub_groups_false(self):
-        return [(1, api.user.get('pmCreator1')),
-                (1, api.user.get('pmCreator1b')),
-                (1, api.user.get('pmManager')),
-                (0, api.user.get('pmObserver1')),
-                (0, api.user.get('pmReviewer1'))]
+        return [(1, 'pmCreator1'), (1, 'pmCreator1b'), (1, 'pmManager'),
+                (0, 'pmObserver1'), (0, 'pmReviewer1')]
 
     def _display_user_groups_sub_groups_true(self):
-        return [(1, api.group.get(self.developers_creators)),
-                (2, api.user.get('pmCreator1')),
-                (2, api.user.get('pmCreator1b')),
-                (2, api.user.get('pmManager')),
-                (0, api.user.get('pmManager')),
-                (0, api.user.get('pmObserver1')),
-                (0, api.user.get('pmReviewer1'))]
+        return [(1, self.developers_creators),
+                (2, 'pmCreator1'), (2, 'pmCreator1b'), (2, 'pmManager'),
+                (0, 'pmManager'), (0, 'pmObserver1'), (0, 'pmReviewer1')]
 
     def test_pm_DisplayGroupUsersViewGroupsInGroups(self):
         """Subgroups are displayed with contained members.
@@ -1660,11 +1662,11 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.groups), 1)
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
-        self.assertListEqual(view._get_groups_and_members(group),
+        self.assertListEqual(self._normalize_gam(view._get_groups_and_members(group)),
                              self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
-        self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),
+        self.assertEqual(self._normalize_gam(view._get_groups_and_members(group, keep_subgroups=True)),
                          self._display_user_groups_sub_groups_true())
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
@@ -3383,19 +3385,20 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         meeting = self.create('Meeting')
-        # working in Folder folder_contents
+        # working in Folder folder_contents — in Plone 6 the view renders a JS widget,
+        # no server-side path listing; just verify it renders without error
         folder = self.getMeetingFolder()
-        self.assertTrue(
-            '/'.join(item.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
-        self.assertTrue(
-            '/'.join(meeting.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
+        self.assertTrue(folder.restrictedTraverse('@@folder_contents')())
         # working with item or meeting related DashboardCollections
+        # verify via brains_results() which backs the @@folder_contents widget
         item_collection = self.meetingConfig.searches.searches_items.searchallitems
-        self.assertTrue(
-            '/'.join(item.getPhysicalPath()) in item_collection.restrictedTraverse('@@folder_contents')())
+        item_path = '/'.join(item.getPhysicalPath())
+        self.assertTrue(any(b.getPath() == item_path
+                            for b in item_collection.brains_results()))
         meeting_collection = self.meetingConfig.searches.searches_meetings.searchnotdecidedmeetings
-        self.assertTrue(
-            '/'.join(meeting.getPhysicalPath()) in meeting_collection.restrictedTraverse('@@folder_contents')())
+        meeting_path = '/'.join(meeting.getPhysicalPath())
+        self.assertTrue(any(b.getPath() == meeting_path
+                            for b in meeting_collection.brains_results()))
 
     def test_pm_title_viewlet(self):
         """Test that MeetingConfig title is displayed on pmFolders (faceted folders)

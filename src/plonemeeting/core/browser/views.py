@@ -2304,7 +2304,26 @@ class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGH
     """ """
 
 
-class PMDisplayGroupUsersView(DisplayGroupUsersView):
+class PMDisplayGroupUsersViewBase(DisplayGroupUsersView):
+    """Plone 6 compatible base: deduplicates group members by ID (not object identity)."""
+
+    def _get_groups_and_members(self, group, index=0, keep_subgroups=False):
+        from Products.CMFPlone.utils import base_hasattr
+        members = []
+        if keep_subgroups and index != 0:
+            members.append((index, group))
+            index += 1
+        for principal in group.getAllGroupMembers():
+            isGroup = base_hasattr(principal, 'isGroup') and principal.isGroup() or 0
+            if isGroup:
+                members += self._get_groups_and_members(principal, index + 1, keep_subgroups)
+            else:
+                if keep_subgroups or principal.getId() not in [p.getId() for i, p in members]:
+                    members.append((index, principal))
+        return members
+
+
+class PMDisplayGroupUsersView(PMDisplayGroupUsersViewBase):
     """
       View that display the users of a Plone group.
     """

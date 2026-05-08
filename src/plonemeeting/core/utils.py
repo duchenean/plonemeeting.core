@@ -2803,6 +2803,10 @@ def convert2xhtml(obj,
 
     if use_appy_pod_preprocessor:
         xhtmlFinal = XhtmlPreprocessor.preprocess(xhtmlFinal, html=True)
+        # appy 1.0+ wraps the content in <p>...</p> for internal XML validity;
+        # strip the root wrapper so callers get back clean HTML
+        if xhtmlFinal.startswith('<p>') and xhtmlFinal.endswith('</p>'):
+            xhtmlFinal = xhtmlFinal[3:-4]
 
     return xhtmlFinal
 
