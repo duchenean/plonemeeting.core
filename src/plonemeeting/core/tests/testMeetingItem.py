@@ -29,6 +29,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToObject
+from imio.helpers.utils import create_image_content
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -7134,10 +7135,8 @@ class testMeetingItem(PloneMeetingTestCase):
         file_handler = open(file_path, 'rb')
         data = file_handler.read()
         file_handler.close()
-        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
-        img = getattr(item, img_id)
-        img2_id = item.invokeFactory('Image', id='dot2.gif', title='Image', file=data)
-        img2 = getattr(item, img2_id)
+        img = create_image_content(item, 'Image', 'dot.gif', data, filename='dot.gif')
+        img2 = create_image_content(item, 'Image', 'dot2.gif', data, filename='dot2.gif')
 
         # let's say we even have external images
         text_pattern = '<p>External image <img src="{0}">.</p>' \

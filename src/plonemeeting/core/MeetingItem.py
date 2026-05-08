@@ -4287,18 +4287,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    def attribute_is_used_cachekey(method, self, name):
-        '''cachekey method for self.attribute_is_used.'''
-        return "{0}.{1}".format(self.portal_type, name)
-
     security.declarePublic('attribute_is_used')
 
-    @ram.cache(attribute_is_used_cachekey)
     def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (name in cfg.used_item_attributes)
+        used = cfg.used_item_attributes
+        if name in used:
+            return True
+        # used_item_attributes stores snake_case names; also check the
+        # snake_case version when a camelCase name is passed (DX migration)
+        from plonemeeting.core.content.meetingconfig import _at_to_dx
+        return _at_to_dx(name) in used
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''

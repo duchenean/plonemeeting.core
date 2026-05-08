@@ -7275,7 +7275,7 @@ class MeetingItem(Container):
                         self._at_creation_flag = False
         if not is_creation:
             self.at_post_edit_script(full_edit_form=True, reindex_local_roles=True)
-        self.reindexObject()
+        reindex_object(self)
 
     security.declarePublic('showOptionalAdvisers')
 
