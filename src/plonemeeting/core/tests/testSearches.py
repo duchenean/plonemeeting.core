@@ -727,6 +727,13 @@ class testSearches(PloneMeetingTestCase):
                         in query['reviewProcessInfo']['query'])
         self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid)
                         in query['reviewProcessInfo']['query'])
+        # restore pmReviewer2 original groups: the functional layer
+        # commits, so the swapped memberships (developers_reviewers!)
+        # would leak View on developers items to later test modules
+        self._removePrincipalFromGroups(
+            'pmReviewer2', [self.developers_reviewers, self.vendors_prereviewers])
+        for grp_id in member_groups:
+            self._addPrincipalToGroup('pmReviewer2', grp_id)
 
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
         '''Test the 'items-to-validate-of-my-reviewer-groups' adapter.

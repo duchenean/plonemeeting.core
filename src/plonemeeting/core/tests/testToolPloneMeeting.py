@@ -340,6 +340,12 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
         self.assertEqual(clonedItem.proposing_group_with_group_in_charge,
                          '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
+        # leave no state behind: the functional layer commits, so
+        # pmCreator2 in developers_observers and the groups_in_charge
+        # values would leak into every module executed after this one
+        self._removePrincipalFromGroups('pmCreator2', [self.developers_observers])
+        self.developers.groups_in_charge = ()
+        self.vendors.groups_in_charge = ()
 
     def test_pm_PasteItem(self):
         '''Paste an item (previously copied) in destFolder.'''

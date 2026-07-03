@@ -3153,7 +3153,7 @@ class testMeetingItem(PloneMeetingTestCase):
         res = form.handleApply(form, None)
         # this generated a 3 pages PDF, 1 page per element
         res.seek(0)
-        self.assertTrue("Pages\n/Count 3" in res.read())
+        self.assertTrue(b"Pages\n/Count 3" in res.read())
         self.assertEqual(self.request.RESPONSE.getHeader('content-type'), 'application/pdf')
 
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
