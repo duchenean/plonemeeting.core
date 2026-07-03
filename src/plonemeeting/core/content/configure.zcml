@@ -71,9 +71,7 @@
              name="MeetingSearchableTextExtender" />
 
     <!-- Plone 6-compatible INavigationQueryBuilder for ContactSource-based sources.
-         plone.formwidget.contenttree's QueryBuilder uses portal_properties which
-         was removed in Plone 6. -->
-    <adapter factory=".source.Plone6NavigationQueryBuilder" />
+         registered in overrides.zcml since it overrides plone.formwidget.contenttree. -->
 
     <!-- Fix object_provides catalog index for organizations after
          collective.contact.plonegroup's mark_organization fires.

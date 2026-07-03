@@ -373,17 +373,25 @@ class UserProposingGroupsVocabulary(object):
         '''cachekey method for self._user_proposing_group_terms.'''
         date = get_cachekey_volatile('_users_groups_value')
         selectable_org_uids = self._get_selectable_orgs(context, tool, cfg, the_objects=False)
+        portal_type = getattr(context, 'portal_type', None)
         # use self.__class__.__name__ to get different ram.cache keys
-        return date, context.portal_type, selectable_org_uids, self.__class__.__name__
+        return date, portal_type, selectable_org_uids, self.__class__.__name__
 
     def _get_selectable_orgs(self, context, tool, cfg, the_objects=True):
         """ """
-        isDefinedInTool = context.isDefinedInTool()
+        # On Add forms context is the parent (not a MeetingItem) so it has
+        # no isDefinedInTool(); equivalent of False (regular access rules).
+        is_item = IMeetingItem.providedBy(context)
+        isDefinedInTool = is_item and context.isDefinedInTool()
         # bypass for Managers, pass isDefinedInTool to True so Managers
         # can select any available organizations
         isManager = tool.isManager(realManagers=True)
         # show every groups for Managers or when isDefinedInTool
         only_selectable = not bool(isDefinedInTool or isManager)
+        # cfg may be None when the vocabulary is bound in a context outside
+        # any MeetingConfig (e.g. portal_factory parent during Add form).
+        if cfg is None:
+            return []
         orgs = tool.get_selectable_orgs(
             cfg, only_selectable=only_selectable, the_objects=the_objects)
         return orgs
@@ -420,26 +428,31 @@ class UserProposingGroupsVocabulary(object):
            Return the organization(s) the user is creator for.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
+        # On Add forms context is the parent (or its RequestContainer wrapper),
+        # not a MeetingItem — methods like getProposingGroup/isDefinedInTool
+        # do not exist there.
+        is_item = IMeetingItem.providedBy(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         term_values, terms = self._user_proposing_group_terms(context, tool, cfg)
         # avoid modifying original list
         terms = list(terms)
-        # include_stored
-        if include_stored:
+        # include_stored — only meaningful on an existing item
+        if include_stored and is_item:
             terms = self._handle_include_stored(context, term_values, terms)
         # sort correctly
-        if 'proposing_group' not in cfg.item_fields_to_keep_config_sorting_for:
+        if cfg is not None and \
+           'proposing_group' not in cfg.item_fields_to_keep_config_sorting_for:
             terms = humansorted(terms, key=attrgetter('title'))
         # add a 'make_a_choice' value when used on an itemtemplate
-        if context.isDefinedInTool(item_type='itemtemplate'):
+        if is_item and context.isDefinedInTool(item_type='itemtemplate'):
             terms.insert(
                 0,
                 SimpleTerm("",
                            "",
                            translate('make_a_choice',
                                      domain='PloneMeeting',
-                                     context=context.REQUEST).encode('utf-8')))
+                                     context=context.REQUEST)))
         return SimpleVocabulary(terms)
 
 
@@ -586,7 +599,8 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'groups_in_charge' in cfg.item_fields_to_keep_config_sorting_for:
+        if cfg is not None and \
+           'groups_in_charge' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(
             context, sort=sort)._terms)
@@ -1045,6 +1059,7 @@ class ItemOptionalAdvicesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         daa = self._getDelayAwareAdvisers(context, cfg)
+        is_item = IMeetingItem.providedBy(context)
         # first time, we init a cached value with include_not_selectable_values=True
         # and include_selected=False so it will be the base default vocabulary
         if not include_selected and include_not_selectable_values:
@@ -1056,8 +1071,9 @@ class ItemOptionalAdvicesVocabulary(object):
             if not vocab:
                 vocab = self(context, False, True)
             # there are missing values
-            if set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
-                return repr(cfg), True, True, context.getOptionalAdvisers(), daa
+            stored = is_item and context.getOptionalAdvisers() or ()
+            if set(stored).difference([t.value for t in vocab._terms]):
+                return repr(cfg), True, True, stored, daa
             else:
                 # no missing values so we can use the default vocabulary
                 return repr(cfg), False, True, (), daa
@@ -1066,11 +1082,14 @@ class ItemOptionalAdvicesVocabulary(object):
 
     def _getDelayAwareAdvisers(self, context, cfg):
         """Separated so it can be called in cachekey."""
+        # cfg may be None on Add forms in folders without MEETING_CONFIG.
+        if cfg is None:
+            return ()
         # add delay-aware optionalAdvisers
         # validity_date is used for customAdviser validaty (date from, date to)
         validity_date = None
         item = None
-        if context.meta_type == 'MeetingItem':
+        if IMeetingItem.providedBy(context):
             item = context
             if context.isDefinedInTool():
                 # this way every defined custom advisers is valid and displayed
@@ -1088,7 +1107,12 @@ class ItemOptionalAdvicesVocabulary(object):
            p_include_not_selectable_values will include the 'not_selectable_value_...' values,
            useful for display only most of times."""
 
-        request = context.REQUEST
+        # On Add forms context is the parent (not a MeetingItem) — disable
+        # selected-value lookups that require getOptionalAdvisers/adviceIndex.
+        is_item = IMeetingItem.providedBy(context)
+        if not is_item:
+            include_selected = False
+        request = getattr(context, 'REQUEST', getRequest())
 
         def _displayDelayAwareValue(delay_label, org_title, delay, is_delay_calendar_days):
             org_title = safe_unicode(org_title)
@@ -1499,12 +1523,15 @@ class ListTypesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
+        if cfg is None:
+            return SimpleVocabulary(res)
+        request = getattr(context, 'REQUEST', getRequest())
         for listType in cfg.list_types:
             res.append(SimpleTerm(listType['identifier'],
                                   listType['identifier'],
                                   translate(safe_unicode(listType['label']),
                                             domain='PloneMeeting',
-                                            context=context.REQUEST))
+                                            context=request))
                        )
         return SimpleVocabulary(res)
 
@@ -2411,9 +2438,12 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
             context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
-        else:
+        elif IMeetingItem.providedBy(context):
             # MeetingItem, XXX not used for now
             stored_terms = context.getItemInitiator()
+        else:
+            # Add form: context is the parent / RequestContainer wrapper
+            stored_terms = []
         # add missing terms as inactive held_positions are not in the vocabulary
         # do not use by_token or by_value, it is not completed, maybe because of cached call?
         term_uids = [term.token for term in terms]
@@ -2558,14 +2588,20 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 
     def __call__(self, context):
         """This is not ram.cached."""
+        # On Add forms context is the parent (not a MeetingItem) so it has
+        # no getAssociatedGroups(); skip the missing-terms branch.
+        is_item = IMeetingItem.providedBy(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'associated_groups' in cfg.item_fields_to_keep_config_sorting_for:
+        if cfg is not None and \
+           'associated_groups' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # make sure we have a copy of _terms because we will add some
         terms = list(terms)
+        if not is_item:
+            return SimpleVocabulary(terms)
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedAssociatedOrganizations or from plonegroup
         stored_terms = context.getAssociatedGroups()
@@ -2605,6 +2641,8 @@ class BaseCopyGroupsVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         portal_groups = api.portal.get_tool('portal_groups')
         terms = []
+        if cfg is None:
+            return SimpleVocabulary(terms)
         if include_both:
             groupIds = cfg.selectable_copy_groups + cfg.selectable_restricted_copy_groups
             # remove duplicates
@@ -2642,6 +2680,10 @@ class ItemCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
         terms = super(ItemCopyGroupsVocabulary, self).__call__(context)._terms
         # make sure we have a copy of _terms because we will add some
         terms = list(terms)
+        # On Add forms context is the parent (not a MeetingItem) — no
+        # auto/stored copy groups to merge in.
+        if not IMeetingItem.providedBy(context):
+            return SimpleVocabulary(humansorted(terms, key=attrgetter('title')))
         # include terms for autoCopyGroups if relevant
         portal_groups = api.portal.get_tool('portal_groups')
         auto_attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'

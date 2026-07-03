@@ -6162,7 +6162,7 @@ class MeetingConfig(Container):
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
-        res = DisplayList(self._listRichTextFieldFor(MeetingItem)).sortedByValue() + get_dx_attrs(
+        res = DisplayList(self._listRichTextFieldFor(IMeetingItem)).sortedByValue() + get_dx_attrs(
             portal_type=self.getMeetingTypeName(), richtext_only=True, prefixed_key=True).sortedByValue()
         return res
 
@@ -6171,21 +6171,24 @@ class MeetingConfig(Container):
     def listItemRichTextFields(self):
         '''Lists all rich-text fields belonging to MeetingItem schema.'''
         res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
-        res += self._listRichTextFieldFor(MeetingItem)
+        res += self._listRichTextFieldFor(IMeetingItem)
         return DisplayList(tuple(res))
 
     def _listRichTextFieldFor(self, baseClass):
         '''
         '''
-        return self._listFieldsFor(baseClass, widget_type='RichWidget')
+        return self._listFieldsFor(baseClass, field_type=RichText)
 
     def _listFieldsFor(self,
                        schema_iface,
                        ignored_field_ids=[],
-                       hide_not_visible=False):
+                       hide_not_visible=False,
+                       field_type=None):
         """List (key, label) tuples for DX schema fields.
 
         ``schema_iface`` is the Dexterity schema interface (e.g. IMeetingItem).
+        ``field_type`` optionally restricts to fields that are instances of
+        the given schema field class (e.g. ``RichText``).
         """
         from zope.schema import getFieldsInOrder
         d = 'PloneMeeting'
@@ -6193,6 +6196,8 @@ class MeetingConfig(Container):
         res = []
         for field_name, field in getFieldsInOrder(schema_iface):
             if field_name in ignored_field_ids:
+                continue
+            if field_type is not None and not isinstance(field, field_type):
                 continue
             if hide_not_visible and field.required is False and \
                getattr(field, 'defaultFactory', None) is None and \

@@ -246,8 +246,124 @@ class IMeetingItem(IMeetingItemMarker):
     ``here.adapted().show_field(...)``, etc.) cannot be expressed at
     schema-declaration time on Dexterity. They are preserved as a comment
     above each affected field; the equivalent runtime visibility logic
-    will be ported into a form / view layer in B.2.x.
+    is ported in ``browser/meetingitem.py`` (MeetingItem{Add,Edit}Form).
     """
+
+    # ---- fieldsets ----
+    # Default fieldset (Details) holds the core fields below; named
+    # fieldsets group the rest into tabs. Field-level visibility is
+    # handled by browser/meetingitem.py:_FIELD_VISIBILITY at runtime.
+    model.fieldset(
+        'proposal',
+        label=_(u'PloneMeeting_fieldset_proposal', default=u'Proposition'),
+        fields=[
+            'proposing_group',
+            'proposing_group_with_group_in_charge',
+            'groups_in_charge',
+            'associated_groups',
+            'copy_groups',
+            'restricted_copy_groups',
+            'optional_advisers',
+            'item_initiator',
+        ],
+    )
+    model.fieldset(
+        'scheduling',
+        label=_(u'PloneMeeting_fieldset_scheduling', default=u'Inscription \xe0 s\xe9ance'),
+        fields=[
+            'list_type',
+            'emergency',
+            'emergency_motivation',
+            'preferred_meeting',
+            'meeting_deadline_date',
+            'oral_question',
+            'to_discuss',
+            'meeting_transition_inserting_me',
+            'send_to_authority',
+            'privacy',
+        ],
+    )
+    model.fieldset(
+        'budget',
+        label=_(u'PloneMeeting_fieldset_budget', default=u'Budget'),
+        fields=['budget_related', 'budget_infos'],
+    )
+    model.fieldset(
+        'decision',
+        label=_(u'PloneMeeting_fieldset_decision', default=u'D\xe9cision'),
+        fields=[
+            'motivation',
+            'decision',
+            'decision_suite',
+            'decision_end',
+            'votes_result',
+            'votes_observations',
+            'poll_type',
+            'poll_type_observations',
+        ],
+    )
+    model.fieldset(
+        'assembly',
+        label=_(u'PloneMeeting_fieldset_assembly', default=u'Assembl\xe9e'),
+        fields=[
+            'item_assembly',
+            'item_assembly_excused',
+            'item_assembly_absents',
+            'item_assembly_guests',
+            'item_signatures',
+            'in_and_out_moves',
+        ],
+    )
+    model.fieldset(
+        'mm_notes',
+        label=_(u'PloneMeeting_fieldset_mm_notes', default=u'Notes / observations'),
+        fields=[
+            'notes',
+            'meeting_managers_notes',
+            'meeting_managers_notes_suite',
+            'meeting_managers_notes_end',
+            'internal_notes',
+            'marginal_notes',
+            'observations',
+            'text_check_list',
+            'groups_in_charge_notes',
+            'needed_follow_up',
+            'provided_follow_up',
+            'committee_observations',
+            'committee_transcript',
+        ],
+    )
+    model.fieldset(
+        'clonable',
+        label=_(u'PloneMeeting_fieldset_clonable',
+                default=u'Vers autres conseils/comit\xe9s'),
+        fields=[
+            'other_meeting_configs_clonable_to',
+            'other_meeting_configs_clonable_to_emergency',
+            'other_meeting_configs_clonable_to_privacy',
+            'other_meeting_configs_clonable_to_field_title',
+            'other_meeting_configs_clonable_to_field_description',
+            'other_meeting_configs_clonable_to_field_detailed_description',
+            'other_meeting_configs_clonable_to_field_motivation',
+            'other_meeting_configs_clonable_to_field_decision',
+            'other_meeting_configs_clonable_to_field_decision_suite',
+            'other_meeting_configs_clonable_to_field_decision_end',
+        ],
+    )
+    model.fieldset(
+        'misc',
+        label=_(u'PloneMeeting_fieldset_misc', default=u'Syst\xe8me'),
+        fields=[
+            'item_number',
+            'item_reference',
+            'manually_linked_items',
+            'is_acceptable_out_of_meeting',
+            'completeness',
+            'item_is_signed',
+            'taken_over_by',
+            'template_using_groups',
+        ],
+    )
 
     # ---- default fieldset ----
 

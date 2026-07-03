@@ -24,9 +24,12 @@
         permission="cmf.ManagePortal" />
     -->
 
+    <!-- Plone 6: global_sections moved from IPortalHeader to IMainNavigation in
+         plone.app.layout 5.x. Override on the new manager so the override
+         actually replaces the default (otherwise both navbars render). -->
     <browser:viewlet
         name="plone.global_sections"
-        manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
+        manager="plone.app.layout.viewlets.interfaces.IMainNavigation"
         class=".browser.overrides.PMGlobalSectionsViewlet"
         template="browser/templates/sections.pt"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
@@ -274,5 +277,10 @@
         name="popup"
         provides="zope.formlib.namedtemplate.INamedTemplate" />
     -->
+
+    <!-- Plone 6-compatible INavigationQueryBuilder for ContactSource-based sources.
+         plone.formwidget.contenttree's QueryBuilder uses portal_properties which
+         was removed in Plone 6. -->
+    <adapter factory=".content.source.Plone6NavigationQueryBuilder" />
 
 </configure>

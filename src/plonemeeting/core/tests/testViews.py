@@ -2561,7 +2561,7 @@ class testViews(PloneMeetingTestCase):
         logout()
         viewlet = self._get_viewlet(
             context=self.portal,
-            manager_name='plone.portalheader',
+            manager_name='plone.mainnavigation',
             viewlet_name='plone.global_sections')
         viewlet.update()
         self.assertEqual(viewlet.selected_portal_tab, 'index_html')
@@ -2572,7 +2572,7 @@ class testViews(PloneMeetingTestCase):
         viewlet_context = self.getMeetingFolder()
         viewlet = self._get_viewlet(
             context=viewlet_context,
-            manager_name='plone.portalheader',
+            manager_name='plone.mainnavigation',
             viewlet_name='plone.global_sections')
         redirect_to_app = getMultiAdapter(
             (self.portal, self.request),
@@ -2586,7 +2586,7 @@ class testViews(PloneMeetingTestCase):
         viewlet_context = self.getMeetingFolder()
         viewlet = self._get_viewlet(
             context=viewlet_context,
-            manager_name='plone.portalheader',
+            manager_name='plone.mainnavigation',
             viewlet_name='plone.global_sections')
         cfg2.is_default = True
         cfg2.updateIsDefaultFields()
@@ -2602,7 +2602,7 @@ class testViews(PloneMeetingTestCase):
         self.request['URL'] = cfg.absolute_url() + '/' + cfg.getLayout()
         viewlet = self._get_viewlet(
             context=cfg,
-            manager_name='plone.portalheader',
+            manager_name='plone.mainnavigation',
             viewlet_name='plone.global_sections')
         viewlet.update()
         self.assertEqual(viewlet.selected_portal_tab, 'mc_config_group_unique_id_1')
@@ -2610,7 +2610,7 @@ class testViews(PloneMeetingTestCase):
         self.request['URL'] = cfg2.absolute_url()
         viewlet = self._get_viewlet(
             context=cfg2,
-            manager_name='plone.portalheader',
+            manager_name='plone.mainnavigation',
             viewlet_name='plone.global_sections')
         viewlet.update()
         self.assertEqual(viewlet.selected_portal_tab, 'mc_{0}'.format(cfg2Id))

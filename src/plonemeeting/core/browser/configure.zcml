@@ -249,6 +249,44 @@
         provides="zope.publisher.interfaces.browser.IBrowserPage"
         factory="plonemeeting.core.browser.meeting.MeetingAdd"
         name="meeting" />
+
+    <!-- MeetingItem custom Add/Edit forms — port AT visibility helpers
+         (attribute_is_used, show_*) to a DX form layer. -->
+    <browser:page
+      for="plonemeeting.core.interfaces.IMeetingItem"
+      name="edit"
+      class="plonemeeting.core.browser.meetingitem.MeetingItemEditForm"
+      permission="cmf.ModifyPortalContent" />
+    <!-- ++add++ traversal looks the AddView up by FTI.factory; base FTIs
+         have factory=meetingitem / meetingitemtemplate / meetingitemrecurring,
+         and per-config FTIs (MeetingItemPma etc.) inherit those names from
+         their typeinfo, so all variants land on this view. -->
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitem" />
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitemtemplate" />
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitemrecurring" />
+    <class class="plonemeeting.core.browser.meetingitem.MeetingItemAddView">
+        <require
+            permission="cmf.AddPortalContent"
+            interface="zope.publisher.interfaces.browser.IBrowserPage" />
+    </class>
     <class class="plonemeeting.core.browser.meeting.MeetingAdd">
         <require
             permission="cmf.AddPortalContent"
