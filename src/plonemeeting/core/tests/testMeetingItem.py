@@ -7185,7 +7185,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.catalog(UID=item.UID()))
 
         # load subscriber and.update_local_roles
-        from zope.component import getSiteManager
+        from zope.component import getGlobalSiteManager
         from zope.component import provideHandler
         from plonemeeting.core.content.meetingitem import IMeetingItem
         from plonemeeting.core.interfaces import IItemLocalRolesUpdatedEvent
@@ -7206,7 +7206,13 @@ class testMeetingItem(PloneMeetingTestCase):
             self.assertTrue(self.hasPermission(View, item))
             self.assertTrue(self.catalog(UID=item.UID()))
         finally:
-            getSiteManager().unregisterHandler(
+            # provideHandler() registers on the GLOBAL site manager, so the
+            # handler must be unregistered there too. getSiteManager() inside
+            # an active Plone site returns the LOCAL (persistent) SM, so the
+            # previous unregister was a no-op and the handler leaked into the
+            # process-global registry, granting 'pmCreator2' a Reader local
+            # role on every item created by later test modules.
+            getGlobalSiteManager().unregisterHandler(
                 onItemLocalRolesUpdated,
                 required=(IMeetingItem, IItemLocalRolesUpdatedEvent))
 
