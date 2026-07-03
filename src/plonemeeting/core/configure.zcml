@@ -65,6 +65,10 @@
   <!-- P6 migration: CKEditor dropped (custom plugins removed), configure stock TinyMCE in Stage D. -->
   <!-- <include package=".ckeditor" /> -->
   <include package=".content" />
+  <!-- P4 -> P6 data migration import hooks, only loaded when
+       collective.exportimport is available (migration runs only) -->
+  <include package=".migrations.p4top6"
+           zcml:condition="installed collective.exportimport" />
   <include package=".documentgenerator" />
   <include package=".external" />
   <include package=".filters" />

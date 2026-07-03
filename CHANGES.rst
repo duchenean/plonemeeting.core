@@ -5,6 +5,15 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.6: added ``migrations/p4top6`` — ``collective.exportimport``
+  import-side hooks for the Plone 4.3 data migration: complete AT
+  camelCase to DX snake_case field maps for ``MeetingItem`` (72 fields)
+  and ``MeetingConfig`` (153 fields, incl. 20 absent from the migration
+  summary doc and ``budgetDefault`` wrongly documented as removed),
+  DataGrid row-key remaps, plain-text unwrapping,
+  ``@@import_pm_manually_linked_items`` and ``@@import_pm_tool_settings``
+  views. Only loaded when ``collective.exportimport`` is installed.
+  [aduchene]
 - B.2.1: infrastructure prep for the DX MeetingItem swap. Adds 6 new
   ``IVocabularyFactory`` wrappers in ``vocabularies.py`` for the AT
   instance methods that backed the ``emergency``, ``preferred_meeting``,

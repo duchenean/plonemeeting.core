@@ -1,0 +1,32 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="PloneMeeting">
+
+  <!-- overrides collective.exportimport's @@import_content: the more
+       specific browser layer wins -->
+  <browser:page
+      name="import_content"
+      for="zope.interface.Interface"
+      class=".import_content.PMImportContent"
+      layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_pm_manually_linked_items"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      class=".import_content.ImportManuallyLinkedItems"
+      layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_pm_tool_settings"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      class=".import_content.ImportToolSettings"
+      layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
+      permission="cmf.ManagePortal"
+      />
+
+</configure>
