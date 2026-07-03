@@ -1084,10 +1084,12 @@ class Meeting(Container):
     def getSelf(self):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
-        res = self
-        if type(self) is not Meeting:
-            res = self.context
-        return res
+        # p_self may be a custom adapter instance (its context is the
+        # meeting) or the meeting itself, possibly acquisition-wrapped:
+        # `type(self) is Meeting` is never True on a wrapped meeting
+        if 'context' in self.__dict__:
+            return self.context
+        return self
 
     def get_category(self, the_object=False):
         '''Helper to get the category.

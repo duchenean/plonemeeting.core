@@ -100,13 +100,16 @@
   <permission id="PloneMeeting.manage_item_category_fields"
               title="PloneMeeting: Manage item category fields" />
 
-  <!-- P6 migration: AT MeetingItem workflow adapters, to be reimplemented in DX content/meetingitem.py -->
-  <!-- <adapter for=".interfaces.IMeetingItem"
+  <!-- P6 migration: the adapter classes still live in the legacy
+       MeetingItem.py module but are plain IMeetingItem adapters that
+       work on the DX class (plonemeeting.communes subclasses them the
+       same way); moving them under workflows/ is a later cleanup -->
+  <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
            provides=".interfaces.IMeetingItemWorkflowConditions" />
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowActions"
-           provides=".interfaces.IMeetingItemWorkflowActions" /> -->
+           provides=".interfaces.IMeetingItemWorkflowActions" />
   <adapter for="plonemeeting.core.interfaces.IMeeting"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"

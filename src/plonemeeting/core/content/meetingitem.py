@@ -1633,6 +1633,11 @@ class MeetingItem(Container):
                 def _setter(value, **kwargs):
                     if isinstance(value, (set, frozenset)):
                         value = list(value)
+                    # AT setters accepted plain HTML strings for rich fields
+                    if dx_name in _RICH_TEXT_FIELDS and \
+                            isinstance(value, str):
+                        value = RichTextValue(
+                            value, 'text/html', 'text/x-html-safe')
                     setattr(self, dx_name, value)
                 return _setter
             return super(MeetingItem, self).__getattr__(name)
