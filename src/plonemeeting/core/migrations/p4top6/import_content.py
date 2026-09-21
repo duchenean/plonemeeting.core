@@ -19,6 +19,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from collective.exportimport.import_content import ImportContent
 
 from plonemeeting.core.content.meetingconfig import IMeetingConfig
+from plonemeeting.core.migrations.p4top6 import extra_state
 from plonemeeting.core.migrations.p4top6 import mappings
 
 logger = logging.getLogger("plonemeeting.core: p4top6 import")
@@ -82,6 +83,9 @@ class PMImportContent(ImportContent):
         return item
 
     def global_obj_hook(self, obj, item):
+        # non-schema persistent attributes and annotations dumped by
+        # export_p43.py (see extra_state.py)
+        extra_state.load_extra_state(obj, item.get(extra_state.EXTRA_STATE_KEY))
         if IMeetingConfig.providedBy(obj):
             self._imported_configs.append(obj.UID())
 
