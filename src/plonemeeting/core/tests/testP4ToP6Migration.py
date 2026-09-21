@@ -149,6 +149,50 @@ class TestExtraStateCodec(unittest.TestCase):
         self.assertEqual(extra_state.attrs_for_portal_type("Folder"), ())
 
 
+class TestExportScriptHelpers(unittest.TestCase):
+    """export_p43 helpers that must work before the export view runs."""
+
+    def test_prepare_request_forces_post(self):
+        from plonemeeting.core.migrations.p4top6 import export_p43
+
+        class Request(dict):
+            def __init__(self):
+                super(Request, self).__init__()
+                self.environ = {"REQUEST_METHOD": "GET"}
+                self.form = {}
+
+        class Portal(object):
+            def absolute_url(self):
+                return "http://nohost/plone"
+
+        request = Request()
+        export_p43.prepare_request(request, Portal(), "pm.json")
+        self.assertEqual(request.environ["REQUEST_METHOD"], "POST")
+        self.assertEqual(request.method, "POST")
+        self.assertTrue(request.form["form.submitted"])
+        self.assertEqual(request.form["filename"], "pm.json")
+        self.assertTrue(request.form["write_errors"])
+        self.assertEqual(request["ACTUAL_URL"], "http://nohost/plone")
+
+    def test_portal_types_with_content_sets_query_attributes(self):
+        from plonemeeting.core.migrations.p4top6 import export_p43
+
+        class View(object):
+            def portal_types(self):
+                # build_query() needs these three attributes
+                self.seen = (self.portal_type, self.path, self.depth)
+                return [{"value": "MeetingConfig"}, {"value": "Folder"}]
+
+        class Portal(object):
+            def getPhysicalPath(self):
+                return ("", "plone")
+
+        view = View()
+        res = export_p43.portal_types_with_content(view, Portal())
+        self.assertEqual(res, ["MeetingConfig", "Folder"])
+        self.assertEqual(view.seen, ([], "/plone", -1))
+
+
 class TestExtraStateRoundTrip(PloneMeetingTestCase):
     """dump_extra_state()/load_extra_state() on real content, through
        the export hook and the import hook."""

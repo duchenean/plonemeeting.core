@@ -48,8 +48,29 @@ class PMExportContent(ExportContent):
         return item
 
 
-def _portal_types_with_content(view):
+def portal_types_with_content(view, portal):
+    """Return every portal_type that has content, as the export form
+       lists them. The view query attributes are only set by __call__,
+       so set them first."""
+    view.portal_type = []
+    view.path = "/".join(portal.getPhysicalPath())
+    view.depth = -1
     return [info["value"] for info in view.portal_types()]
+
+
+def prepare_request(request, portal, filename):
+    """Make p_request look like the submitted @@export_content form.
+       A scripted request is a GET by default and the export view then
+       forces migration=True, which drops the relation fields."""
+    request.environ["REQUEST_METHOD"] = "POST"
+    try:
+        request.method = "POST"
+    except AttributeError:
+        pass
+    request.form["form.submitted"] = True
+    request.form["filename"] = filename
+    request.form["write_errors"] = True
+    request["ACTUAL_URL"] = portal.absolute_url()
 
 
 def main(app, argv):
@@ -61,16 +82,14 @@ def main(app, argv):
     setRequest(request)
     portal = getattr(app, site_id)
     setSite(portal)
+    # run as the first Zope root user
     admin = app.acl_users.getUsers()[0]
     newSecurityManager(None, admin.__of__(app.acl_users))
 
     view = PMExportContent(portal, request)
-    portal_types = argv[1:] or _portal_types_with_content(view)
+    portal_types = argv[1:] or portal_types_with_content(view, portal)
     logger.info("Exporting %s", ", ".join(portal_types))
-    request.form["form.submitted"] = True
-    request.form["filename"] = filename
-    request.form["write_errors"] = True
-    request["ACTUAL_URL"] = portal.absolute_url()
+    prepare_request(request, portal, filename)
     view(portal_type=portal_types,
          include_blobs=2,
          download_to_server=True,
