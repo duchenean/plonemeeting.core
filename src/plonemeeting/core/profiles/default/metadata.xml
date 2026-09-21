@@ -25,7 +25,7 @@
     <dependency>profile-imio.helpers:default</dependency>
     <dependency>profile-imio.webspellchecker:default</dependency>
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
-    <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>
+    <dependency>profile-plonetheme.imioapps:iadelib</dependency>
     <dependency>profile-Products.CPUtils:default</dependency>
     <!-- P6 migration: Products.DataGridField is AT-only, replaced by collective.z3cform.datagridfield -->
     <!-- <dependency>profile-Products.DataGridField:default</dependency> -->
