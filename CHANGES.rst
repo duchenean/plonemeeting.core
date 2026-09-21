@@ -5,6 +5,13 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- Rail counts: mark a ``.term-count`` that returns something with
+  ``has-items``. The skin draws a quiet chip for a count of zero and an
+  accent chip for the others, and only the number tells the two apart.
+  ``collective.eeafaceted.dashboard`` writes that number after the page
+  loads, so the class follows the text.
+  [duchenean]
+
 - D.6: added ``migrations/p4top6`` — ``collective.exportimport``
   import-side hooks for the Plone 4.3 data migration: complete AT
   camelCase to DX snake_case field maps for ``MeetingItem`` (72 fields)

@@ -806,16 +806,19 @@ $(document).ready(function () {
   if (!has_faceted()) {
     updatePortletTodo();
   }
-  $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
+  $(Faceted.Events).on(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
     updatePortletTodo();
   });
-  $(Faceted.Events).bind(Faceted.Events.INITIALIZE, function() {
-    let searchParams = new URLSearchParams(window.location.search);
-    b_start = searchParams.get('custom_b_start');
-    if (b_start) {
-        Faceted.Query.b_start = parseInt(b_start);
-    }
-  });
+});
+
+// eea.facetednavigation fires INITIALIZE from its own document-ready
+// handler. Bind now, a later ready handler misses the event.
+$(Faceted.Events).on(Faceted.Events.INITIALIZE, function() {
+  let searchParams = new URLSearchParams(window.location.search);
+  b_start = searchParams.get('custom_b_start');
+  if (b_start) {
+      Faceted.Query.b_start = parseInt(b_start);
+  }
 });
 
 /* Disable caching of AJAX responses when using IE,
@@ -1132,5 +1135,31 @@ $(document).ready(function () {
     $("body.portaltype-meetingconfig input.context[type='submit']").click(function() {
       $("div.ArchetypesInAndOutWidget").each(
         function() {inout_selectAllWords(this.dataset.fieldname);});
+    });
+});
+
+/* Counts of the rail.
+
+   The skin draws a quiet chip for a search that returns nothing and an
+   accent chip for a search that returns something. Only the number tells
+   the two apart, and collective.eeafaceted.dashboard writes that number
+   after the page loads, so the class follows the text. */
+function markRailCounts() {
+    $("#portal-column-one .term-count").each(function () {
+        var count = parseInt($(this).text(), 10);
+        $(this).toggleClass("has-items", count > 0);
+    });
+}
+
+$(document).ready(function () {
+    var rail = document.getElementById("portal-column-one");
+    if (!rail) {
+        return;
+    }
+    markRailCounts();
+    new MutationObserver(markRailCounts).observe(rail, {
+        childList: true,
+        subtree: true,
+        characterData: true
     });
 });
