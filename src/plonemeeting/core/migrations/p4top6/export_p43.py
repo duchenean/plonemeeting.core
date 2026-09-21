@@ -14,6 +14,8 @@ COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY when set).
 
 Environment: PM_EXPORT_SITE_ID (default "Plone", a path such as
 "demo/demo" when the site is in a mounted database),
+PM_EXPORT_TARGET_SITE_ID (the id of the Plone 6 site the JSON is
+imported into, default: the id of the exported site),
 PM_EXPORT_FILENAME (default "pm_content.json").
 """
 
@@ -58,11 +60,31 @@ except ImportError:
 logger = logging.getLogger("plonemeeting.core: p4top6 export")
 
 
+def flatten_urls(value, portal_url, flat_url):
+    """Replace p_portal_url by p_flat_url in every string of p_value."""
+    if isinstance(value, dict):
+        return dict((key, flatten_urls(sub, portal_url, flat_url))
+                    for key, sub in value.items())
+    if isinstance(value, list):
+        return [flatten_urls(sub, portal_url, flat_url) for sub in value]
+    if isinstance(value, tuple):
+        return tuple(flatten_urls(sub, portal_url, flat_url) for sub in value)
+    if isinstance(value, basestring):  # noqa: F821 (python 2)
+        return value.replace(portal_url, flat_url)
+    return value
+
+
 class PMExportContent(ExportContent):
     """@@export_content plus the PloneMeeting extra state."""
 
+    # set when the site is not a direct child of the Zope root
+    portal_url = None
+    flat_portal_url = None
+
     def global_dict_hook(self, item, obj):
         item[extra_state.EXTRA_STATE_KEY] = extra_state.dump_extra_state(obj)
+        if self.portal_url:
+            item = flatten_urls(item, self.portal_url, self.flat_portal_url)
         return item
 
 
@@ -177,6 +199,21 @@ def main(app, args):
     drop_restapi_serializers()
     patch_richtext_serializer()
     view = PMExportContent(portal, request)
+    # collective.exportimport builds the target path from the "@id" of an
+    # item: it drops the first element, the id of the site, and resolves
+    # the rest against the new site. So the "@id" must hold exactly one
+    # element for the site, and it must be the id of the *new* site. A
+    # site in a mounted database has more than one element, and the new
+    # site can have another id. Rewrite the URLs for both cases.
+    target_id = os.environ.get("PM_EXPORT_TARGET_SITE_ID", portal.getId())
+    portal_url = portal.absolute_url()
+    flat_portal_url = "{0}/{1}".format(
+        portal.getPhysicalRoot().absolute_url(), target_id)
+    if portal_url != flat_portal_url:
+        view.portal_url = portal_url
+        view.flat_portal_url = flat_portal_url
+        logger.info("Writing %s as %s in the export",
+                    portal_url, flat_portal_url)
     portal_types = args or portal_types_with_content(view, portal)
     logger.info("Exporting %s", ", ".join(portal_types))
     prepare_request(request, portal, filename)
