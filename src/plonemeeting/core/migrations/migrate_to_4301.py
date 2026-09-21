@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+from plone.base.utils import get_installer
 from plonemeeting.core.migrations import logger
 from plonemeeting.core.migrations import Migrator
 
@@ -16,6 +17,7 @@ BUNDLE_PRODUCTS = (
     'collective.js.iframeresizer',
     'collective.eeafaceted.collectionwidget',
     'collective.eeafaceted.dashboard',
+    'collective.z3cform.select2',
 )
 
 # Skin layers that no longer exist: the Plone 4 theme layers and the
@@ -30,6 +32,16 @@ OBSOLETE_SKIN_LAYERS = (
 
 
 class Migrate_To_4301(Migrator):
+
+    def _installQuickupload(self):
+        """Install collective.quickupload, the multi-upload widget of imio.annex.
+           Sites created before imio.annex declared it as a profile dependency
+           do not have it."""
+        logger.info('Installing collective.quickupload...')
+        installer = get_installer(self.portal, self.request)
+        if not installer.is_product_installed('collective.quickupload'):
+            installer.install_product('collective.quickupload')
+        logger.info('Installing collective.quickupload... Done.')
 
     def _loadFrontEndBundles(self):
         """Load the bundle records of PloneMeeting and of the dependencies
@@ -57,6 +69,7 @@ class Migrate_To_4301(Migrator):
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
         logger.info('Migrating to PloneMeeting 4301...')
+        self._installQuickupload()
         self._loadFrontEndBundles()
         self._removeObsoleteSkinLayers()
         logger.info('Migrating to PloneMeeting 4301... Done.')
@@ -65,8 +78,9 @@ class Migrate_To_4301(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Load the Plone 6 bundle records of PloneMeeting and its dependencies.
-       2) Remove the portal_skins layers that no longer exist.
+       1) Install collective.quickupload.
+       2) Load the Plone 6 bundle records of PloneMeeting and its dependencies.
+       3) Remove the portal_skins layers that no longer exist.
     '''
     migrator = Migrate_To_4301(context)
     migrator.run()

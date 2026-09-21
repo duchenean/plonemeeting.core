@@ -249,4 +249,14 @@
         <value key="load_async">False</value>
     </records>
 
+    <!-- collective.quickupload settings for the annex multi-upload widget of
+         imio.annex: a title field for each file, unique ids, one upload at a
+         time so parallel uploads do not conflict on the parent. -->
+    <records interface="collective.quickupload.browser.quickupload_settings.IQuickUploadControlPanel">
+        <value key="fill_titles">True</value>
+        <value key="object_unique_id">True</value>
+        <value key="id_as_title">False</value>
+        <value key="sim_upload_limit">1</value>
+    </records>
+
 </registry>

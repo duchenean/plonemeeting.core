@@ -244,8 +244,6 @@ def postInstall(context):
     # # configure CKEditor : adapt available buttons in toolbar and
     # # defines it as default Plone editor
     # _configureCKeditor(site)
-    #
-    # _configureQuickupload(site)
 
     _configureWebspellchecker(site)
 
@@ -517,18 +515,6 @@ def activate_solr_and_reindex_if_available(site):
 #     cke_props.properties_overloaded = (u'width', u'height')
 #     # use Moono-Lisa skin
 #     cke_props.skin = u'moono-lisa'
-#     logger.info('Done.')
-
-
-# P6 migration: CKEditor dropped, drop quickupload integration with it. Reimplement under TinyMCE in Stage D.
-# def _configureQuickupload(site):
-#     '''Configure collective.quickupload.'''
-#     logger.info('Defining collective.quickupload...')
-#     qu_props = site.portal_properties.quickupload_properties
-#     qu_props.fill_titles = True
-#     qu_props.object_unique_id = True
-#     qu_props.id_as_title = False
-#     qu_props.sim_upload_limit = 1
 #     logger.info('Done.')
 
 

@@ -181,6 +181,7 @@ jQuery(document).ready(function($) {
                        options={position: 'bottom',
                                 trigger: 'click'});
     addCompleteOrQuickMeetingAdvice();
+    contentHistory();
     pmCommonOverlays();
 });
 
@@ -239,14 +240,20 @@ function overOverlays(){
 
 
 function editAnnex(){
+  // the quick upload view is a fragment without #content, show the uploader
+  // itself. Its buttons are not form buttons, the modal must not bind them.
+  imio_modal('a.link-overlay-pm-annex[href*="@@quick_upload"]', {
+    content: '.quick-uploader',
+    submit: 'native'
+  });
   imio_modal('a.link-overlay-pm-annex', {
     afterRender: function (modal, element) {
       initializeIconifiedCategoryWidget();
     },
     hidden: function (modal, element) {
-      // unlock the annex, an add form has nothing to unlock
+      // unlock the annex, only an edit form locks it
       var obj_url = $(element).attr('href');
-      if (obj_url.indexOf('++add++annex') === -1) {
+      if (obj_url.slice(-5) === '/edit') {
         // remove '/edit'
         obj_url = obj_url.slice(0, -5);
         $.ajax({url: obj_url + "/@@plone_lock_operations/safe_unlock", });

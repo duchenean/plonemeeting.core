@@ -5,6 +5,16 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.5bis front-end follow-ups on Plone 6: ``collective.quickupload`` is kept
+  for the annex multi-upload (its settings are registry records in
+  ``registry.xml``, ``migrate_to_4301`` installs it and loads the
+  ``collective.z3cform.select2`` bundles), the quick upload modal shows the
+  uploader fragment, the history link opens in a modal on every page,
+  ``Faceted.Events.INITIALIZE`` handlers bind when the script loads, the
+  annex actions panel no longer walks up the parents by class name and the
+  ``annexDecision`` icons are Bootstrap icons.
+  [aduchene]
+
 - Rail counts: mark a ``.term-count`` that returns something with
   ``has-items``. The skin draws a quiet chip for a count of zero and an
   accent chip for the others, and only the number tells the two apart.
