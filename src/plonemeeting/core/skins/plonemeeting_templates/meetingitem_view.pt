@@ -389,7 +389,7 @@
 
               <span i18n:name="assembly_edit">
                 <a tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
-                  <img tal:attributes="src string:$portal_url/edit.png" />
+                  <img tal:attributes="src string:$portal_url/++plone++bootstrap-icons/pencil.svg" />
                 </a>
               </span>
               and
@@ -402,14 +402,14 @@
 
               <span i18n:name="signatures_edit">
                 <a tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
-                  <img tal:attributes="src string:$portal_url/edit.png" />
+                  <img tal:attributes="src string:$portal_url/++plone++bootstrap-icons/pencil.svg" />
                 </a>
               </span>
           </span>
       </div>
       <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
         <div class="collapsible-inner-content">
-         <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+         <img tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
         </div>
       </div>
       <script>
@@ -463,7 +463,7 @@
         </div>
         <div id="collapsible-linked-items" class="collapsible-content discreet">
           <div class="collapsible-inner-content">
-             <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+             <img tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
           </div>
         </div>
     </tal:defines>
@@ -480,7 +480,7 @@
         </div>
         <div id="collapsible-external-infos" class="collapsible-content discreet">
           <div class="collapsible-inner-content">
-             <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+             <img tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
           </div>
         </div>
     </tal:external-infos>

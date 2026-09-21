@@ -70,7 +70,7 @@
                                target='_parent'
                                tal:attributes="href string:${context/absolute_url}/advice_proposing_group_comment_form?advice_id=${context/advice_group}">
                               <img i18n:attributes="title" title="advice_proposing_group_comment_edit"
-                                   tal:attributes="src string:${view/portal_url}/edit.png;" />
+                                   tal:attributes="src string:${view/portal_url}/++plone++bootstrap-icons/pencil.svg;" />
                             </a>
                          </legend>
                       <tal:comment tal:replace="structure python: proposing_group_comment" />

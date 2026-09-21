@@ -3,6 +3,12 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
+  <!-- Scripts and styles loaded through the bundle records of registry.xml -->
+  <browser:resourceDirectory
+      name="plonemeeting.core"
+      directory="static" />
+
+
     <!-- Viewlets -->
     <!-- Display workflow state on the Meeting, MeetingItem, meetingadvice and some elements of the config -->
     <browser:viewlet

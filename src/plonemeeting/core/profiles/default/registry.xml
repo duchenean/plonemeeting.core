@@ -200,4 +200,53 @@
         </value>
     </record>
 
+    <!-- eea.facetednavigation loads its bundles async. Scripts of PloneMeeting
+         and of the faceted add-ons use the Faceted object when the document is
+         ready, so these bundles must load in dependency order. -->
+    <records prefix="plone.bundles/faceted.jquery"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="load_async">False</value>
+        <value key="load_defer">False</value>
+    </records>
+    <records prefix="plone.bundles/faceted.view"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="load_async">False</value>
+        <value key="load_defer">False</value>
+    </records>
+    <records prefix="plone.bundles/faceted.edit"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="load_async">False</value>
+        <value key="load_defer">False</value>
+    </records>
+
+    <!-- Front-end bundles. Plone 6 loads scripts and styles from these
+         records. The browser/static directory serves the files. -->
+    <records prefix="plone.bundles/plonemeeting-vars"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="enabled">True</value>
+        <value key="depends">plone</value>
+        <value key="jscompilation">plonemeeting_javascript_variables.js</value>
+        <value key="csscompilation"></value>
+        <value key="load_defer">False</value>
+        <value key="load_async">False</value>
+    </records>
+    <records prefix="plone.bundles/plonemeeting"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="enabled">True</value>
+        <value key="depends">plonemeeting-vars,jqueryui,imio-helpers,collective.js.tooltipster.helper,faceted.view</value>
+        <value key="jscompilation">++resource++plonemeeting.core/plonemeeting.js</value>
+        <value key="csscompilation">++resource++plonemeeting.core/plonemeeting.css</value>
+        <value key="load_defer">False</value>
+        <value key="load_async">False</value>
+    </records>
+    <records prefix="plone.bundles/plonemeeting-popups"
+             interface="Products.CMFPlone.interfaces.IBundleRegistry">
+        <value key="enabled">True</value>
+        <value key="depends">plonemeeting,iconifiedcategory,actionspanel</value>
+        <value key="jscompilation">++resource++plonemeeting.core/plonemeetingpopups.js</value>
+        <value key="csscompilation"></value>
+        <value key="load_defer">False</value>
+        <value key="load_async">False</value>
+    </records>
+
 </registry>

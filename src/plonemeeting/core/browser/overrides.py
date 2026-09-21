@@ -512,7 +512,7 @@ class PMRenderTermView(RenderTermPortletView):
         # display the searchnotdecidedmeetings/searchlastdecisions as a selection list
         if self.context.getId() in ['searchnotdecidedmeetings', 'searchlastdecisions']:
             rendered_term = "<div id='async_search_term_{0}' class='loading' data-collection_uid='{0}'>" \
-                "<img src='{1}/spinner_small.gif' /></div>".format(
+                "<img src='{1}/++plone++bootstrap-icons/arrow-repeat.svg' /></div>".format(
                     self.context.UID(), api.portal.get().absolute_url())
         return rendered_term
 

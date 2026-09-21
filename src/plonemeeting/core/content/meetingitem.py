@@ -5970,7 +5970,7 @@ class MeetingItem(Container):
 
     def _displayAdviserUsers(self, userids, portal_url, tool):
         """ """
-        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
+        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/++plone++bootstrap-icons/person.svg" />{2}'
         rendered_users = []
         help_msg = translate("adviser_userid_notified",
                              domain="PloneMeeting",

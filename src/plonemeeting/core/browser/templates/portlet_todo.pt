@@ -40,7 +40,7 @@
    </tal:load>
    <tal:loading condition="not:request/load_portlet_todo|nothing">
       <div class="loading">
-        <img tal:attributes="src string:${view/portal/absolute_url}/spinner_small.gif" />
+        <img tal:attributes="src string:${view/portal/absolute_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
       </div>
    </tal:loading>
 

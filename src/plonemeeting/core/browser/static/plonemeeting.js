@@ -1,3 +1,26 @@
+// Cookie helpers.
+function createCookie(name, value, days) {
+  var expires = '';
+  if (days) {
+    var date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = '; expires=' + date.toUTCString();
+  }
+  document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/; SameSite=Lax';
+}
+
+function readCookie(name) {
+  var prefix = name + '=';
+  var parts = document.cookie.split(';');
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i].trim();
+    if (part.indexOf(prefix) === 0) {
+      return decodeURIComponent(part.substring(prefix.length));
+    }
+  }
+  return null;
+}
+
 // Function that shows a popup that asks the user if he really wants to reinitialize advice delay
 function confirmReinitializeDelay(base_url, advice, tag, msgName){
     if (!msgName) {

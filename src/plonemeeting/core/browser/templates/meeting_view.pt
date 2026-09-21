@@ -83,7 +83,7 @@
   <div id="collapsible-assembly-and-signatures"
        class="collapsible-content">
     <div class="collapsible-inner-content">
-      <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+      <img tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
     </div>
   </div>
   <script>

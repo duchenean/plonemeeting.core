@@ -323,4 +323,12 @@
       handler="plonemeeting.core.migrations.migrate_to_4300.migrate"
       profile="plonemeeting.core:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4301"
+      description="Go to PloneMeeting 4301"
+      source="4300"
+      destination="4301"
+      handler="plonemeeting.core.migrations.migrate_to_4301.migrate"
+      profile="plonemeeting.core:default" />
+
 </configure>
