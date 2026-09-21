@@ -62,6 +62,10 @@ class Renderer(FacetedRenderer):
                 return parent
             parent = parent.aq_inner.aq_parent
 
+    def render(self):
+        '''Override, the base class renders its own template.'''
+        return self._template()
+
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
         if self.cfg:

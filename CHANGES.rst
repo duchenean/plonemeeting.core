@@ -5,6 +5,13 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- Restore the PloneMeeting portlet template. The renderer inherits from
+  ``collective.eeafaceted.dashboard``, whose ``render()`` picks its own
+  template, so the rail lost the configuration name, the home and gear
+  shortcuts and the contacts links. The template is also a portlet fragment
+  now, not a full HTML document.
+  [aduchene]
+
 - D.5bis front-end follow-ups on Plone 6: ``collective.quickupload`` is kept
   for the annex multi-upload (its settings are registry records in
   ``registry.xml``, ``migrate_to_4301`` installs it and loads the

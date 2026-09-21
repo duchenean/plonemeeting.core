@@ -1,12 +1,7 @@
-<html xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal"
-      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      i18n:domain="PloneMeeting">
-<body>
-
-<dl class="portlet portletWidgetCollection"
+<dl i18n:domain="PloneMeeting"
+    class="portlet portletWidgetCollection"
     tal:define="tool python: view.tool;
-                cfg nocall:view/cfg">
+                cfg nocall:view/cfg;">
 
     <dt class="portletHeader">
         <tal:cfg condition="nocall:cfg">
@@ -72,5 +67,3 @@
       </div>
     </dd>
 </dl>
-</body>
-</html>
