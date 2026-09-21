@@ -231,3 +231,64 @@ class TestExtraStateRoundTrip(PloneMeetingTestCase):
         # an item without extra state is left untouched
         importer.global_obj_hook(target, {"@type": item.portal_type})
         self.assertEqual(target.adviceIndex, item.adviceIndex)
+
+
+class TestImportPostProcess(PloneMeetingTestCase):
+    """@@import_pm_post_process re-initializes imported user folders."""
+
+    def _plain_imported_folders(self, user_id, cfg_id):
+        """Mimic what the JSON import leaves behind: plain folders."""
+        from plonemeeting.core.config import ROOT_FOLDER
+        mtool = self.portal.portal_membership
+        if mtool.getHomeFolder(user_id) is None:
+            if not mtool.getMemberareaCreationFlag():
+                mtool.setMemberareaCreationFlag()
+            mtool.createMemberArea(user_id)
+        home = mtool.getHomeFolder(user_id)
+        if ROOT_FOLDER not in home.objectIds():
+            home.invokeFactory("Folder", ROOT_FOLDER, title="My meetings")
+        root = home[ROOT_FOLDER]
+        if cfg_id not in root.objectIds():
+            root.invokeFactory("Folder", cfg_id, title="Imported")
+        return root, root[cfg_id]
+
+    def test_post_process_initializes_meeting_folders(self):
+        from eea.facetednavigation.interfaces import IFacetedNavigable
+        from plonemeeting.core.config import MEETING_CONFIG
+        from plonemeeting.core.config import MEETINGMANAGERS_GROUP_SUFFIX
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        self.changeUser("siteadmin")
+        root, mc_folder = self._plain_imported_folders("pmCreator2", cfg_id)
+        self.assertFalse(IFacetedNavigable.providedBy(mc_folder))
+        self.assertFalse(mc_folder.hasProperty(MEETING_CONFIG))
+
+        view = self.portal.restrictedTraverse("@@import_pm_post_process")
+        self.request.form["skip_categorized_elements"] = "1"
+        msg = view()
+        self.assertTrue("meeting folders initialized" in msg)
+
+        self.assertTrue(IFacetedNavigable.providedBy(mc_folder))
+        self.assertEqual(mc_folder.getProperty(MEETING_CONFIG), cfg_id)
+        self.assertTrue("searches_items" in mc_folder.objectIds())
+        self.assertTrue(cfg.getItemTypeName() in mc_folder.locally_allowed_types)
+        mm_group = "%s_%s" % (cfg_id, MEETINGMANAGERS_GROUP_SUFFIX)
+        self.assertTrue("MeetingManager" in dict(mc_folder.get_local_roles())[mm_group])
+        from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+        self.assertEqual(ISelectableConstrainTypes(root).getLocallyAllowedTypes(), ["Folder"])
+        # the tool reuses the folder instead of creating a new one
+        self.assertEqual(self.tool.getPloneMeetingFolder(cfg_id, "pmCreator2"), mc_folder)
+        # calling it again is harmless
+        view()
+        self.assertEqual(mc_folder.getProperty(MEETING_CONFIG), cfg_id)
+
+    def test_post_process_updates_categorized_elements(self):
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        annex = self.addAnnex(item)
+        item.categorized_elements.clear()
+        self.assertFalse(annex.UID() in item.categorized_elements)
+        self.changeUser("siteadmin")
+        msg = self.portal.restrictedTraverse("@@import_pm_post_process")()
+        self.assertTrue("categorized_elements updated" in msg)
+        self.assertTrue(annex.UID() in item.categorized_elements)

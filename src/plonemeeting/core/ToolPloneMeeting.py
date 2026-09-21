@@ -665,12 +665,7 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
             # Create the "My meetings" folder
             home_folder.invokeFactory('Folder', ROOT_FOLDER,
                                       title=self.meeting_folder_title)
-            rootFolder = getattr(home_folder, ROOT_FOLDER)
-            from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
-            constrains = ISelectableConstrainTypes(rootFolder)
-            constrains.setConstrainTypesMode(1)
-            constrains.setLocallyAllowedTypes(['Folder'])
-            constrains.setImmediatelyAddableTypes(['Folder'])
+            self.init_meeting_root_folder(getattr(home_folder, ROOT_FOLDER))
 
         root_folder = getattr(home_folder, ROOT_FOLDER)
         if not hasattr(aq_base(root_folder), meetingConfigId):
@@ -689,8 +684,32 @@ class ToolPloneMeeting(UniqueObject, OrderedFolder, BrowserDefaultMixin):
         root_folder.invokeFactory('Folder', meetingConfigId,
                                   title=cfg.folder_title)
         mc_folder = getattr(root_folder, meetingConfigId)
+        self.init_meeting_config_folder(mc_folder, cfg)
+
+    security.declarePrivate('init_meeting_root_folder')
+
+    def init_meeting_root_folder(self, root_folder):
+        '''Configure the "My meetings" folder p_root_folder.
+           Safe to call again on an existing folder.'''
+        from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+        constrains = ISelectableConstrainTypes(root_folder)
+        constrains.setConstrainTypesMode(1)
+        constrains.setLocallyAllowedTypes(['Folder'])
+        constrains.setImmediatelyAddableTypes(['Folder'])
+
+    security.declarePrivate('init_meeting_config_folder')
+
+    def init_meeting_config_folder(self, mc_folder, cfg):
+        '''Configure p_mc_folder as the meeting folder of p_cfg:
+           MEETING_CONFIG property, faceted dashboard, permissions,
+           constrained types and local roles.
+           Safe to call again on an existing folder.'''
+        meetingConfigId = cfg.getId()
         # We add the MEETING_CONFIG property to the folder
-        mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
+        if not mc_folder.hasProperty(MEETING_CONFIG):
+            mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
+        else:
+            mc_folder.manage_changeProperties(**{MEETING_CONFIG: meetingConfigId})
 
         # manage faceted nav
         cfg._synchSearches(mc_folder)

@@ -11,14 +11,19 @@ source (see MIGRATION_DATA.md at the buildout root).
 import json
 import logging
 
+from Acquisition import aq_base
 from Products.Five import BrowserView
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone import api
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
 from collective.exportimport.import_content import ImportContent
 
+from plonemeeting.core.config import ROOT_FOLDER
 from plonemeeting.core.content.meetingconfig import IMeetingConfig
+from plonemeeting.core.interfaces import IMeeting
+from plonemeeting.core.interfaces import IMeetingItem
 from plonemeeting.core.migrations.p4top6 import extra_state
 from plonemeeting.core.migrations.p4top6 import mappings
 
@@ -165,5 +170,62 @@ class ImportToolSettings(BrowserView):
                 value = tuple(value)
             setattr(tool, name, value)
         msg = "portal_plonemeeting: %s attributes set" % len(settings)
+        logger.info(msg)
+        return msg
+
+
+class ImportPostProcess(BrowserView):
+    """Re-apply the PloneMeeting setup that the JSON import cannot carry.
+
+    - User meeting folders (Members/<user>/mymeetings/<cfg_id>) come back
+      as plain folders: re-apply the faceted dashboard, the meeting_config
+      property, permissions, constrained types and local roles, and the
+      constraints of the "mymeetings" root folder.
+    - Rebuild the collective.iconifiedcategory annex caches
+      (categorized_elements) on every item and meeting, unless called
+      with ?skip_categorized_elements=1.
+
+    Call as @@import_pm_post_process once every content is imported,
+    before the catalog rebuild.
+    """
+
+    def _init_meeting_folders(self):
+        tool = api.portal.get_tool("portal_plonemeeting")
+        members = api.portal.get_tool("portal_membership").getMembersFolder()
+        cfg_ids = tool.objectIds("MeetingConfig")
+        done = 0
+        if members is None:
+            return done
+        for home_folder in members.objectValues():
+            root_folder = getattr(aq_base(home_folder), ROOT_FOLDER, None)
+            if root_folder is None:
+                continue
+            root_folder = home_folder[ROOT_FOLDER]
+            tool.init_meeting_root_folder(root_folder)
+            for cfg_id in cfg_ids:
+                if getattr(aq_base(root_folder), cfg_id, None) is None:
+                    continue
+                logger.info("Initializing meeting folder %s",
+                            "/".join(root_folder[cfg_id].getPhysicalPath()))
+                tool.init_meeting_config_folder(root_folder[cfg_id], tool[cfg_id])
+                done += 1
+        return done
+
+    def _update_categorized_elements(self):
+        catalog = api.portal.get_tool("portal_catalog")
+        done = 0
+        for brain in catalog.unrestrictedSearchResults(
+                object_provides=[IMeetingItem.__identifier__,
+                                 IMeeting.__identifier__]):
+            update_all_categorized_elements(brain._unrestrictedGetObject())
+            done += 1
+        return done
+
+    def __call__(self):
+        folders = self._init_meeting_folders()
+        msg = "%s meeting folders initialized" % folders
+        if not self.request.form.get("skip_categorized_elements"):
+            containers = self._update_categorized_elements()
+            msg += ", categorized_elements updated on %s items and meetings" % containers
         logger.info(msg)
         return msg
