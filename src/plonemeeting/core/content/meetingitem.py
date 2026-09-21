@@ -1581,7 +1581,7 @@ class MeetingItem(Container):
 
         The AT widget() returned a METAL macro that rendered the field's
         content.  For DX we build a template that reads
-        ``here/_dx_widget_value`` (set just before the call) and emits
+        ``request/dxWidgetValue`` (set just before the call) and emits
         the value as raw HTML.
         """
         from Products.PageTemplates.ZopePageTemplate import ZopePageTemplate
@@ -1593,12 +1593,17 @@ class MeetingItem(Container):
                     value = value.decode('utf-8')
             else:
                 value = u''
-            self.dxWidgetValue = value or u''
+            # keep the value on the request. an attribute set on the item is a
+            # database write during a read request. plone.protect refuses this
+            # and shows the confirm-action page. the request is also specific to
+            # one thread, so two renderings of the same item can not interfere.
+            self.REQUEST.set('dxWidgetValue', value or u'')
             if MeetingItem._widget_view_pt is None:
                 MeetingItem._widget_view_pt = ZopePageTemplate(
                     'dx_widget_view',
                     '<span metal:define-macro="view"'
-                    ' tal:content="structure here/dxWidgetValue"></span>\n')
+                    ' tal:content="structure request/dxWidgetValue | nothing">'
+                    '</span>\n')
             return MeetingItem._widget_view_pt.__of__(self).macros['view']
         if MeetingItem._widget_pt is None:
             MeetingItem._widget_pt = ZopePageTemplate(
