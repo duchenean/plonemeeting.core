@@ -1084,30 +1084,28 @@ def get_dx_attrs(portal_type,
         res.append(field_name)
     if as_display_list:
         display_list_tuples = []
+        fields = dict(schema_fields)
         for field_name in res:
+            title = get_dx_field_title(fields[field_name], field_name, request)
             key = field_name
             if prefixed_key:
                 prefix = fti.klass.split(".")[-1]
                 key = "{0}.{1}".format(prefix, key)
-                display_list_tuples.append(
-                    (key,
-                     u'%s ➔ %s' % (
-                         key,
-                         translate("title_{0}".format(field_name),
-                                   domain="PloneMeeting",
-                                   context=request))
-                     ))
+                display_list_tuples.append((key, u'%s ➔ %s' % (key, title)))
             else:
-                display_list_tuples.append(
-                    (key,
-                     '%s (%s)' % (translate("title_{0}".format(field_name),
-                                            domain="PloneMeeting",
-                                            context=request),
-                                  field_name)
-                     ))
+                display_list_tuples.append((key, u'%s (%s)' % (title, field_name)))
 
         res = DisplayList(tuple(display_list_tuples))
     return res
+
+
+def get_dx_field_title(field, field_name, request=None):
+    """Return the translated title of a DX schema field.
+       Use the field title Message. Fall back to the "title_<field_name>"
+       msgid when the field has no title."""
+    request = request or getRequest()
+    title = field.title or u"title_{0}".format(field_name)
+    return translate(title, domain="PloneMeeting", context=request)
 
 
 def get_dx_schema(obj=None, portal_type=None):
