@@ -343,13 +343,14 @@ DEFERRED_FIELDS = {
                       "voting_group",
                       "represented_organizations"),
     # a POD template -> other POD templates of the same config (the
-    # style, the templates it merges, the mailing loop, the template it
-    # reuses) and an annex type of the config, all of them written after
-    # it or in another config
+    # style, the templates it merges, the mailing loop) and an annex type
+    # of the config, all of them written after it or in another config.
+    # "pod_template_to_use" stays: a template with no odt_file needs it
+    # to pass its own invariant, and the second pass over the file (the
+    # "configs2" step) is there for the order.
     "ConfigurablePODTemplate": ("style_template",
                                 "merge_templates",
                                 "mailing_loop_template",
-                                "pod_template_to_use",
                                 "store_as_annex"),
     # a dashboard template -> the DashboardCollections it is shown on,
     # which live in the searches folder of a MeetingConfig, plus the POD
@@ -357,8 +358,7 @@ DEFERRED_FIELDS = {
     "DashboardPODTemplate": ("dashboard_collections",
                              "style_template",
                              "merge_templates",
-                             "mailing_loop_template",
-                             "pod_template_to_use"),
+                             "mailing_loop_template"),
     # an annex type -> another annex type, of this config or of the one
     # the items are sent to
     "ItemAnnexContentCategory": ("after_scan_change_annex_type_to",
