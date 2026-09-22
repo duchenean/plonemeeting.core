@@ -555,6 +555,21 @@ class TestImportPostProcess(PloneMeetingTestCase):
         self.assertTrue("categorized_elements updated" in msg)
         self.assertTrue(annex.UID() in item.categorized_elements)
 
+    def test_post_process_builds_the_annex_type_icons(self):
+        """The import writes the icon of an annex type after the object
+           is created, so its listing scale is not built."""
+        from plone.namedfile.interfaces import IAvailableSizes
+        from zope.annotation.interfaces import IAnnotations
+        self.changeUser("siteadmin")
+        cfg = self.meetingConfig
+        category = cfg.annexes_types.item_annexes.objectValues()[0]
+        # what an imported category looks like: no scale built yet
+        IAnnotations(category).pop("plone.scale", None)
+        self.assertTrue(IAvailableSizes is not None)
+        msg = self.portal.restrictedTraverse("@@import_pm_post_process")()
+        self.assertTrue("annex type icons built" in msg)
+        self.assertTrue("plone.scale" in IAnnotations(category))
+
     def test_the_import_defers_the_annex_cache(self):
         """The cache of a container cannot be built while the annexes of
            the container are still created empty."""
@@ -651,6 +666,13 @@ class TestDeferredFields(PloneMeetingTestCase):
         self.assertEqual(set(mappings.CONFIG_FACTORY_FIELDS) - names, set())
         self.assertTrue(mappings.CONFIG_WF_ADAPTATIONS_FIELD in
                         self._schema_names("MeetingConfig"))
+        # every type of the table, the configs included
+        for portal_type, fields in mappings.FACTORY_FIELDS.items():
+            known = self._schema_names(portal_type)
+            known.update(
+                inspect.signature(DexterityContent.__init__).parameters)
+            self.assertEqual(set(fields) - known, set(),
+                             "%s: unknown factory fields" % portal_type)
 
     def _importer(self):
         from plonemeeting.core.migrations.p4top6.import_content import PMImportContent
@@ -884,6 +906,30 @@ class TestContainers(PloneMeetingTestCase):
         data = importer.global_dict_hook(data)
         importer.global_obj_hook_before_deserializing(item, data)
         self.assertTrue("item_tags" not in data)
+
+    def test_a_pod_template_gets_the_md5_of_its_file(self):
+        """The 4.3 site has templates whose md5 was never computed, and
+           the fields are required on the new schema."""
+        self.changeUser("siteadmin")
+        cfg = self.meetingConfig
+        template = [pod for pod in cfg.podtemplates.objectValues()
+                    if pod.portal_type == "ConfigurablePODTemplate"][0]
+        data = {"@id": template.absolute_url(),
+                "@type": template.portal_type,
+                "id": template.getId(),
+                "initial_md5": None,
+                "style_modification_md5": None}
+        self._importer().global_obj_hook_before_deserializing(template, data)
+        self.assertEqual(data["initial_md5"], template.current_md5)
+        self.assertEqual(data["style_modification_md5"], template.current_md5)
+        self.assertTrue(data["initial_md5"])
+        # a value the export carries is kept
+        data = {"@id": template.absolute_url(),
+                "@type": template.portal_type,
+                "id": template.getId(),
+                "initial_md5": u"an-md5"}
+        self._importer().global_obj_hook_before_deserializing(template, data)
+        self.assertEqual(data["initial_md5"], u"an-md5")
 
     def test_a_rich_text_that_was_never_set_is_dropped(self):
         """plone.restapi unescapes the data of a rich text without a

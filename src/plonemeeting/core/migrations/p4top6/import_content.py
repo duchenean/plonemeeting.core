@@ -14,6 +14,9 @@ from Acquisition import aq_parent
 from collective.exportimport.import_content import ImportContent
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import \
     IIconifiedCategorizationMarker
+from collective.iconifiedcategory.content.category import ICategory
+from collective.iconifiedcategory.content.events import _cookCssResources
+from collective.iconifiedcategory.content.subcategory import ISubcategory
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -248,6 +251,21 @@ def _unwrap_plain_text(item, field_names):
         value = item.get(name)
         if isinstance(value, dict) and "data" in value:
             item[name] = value["data"]
+    return item
+
+
+def _pod_template_md5(obj, item):
+    """Give a POD template the md5 of its own file.
+
+       The 4.3 site has templates whose md5 was never computed, the
+       fields are required on the new schema, and the invariants of the
+       schema are checked against what the payload carries."""
+    if not hasattr(aq_base(obj), "current_md5"):
+        return item
+    md5 = obj.current_md5 or u""
+    for name in ("initial_md5", "style_modification_md5"):
+        if not item.get(name):
+            item[name] = md5
     return item
 
 
@@ -491,6 +509,11 @@ class PMImportContent(ImportContent):
         portal = api.portal.get()
         self._url_pattern = _site_url_pattern(portal.getId())
         self._portal_url = portal.absolute_url()
+        # an add handler redirects the browser to the referer, unless
+        # the form it comes from is an edit form. A scripted request has
+        # no referer at all and the read raises.
+        self.request.environ.setdefault(
+            "HTTP_REFERER", "%s/edit" % self._portal_url)
         deferred_store(create=True)
         uid_map(create=True)
 
@@ -588,6 +611,7 @@ class PMImportContent(ImportContent):
                 item.pop(name)
         item = _adapt_text_fields(obj, item)
         item = _drop_missing_required(obj, item)
+        item = _pod_template_md5(obj, item)
         item = _untokenize_choices(obj, item)
         if IMeetingConfig.providedBy(obj):
             self._apply_wf_adaptations(obj, item)
@@ -652,8 +676,6 @@ class PMImportContent(ImportContent):
                 item, mappings.MEETINGCONFIG_PREFIXED_ITEM_FIELD_FIELDS, names)
             item = _rename_column_values(
                 item, mappings.MEETINGCONFIG_ITEM_FIELD_NAME_COLUMNS, names)
-            item["factory_kwargs"] = _factory_kwargs(
-                item, mappings.CONFIG_FACTORY_FIELDS)
             raw = {}
             for name in (mappings.MEETINGCONFIG_RAW_GRIDS +
                          mappings.MEETINGCONFIG_RAW_FIELDS):
@@ -673,6 +695,9 @@ class PMImportContent(ImportContent):
             self._import_directory(item)
         # Meeting* (non item), meetingadvice, annex/annexDecision and
         # contacts types were already DX on Plone 4.3: no rename needed.
+        factory_fields = mappings.FACTORY_FIELDS.get(portal_type)
+        if factory_fields:
+            item["factory_kwargs"] = _factory_kwargs(item, factory_fields)
         return self._defer_fields(item)
 
     def global_obj_hook(self, obj, item):
@@ -898,9 +923,33 @@ class ImportPostProcess(BrowserView):
             update_all_categorized_elements(container)
         return len(containers)
 
+    def _update_category_icons(self):
+        """Build the icon scale and the CSS of the annex types.
+
+           collective.iconifiedcategory does it when a category is
+           created, and the import creates the object before it writes
+           the icon."""
+        catalog = api.portal.get_tool("portal_catalog")
+        done = 0
+        for brain in catalog.unrestrictedSearchResults(
+                object_provides=[ICategory.__identifier__,
+                                 ISubcategory.__identifier__]):
+            category = brain._unrestrictedGetObject()
+            try:
+                category.restrictedTraverse("@@images").scale(scale="listing")
+            except Exception as error:
+                logger.warning("No icon scale for %s: %s",
+                               "/".join(category.getPhysicalPath()), error)
+                continue
+            done += 1
+        _cookCssResources()
+        return done
+
     def __call__(self):
         folders = self._init_meeting_folders()
         msg = "%s meeting folders initialized" % folders
+        icons = self._update_category_icons()
+        msg += ", %s annex type icons built" % icons
         if not self.request.form.get("skip_categorized_elements"):
             containers = self._update_categorized_elements()
             msg += ", categorized_elements updated on %s items and meetings" % containers

@@ -415,6 +415,19 @@ CONFIG_FACTORY_FIELDS = ("short_name",
                          "meeting_workflow",
                          "item_wf_validation_levels")
 
+# The fields an object needs before its ObjectAddedEvent, per portal
+# type. collective.exportimport creates an empty object and sets the
+# fields afterwards, so a handler that reads a field of the new object
+# gets nothing: MeetingAdvice._updateAdviceRowId reads "advice_group"
+# and raises without it.
+FACTORY_FIELDS = {
+    "MeetingConfig": CONFIG_FACTORY_FIELDS,
+    "meetingadvice": ("advice_group",
+                      "advice_type",
+                      "advice_hide_during_redaction"),
+}
+
+
 # The workflow adaptations cannot travel with CONFIG_FACTORY_FIELDS:
 # _performWorkflowAdaptations() reads the "searches" folders of the
 # config, and onConfigInitialized() creates them *after* it calls
