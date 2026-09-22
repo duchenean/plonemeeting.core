@@ -517,8 +517,13 @@ DROP_UNKNOWN_CHOICE_VALUES = ("item_tags", )
 # not offer. Every Archetypes object of the 4.3 site carries a
 # "language", and a site that was never multilingual holds "fr-be",
 # "en" and the neutral empty token beside its own language. The key is
-# dropped and the site language applies.
-DROP_UNKNOWN_CHOICE_FIELDS = ("language", )
+# dropped and the site language applies. A site that ran for ten years
+# also holds items whose category or classifier is the id of a category
+# that was deleted, or the id of a category of another MeetingConfig:
+# the id is dropped and the item is kept, because an item with no
+# category is a smaller loss than no item at all. The import logs every
+# value it drops.
+DROP_UNKNOWN_CHOICE_FIELDS = ("language", "category", "classifier")
 
 
 # A MeetingConfig stores the dotted name of the interfaces that carry

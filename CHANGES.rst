@@ -22,7 +22,13 @@ Changelog
   cannot be computed for an advice of a group the config no longer asks
   (``KeyError: Not able to find a value to set for advice row_id!``);
   it also sends a mail for an advice given years ago. It still gives the
-  advice the permissions it computes, which nothing else does.
+  advice the permissions it computes, which nothing else does. The
+  modify handler stops on the same key, for the same reason. An item
+  whose category or classifier is the id of a category that was deleted,
+  or of a category of another MeetingConfig, keeps no category instead
+  of being lost, and the import logs the value it drops. A rich text
+  that the 4.3 site never set can also come out of the export as a plain
+  null, not only as a mapping with a null in it.
   [aduchene]
 
 - D.6 data migration: the objects the configs and the folders steps were

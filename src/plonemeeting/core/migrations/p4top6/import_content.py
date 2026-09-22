@@ -312,6 +312,8 @@ def _untokenize_choices(obj, item):
         # a term the new site does not offer is not a value either
         if name in mappings.DROP_UNKNOWN_CHOICE_FIELDS and \
                 not _in_vocabulary(field, obj, value):
+            logger.info("%s: %r is not offered any more on %s",
+                        name, value, item.get("@id"))
             item.pop(name)
             continue
         # or, for a list, only the values it does not offer leave
@@ -371,21 +373,24 @@ def _adapt_text_fields(obj, item):
     for schema_ in iterSchemata(obj):
         fields.update(getFields(schema_))
     for name, value in list(item.items()):
-        if not isinstance(value, dict) or "data" not in value:
-            continue
         field = fields.get(name)
         if field is None:
             continue
         if IRichText.providedBy(field):
-            if value.get("data") is None:
-                # an AT TextField that was never set: the deserializer
-                # of plone.restapi unescapes the data without a check
+            # an AT TextField that was never set comes out as a null, or
+            # as a mapping with a null in it. The deserializer of
+            # plone.restapi unescapes the data without a check.
+            if value is None or (isinstance(value, dict) and
+                                 value.get("data") is None):
                 item.pop(name)
+                continue
+            if not isinstance(value, dict):
                 continue
             allowed = field.allowed_mime_types
             if allowed and value.get("content-type") not in allowed:
                 value["content-type"] = field.default_mime_type
-        elif IText.providedBy(field):
+        elif IText.providedBy(field) and isinstance(value, dict) and \
+                "data" in value:
             item[name] = value["data"]
     return item
 

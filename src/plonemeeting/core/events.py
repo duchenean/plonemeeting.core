@@ -1002,6 +1002,11 @@ def onAdviceModified(advice, event):
     if advice.REQUEST.get('currentlyStoringExternalImages', False) is True:
         return
 
+    # the import of a 4.3 site writes the fields of the advice one after
+    # the other: see onAdviceAdded
+    if advice.REQUEST.get('importingPloneMeetingContent', False):
+        return
+
     if not isinstance(event, ContainerModifiedEvent):
         mod_attrs = get_modified_attrs(event)
         if 'advice_hide_during_redaction' in mod_attrs:

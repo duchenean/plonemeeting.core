@@ -653,6 +653,10 @@ class TestImportPostProcess(PloneMeetingTestCase):
         self.assertEqual(
             advice.acquiredRolesAreUsedBy(
                 "plone.app.contenttypes: Add Image"), "")
+        # the import writes the fields after, one event at a time
+        from zope.lifecycleevent import modified
+        advice.advice_type = u"negative"
+        modified(advice)
 
     def test_the_import_defers_the_annex_cache(self):
         """The cache of a container cannot be built while the annexes of
@@ -948,6 +952,27 @@ class TestContainers(PloneMeetingTestCase):
         self._importer().global_obj_hook_before_deserializing(item, data)
         self.assertEqual(data["privacy"], "secret")
 
+    def test_a_category_the_config_does_not_have_leaves_the_item(self):
+        """A site that ran for ten years holds items whose category was
+           deleted, or belongs to another MeetingConfig. An item with no
+           category is a smaller loss than no item at all."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "category": {"title": u"Informatique",
+                             "token": "informatique"}}
+        self.changeUser("siteadmin")
+        self._importer().global_obj_hook_before_deserializing(item, data)
+        self.assertFalse("category" in data)
+        # a category the config has is left alone
+        category_id = self.meetingConfig.getCategories(
+            onlySelectable=False)[0].getId()
+        data["category"] = {"title": u"Whatever", "token": category_id}
+        self._importer().global_obj_hook_before_deserializing(item, data)
+        self.assertEqual(data["category"], category_id)
+
     def test_a_type_the_new_site_does_not_have_leaves_the_constraints(self):
         """A 4.3 folder allows MeetingFile or Large Plone Folder.
            ISelectableConstrainTypes refuses the whole list when one id
@@ -1025,11 +1050,14 @@ class TestContainers(PloneMeetingTestCase):
                 "id": item.getId(),
                 "description": {"content-type": "text/html", "data": None},
                 "decision": {"content-type": "text/html", "data": None},
+                "observations": None,
                 "motivation": {"content-type": "text/html",
                                "data": u"<p>Motivation</p>"}}
         self.changeUser("siteadmin")
         self._importer().global_obj_hook_before_deserializing(item, data)
         self.assertTrue("decision" not in data)
+        # the export writes a plain null too
+        self.assertTrue("observations" not in data)
         self.assertEqual(data["motivation"]["data"], u"<p>Motivation</p>")
 
     def test_dublin_core_text_fields_are_unwrapped(self):
