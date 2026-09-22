@@ -5,6 +5,39 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- Faceted dashboards on Plone 6. ``@@static-infos`` called ``update()``
+  on the default view of its object, and the default view of an item
+  delegates to a skin template instead of being a form, so every listing
+  of items raised ``AttributeError: 'MeetingItemDefaultView' object has
+  no attribute 'update'``. It now builds a display form when the view is
+  not one, and it keeps the names that are not a field of the schema
+  (``labels``, ``item_reference``), which the new filter would drop.
+  ``itemstaticinfos.pt`` rendered Archetypes widgets and is ported to
+  Dexterity. ``MeetingConfig._synchSearches`` and
+  ``_set_default_faceted_search`` now give every ``searches_*`` folder,
+  of the configuration and of every user, the collection it shows:
+  without one the table falls back to the columns of an item, and an
+  item column on a listing of meetings raises in five different ways.
+  ``ItemNumberColumn``, ``ItemListTypeColumn``, ``ItemAdvicesColumn``
+  and ``ItemLinkedMeetingColumn`` no longer assume the brain they get is
+  the brain of an item: the catalog answers ``Missing.Value``, which is
+  false and unhashable at the same time.
+  [aduchene]
+
+- The Dexterity ``Meeting`` schema extends the ``IMeeting`` marker, the
+  way the item schema extends its own. Without it no meeting answered to
+  ``object_provides`` on that interface: the annex cache of every
+  meeting was never built and the check that a meeting is closed in
+  ``utils.isPowerObserverForCfg`` never fired.
+  [aduchene]
+
+- ``collective.dms.scanbehavior`` is a dependency: the ``annexDecision``
+  type declares its ``IScanFields`` behavior, ``imio.annex`` only loads
+  the package when it is installed, and without it every scanned annex
+  loses ``scan_id``, ``scan_date`` and ``scanner``. It holds the fields
+  of a scanned annex, not the AMQP transport.
+  [aduchene]
+
 - D.6 data migration: the state and the meeting folder of an imported
   object. The meeting folder of a user (``Members/<user>/mymeetings/
   <cfg_id>``) comes back from the export as a plain folder: the

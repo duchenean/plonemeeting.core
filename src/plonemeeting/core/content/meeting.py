@@ -55,6 +55,7 @@ from plonemeeting.core.config import PMMessageFactory as _
 from plonemeeting.core.config import READER_USECASES
 from plonemeeting.core.config import REINDEX_NEEDED_MARKER
 from plonemeeting.core.interfaces import IDXMeetingContent
+from plonemeeting.core.interfaces import IMeeting as IMeetingMarker
 from plonemeeting.core.utils import _addManagedPermissions
 from plonemeeting.core.utils import _base_extra_expr_ctx
 from plonemeeting.core.utils import _get_category
@@ -176,7 +177,7 @@ class ICommitteesRowSchema(Interface):
         allowed_mime_types=(u"text/html", ))
 
 
-class IMeeting(IDXMeetingContent):
+class IMeeting(IDXMeetingContent, IMeetingMarker):
     """
         Meeting schema
     """

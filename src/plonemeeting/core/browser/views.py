@@ -26,7 +26,9 @@ from imio.pyutils.utils import get_ordinal_clusters
 from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
+from plone.dexterity.browser.view import DefaultView
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import iterSchemata
 from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
@@ -35,6 +37,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
+from zope.schema import getFieldNames
 from plonemeeting.core import logger
 from plonemeeting.core.browser.itemchangeorder import _is_integer
 from plonemeeting.core.browser.itemvotes import _get_linked_item_vote_numbers
@@ -177,16 +180,31 @@ class BaseStaticInfosView(BrowserView):
         self.static_infos_field_names = self._static_infos_field_names()
         if self.static_infos_field_names and IDexterityContent.providedBy(self.context):
             view = self.context.restrictedTraverse('@@view')
+            if not hasattr(view, 'w'):
+                # the default view of an item delegates to a skin
+                # template, so it is not a form and has no widget
+                view = DefaultView(self.context, self.request)
             view.update()
             self.dx_view = view
-            # if we ask to display a field that is not enabled, it could
-            # not be in dx_view.w, will only be shown if not None
+            schema_field_names = set()
+            for schema in iterSchemata(self.context):
+                schema_field_names.update(getFieldNames(schema))
+            # a name that is not a field of the schema (labels, the item
+            # reference) is rendered by the template on its own. A field
+            # the config disabled is not in dx_view.w
             # (check BaseMeetingView.show_field)
             self.static_infos_field_names = [
                 field_name for field_name in self.static_infos_field_names
-                if field_name in self.dx_view.w]
+                if field_name not in schema_field_names or
+                field_name in self.dx_view.w]
 
         return super(BaseStaticInfosView, self).__call__()
+
+    def widget_for(self, field_name):
+        """The display widget of a field, or nothing when the config
+           does not use it."""
+        dx_view = getattr(self, 'dx_view', None)
+        return dx_view is not None and dx_view.w.get(field_name) or None
 
     def _static_infos_field_names(self):
         """Field names displayed as static infos.

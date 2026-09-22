@@ -28,6 +28,7 @@ from Products.CMFCore.utils import _checkPermission
 from plonemeeting.core.config import AddAnnex
 from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.content.meeting import IMeeting
+from plonemeeting.core.content.meetingitem import IMeetingItem
 from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import displaying_available_items
 from zope.i18n import translate
@@ -123,6 +124,13 @@ class ItemAdvicesColumn(BrowserViewCallColumn):
     """A column that display the MeetingItem advices."""
     view_name = 'advices-icons'
     escape = False
+
+    def renderCell(self, item):
+        """The column is also on a listing of meetings, and only an item
+           gives an advice."""
+        if not IMeetingItem.providedBy(self._getObject(item)):
+            return u''
+        return super(ItemAdvicesColumn, self).renderCell(item)
 
 
 class ItemToDiscussColumn(BrowserViewCallColumn):
@@ -302,19 +310,26 @@ class ItemLinkedMeetingColumn(BaseColumn):
     def renderCell(self, item):
         """ """
         value = self.getValue(item)
+        if not value:
+            # the catalog gives Missing.Value when the brain has no such
+            # column, and that value cannot be a key of the cache
+            value = None
         if self.use_caching:
             res = self._get_cached_result(value)
             if res:
                 return res
 
-        if not value or value.year <= 1950:
+        meeting_uid = getattr(item, self.meeting_uid_attr, None)
+        if not meeting_uid:
+            # the brain of a meeting has no such column
+            meeting_uid = None
+        if not value or not meeting_uid or value.year <= 1950:
             res = u'-'
         else:
             catalog = self.table.portal.portal_catalog
             # done unrestricted because can be used to display meeting date
             # in dashboard when current user may not see the meeting
-            brains = catalog.unrestrictedSearchResults(
-                UID=getattr(item, self.meeting_uid_attr))
+            brains = catalog.unrestrictedSearchResults(UID=meeting_uid)
             meeting = brains[0]._unrestrictedGetObject()
             res = meeting.get_pretty_link()
 
@@ -341,6 +356,13 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
     vocabulary = u'plonemeeting.core.vocabularies.listtypesvocabulary'
     # VocabularyColumn and ColorColumn manage escape manually
     escape = False
+
+    def getValue(self, item):
+        """The column is also on a listing of meetings, and a meeting
+           has no list type: the catalog gives Missing.Value, which the
+           CSS class of the cell cannot hold."""
+        value = super(ItemListTypeColumn, self).getValue(item)
+        return isinstance(value, str) and value or u''
 
     def renderCell(self, item):
         """Display a message."""
@@ -377,7 +399,11 @@ class ItemNumberColumn(BrowserViewCallColumn):
         """ """
         _may_change_items_order = getattr(self.table, '_may_change_items_order', None)
         if _may_change_items_order is None:
-            self.table._may_change_items_order = meeting.wfConditions().may_change_items_order()
+            # the column is also on a dashboard, where the context is
+            # the faceted folder and not a meeting
+            self.table._may_change_items_order = \
+                IMeeting.providedBy(meeting) and \
+                meeting.wfConditions().may_change_items_order()
             if not self.table._may_change_items_order:
                 # avoid init table DND, would slow browser for nothing
                 self.header_js = u''

@@ -57,6 +57,10 @@ setup(name='plonemeeting.core',
           'collective.behavior.internalnumber',
           # 'collective.ckeditor',  # P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D
           'collective.contact.plonegroup',
+          # the annexDecision FTI declares its IScanFields behavior, and
+          # imio.annex only loads the package when it is installed. It
+          # holds the fields of a scanned annex, not the AMQP transport.
+          'collective.dms.scanbehavior',
           # 'collective.datagridcolumns',  # P6 migration: AT DataGridField column types, no longer needed
           # 'collective.dexteritytextindexer',  # P6 migration: merged into plone.app.dexterity.textindexer
           'collective.js.fancytree',

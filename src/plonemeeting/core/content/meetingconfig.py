@@ -5854,6 +5854,13 @@ class MeetingConfig(Container):
         '''See doc in interfaces.py.'''
         return []
 
+    def _first_collection_uid(self, sub_folder):
+        """The collection a dashboard shows when nothing is selected."""
+        collections = [obj for obj in sub_folder.objectValues()
+                       if obj.portal_type == 'DashboardCollection' and
+                       obj.enabled]
+        return collections and collections[0].UID() or None
+
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
         collection = getattr(self.searches.searches_items, collection_id,
@@ -5862,6 +5869,16 @@ class MeetingConfig(Container):
         # update the criterion default value in searches and searches_items folders
         _updateDefaultCollectionFor(self.searches, default_uid)
         _updateDefaultCollectionFor(self.searches.searches_items, default_uid)
+        # every other searches_* folder gets its own first collection.
+        # Without a collection the dashboard falls back to the columns
+        # of an item, and an item column on a listing of meetings raises
+        for sub_folder in self.searches.objectValues():
+            if not sub_folder.getId().startswith('searches_') or \
+               sub_folder.getId() == 'searches_items':
+                continue
+            sub_uid = self._first_collection_uid(sub_folder)
+            if sub_uid:
+                _updateDefaultCollectionFor(sub_folder, sub_uid)
 
 
     security.declarePrivate('at_post_create_script')
@@ -6748,6 +6765,13 @@ class MeetingConfig(Container):
                 constrain.setImmediatelyAddableTypes(allowedTypes)
                 # reindex object
                 subFolderObj.reindexObject()
+
+            # every folder has its faceted configuration now: give each
+            # one the collection its configuration folder shows
+            for subFolderId, subFolderTitle in subFolderInfos:
+                sub_uid = self._first_collection_uid(self.searches[subFolderId])
+                if sub_uid:
+                    _updateDefaultCollectionFor(folder[subFolderId], sub_uid)
 
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''In those states, the meeting accept items, normal or late.
