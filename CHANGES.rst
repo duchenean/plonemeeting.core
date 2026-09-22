@@ -5,6 +5,26 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.6 data migration: the state and the meeting folder of an imported
+  object. The meeting folder of a user (``Members/<user>/mymeetings/
+  <cfg_id>``) comes back from the export as a plain folder: the
+  ``meeting_config`` property is not in the JSON, and that property is
+  what the tool reads to know the config an object belongs to. The new
+  ``@@import_pm_meeting_folders`` runs between the folders and the
+  content, so every item lands in a folder that knows its config.
+  ``PMImportContent`` no longer plays the transitions of an object to
+  reach its state: a transition is an action, and the workflow history
+  that ``collective.exportimport`` writes after it already holds the
+  state. ``@@import_pm_post_process`` gives every object the permissions
+  of that state and puts the state in the catalog. The add handler of a
+  meetingadvice stops on ``importingPloneMeetingContent``: it recomputes
+  the row id of an advice the 4.3 site already has, and that row id
+  cannot be computed for an advice of a group the config no longer asks
+  (``KeyError: Not able to find a value to set for advice row_id!``);
+  it also sends a mail for an advice given years ago. It still gives the
+  advice the permissions it computes, which nothing else does.
+  [aduchene]
+
 - D.6 data migration: the objects the configs and the folders steps were
   losing. A POD template that names another one (``style_template``,
   ``merge_templates``, ``mailing_loop_template``, ``pod_template_to_use``,

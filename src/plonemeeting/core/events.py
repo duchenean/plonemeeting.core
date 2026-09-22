@@ -953,6 +953,14 @@ def onAdviceAdded(advice, event):
     if advice.REQUEST.get('currentlyPastingItems', False):
         return
 
+    # the import of a 4.3 site writes the row id, the history and the
+    # advices index of the item itself, and the advice was given years
+    # ago: no mail. The permissions this handler computes are the only
+    # thing the import cannot give back.
+    if advice.REQUEST.get('importingPloneMeetingContent', False):
+        _addManagedPermissions(advice)
+        return
+
     # Add a place to store advice_given_history
     advice.advice_given_history = PersistentList()
 

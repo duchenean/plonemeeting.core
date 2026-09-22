@@ -570,6 +570,90 @@ class TestImportPostProcess(PloneMeetingTestCase):
         self.assertTrue("annex type icons built" in msg)
         self.assertTrue("plone.scale" in IAnnotations(category))
 
+    def test_the_meeting_folders_know_their_config(self):
+        """The items are imported in these folders, and the tool reads
+           the property to know the config an item belongs to."""
+        from plonemeeting.core.config import MEETING_CONFIG
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        self.changeUser("siteadmin")
+        root, mc_folder = self._plain_imported_folders("pmCreator2", cfg_id)
+        self.assertFalse(mc_folder.hasProperty(MEETING_CONFIG))
+        self.assertIsNone(self.tool.getMeetingConfig(mc_folder))
+
+        msg = self.portal.restrictedTraverse("@@import_pm_meeting_folders")()
+
+        self.assertTrue("meeting folders initialized" in msg)
+        self.assertEqual(mc_folder.getProperty(MEETING_CONFIG), cfg_id)
+        self.assertEqual(self.tool.getMeetingConfig(mc_folder), cfg)
+
+    def test_the_import_does_not_play_the_transitions_of_an_object(self):
+        """A transition is an action: the workflow history is the only
+           source of the state of an imported object."""
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            PMImportContent
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.changeUser("siteadmin")
+        importer = PMImportContent(self.portal, self.request)
+        importer.start()
+        importer.import_review_state(item, {"review_state": "validated"})
+        self.assertEqual(api.content.get_state(item), "itemcreated")
+
+    def test_post_process_gives_back_the_permissions_of_the_state(self):
+        """collective.exportimport writes the workflow history after the
+           object is created, so the object keeps the permissions of the
+           state it was created in, and the catalog keeps that state."""
+        permission = "Modify portal content"
+
+        def roles_of(obj):
+            return sorted(entry["name"] for entry
+                          in obj.rolesOfPermission(permission)
+                          if entry["selected"])
+
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.changeUser("siteadmin")
+        expected = roles_of(item)
+        self.assertTrue(len(expected) > 1)
+        # what an imported object looks like: the permissions of another state
+        item.manage_permission(permission, ("Manager", ), acquire=0)
+        self.assertEqual(roles_of(item), ["Manager"])
+
+        msg = self.portal.restrictedTraverse("@@import_pm_post_process")()
+
+        self.assertTrue("permissions of their state" in msg)
+        self.assertEqual(roles_of(item), expected)
+        brain = self.portal.portal_catalog(UID=item.UID())[0]
+        self.assertEqual(brain.review_state, api.content.get_state(item))
+
+    def test_the_import_does_not_let_an_advice_recompute_itself(self):
+        """The add handler of an advice computes what the import already
+           holds, and what it computes can raise: the 4.3 site has
+           advices of a group the config no longer asks."""
+        from Products.CMFPlone.utils import _createObjectByType
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            IMPORTING_KEY
+        self.changeUser("pmManager")
+        item = self.create("MeetingItem")
+        self.changeUser("siteadmin")
+        fields = {"advice_group": self.vendors_uid, "advice_type": u"positive"}
+        cfg = self.meetingConfig
+        self.assertFalse(self.vendors_uid in item.adviceIndex)
+        self.assertFalse(self.vendors_uid in cfg.power_advisers_groups)
+        self.assertRaises(KeyError, _createObjectByType,
+                          "meetingadvice", item, "asked", **fields)
+
+        self.request.set(IMPORTING_KEY, True)
+        advice = _createObjectByType("meetingadvice", item, "imported", **fields)
+
+        # the handler stopped before it wrote anything of its own
+        self.assertIsNone(getattr(advice, "advice_given_history", None))
+        # the permissions it computes are the only thing it still does
+        self.assertEqual(
+            advice.acquiredRolesAreUsedBy(
+                "plone.app.contenttypes: Add Image"), "")
+
     def test_the_import_defers_the_annex_cache(self):
         """The cache of a container cannot be built while the annexes of
            the container are still created empty."""

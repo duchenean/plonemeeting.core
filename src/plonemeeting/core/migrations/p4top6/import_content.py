@@ -68,6 +68,12 @@ DEFER_CATEGORIZED_KEYS = ("defer_update_categorized_elements",
 # years is the reference here, not the validators.
 SKIP_VALIDATORS_KEY = "skip_at_compat_validators"
 
+# plonemeeting.core reads this one. An add handler works on an object a
+# user just filled in a form. The import adds an empty object and writes
+# the fields after, and it has the whole state of the 4.3 object, so the
+# handler has nothing to compute and must not send a mail.
+IMPORTING_KEY = "importingPloneMeetingContent"
+
 DEFERRED_KEY = "plonemeeting.core.p4top6.deferred_fields"
 
 # UID of the 4.3 site -> UID of the new site, for the content the
@@ -504,7 +510,7 @@ class PMImportContent(ImportContent):
         self._raw_fields = {}
         self._type_ids = set(
             api.portal.get_tool("portal_types").objectIds())
-        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, ):
+        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, IMPORTING_KEY):
             self.request.set(key, True)
         portal = api.portal.get()
         self._url_pattern = _site_url_pattern(portal.getId())
@@ -709,6 +715,16 @@ class PMImportContent(ImportContent):
         if IMeetingConfig.providedBy(obj):
             self._imported_configs.append(obj.UID())
 
+    def import_review_state(self, obj, item):
+        """Do not play the transitions of an object to reach its state.
+
+           collective.exportimport writes the workflow history of the
+           object after this, and the state of a DCWorkflow is the state
+           of the last entry of that history. A transition is also an
+           action: it can put an item in a meeting or send a mail. The
+           permissions of the state and the catalog come back in
+           @@import_pm_post_process."""
+
     def finish(self):
         # AT mutators for customAdvisers/powerObservers/committees/
         # usingGroups/wfAdaptations had side effects (Plone group creation,
@@ -726,7 +742,7 @@ class PMImportContent(ImportContent):
         applied, remaining, missing = apply_deferred_fields(self.request)
         logger.info("Deferred fields: %s applied, %s waiting, %s objects "
                     "not imported", applied, remaining, missing)
-        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, ):
+        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, IMPORTING_KEY):
             self.request.set(key, False)
 
 
@@ -865,6 +881,49 @@ class ImportDeferredFields(BrowserView):
         return msg
 
 
+def init_meeting_folders():
+    """Make every Members/<user>/mymeetings/<cfg_id> folder a meeting folder.
+
+       The export gives back a plain folder: the meeting_config property,
+       the faceted dashboard, the permissions, the constrained types and
+       the local roles are not in the JSON. The property is the one the
+       tool reads to know which MeetingConfig an object belongs to, so
+       this must run before the items are imported."""
+    tool = api.portal.get_tool("portal_plonemeeting")
+    members = api.portal.get_tool("portal_membership").getMembersFolder()
+    cfg_ids = tool.objectIds("MeetingConfig")
+    done = 0
+    if members is None:
+        return done
+    for home_folder in members.objectValues():
+        root_folder = getattr(aq_base(home_folder), ROOT_FOLDER, None)
+        if root_folder is None:
+            continue
+        root_folder = home_folder[ROOT_FOLDER]
+        tool.init_meeting_root_folder(root_folder)
+        for cfg_id in cfg_ids:
+            if getattr(aq_base(root_folder), cfg_id, None) is None:
+                continue
+            logger.info("Initializing meeting folder %s",
+                        "/".join(root_folder[cfg_id].getPhysicalPath()))
+            tool.init_meeting_config_folder(root_folder[cfg_id], tool[cfg_id])
+            done += 1
+    return done
+
+
+class ImportMeetingFolders(BrowserView):
+    """Make the imported member folders meeting folders.
+
+    Call as @@import_pm_meeting_folders after the folders are imported
+    and before the items are.
+    """
+
+    def __call__(self):
+        msg = "%s meeting folders initialized" % init_meeting_folders()
+        logger.info(msg)
+        return msg
+
+
 class ImportPostProcess(BrowserView):
     """Re-apply the PloneMeeting setup that the JSON import cannot carry.
 
@@ -872,6 +931,8 @@ class ImportPostProcess(BrowserView):
       as plain folders: re-apply the faceted dashboard, the meeting_config
       property, permissions, constrained types and local roles, and the
       constraints of the "mymeetings" root folder.
+    - Give back to every object the permissions of its review state, and
+      put that state in the catalog.
     - Rebuild the collective.iconifiedcategory annex caches
       (categorized_elements) on every item and meeting, unless called
       with ?skip_categorized_elements=1.
@@ -880,27 +941,23 @@ class ImportPostProcess(BrowserView):
     before the catalog rebuild.
     """
 
-    def _init_meeting_folders(self):
-        tool = api.portal.get_tool("portal_plonemeeting")
-        members = api.portal.get_tool("portal_membership").getMembersFolder()
-        cfg_ids = tool.objectIds("MeetingConfig")
-        done = 0
-        if members is None:
-            return done
-        for home_folder in members.objectValues():
-            root_folder = getattr(aq_base(home_folder), ROOT_FOLDER, None)
-            if root_folder is None:
-                continue
-            root_folder = home_folder[ROOT_FOLDER]
-            tool.init_meeting_root_folder(root_folder)
-            for cfg_id in cfg_ids:
-                if getattr(aq_base(root_folder), cfg_id, None) is None:
-                    continue
-                logger.info("Initializing meeting folder %s",
-                            "/".join(root_folder[cfg_id].getPhysicalPath()))
-                tool.init_meeting_config_folder(root_folder[cfg_id], tool[cfg_id])
-                done += 1
-        return done
+    def _update_workflow_security(self):
+        """Give back to every object the permissions of its review state.
+
+           The review state comes from the workflow history, and
+           collective.exportimport writes that history after the object
+           is created. The object keeps the permissions of the initial
+           state, and the catalog keeps its review state."""
+        wf_tool = api.portal.get_tool("portal_workflow")
+        count = wf_tool.updateRoleMappings()
+        catalog = api.portal.get_tool("portal_catalog")
+        for brain in catalog.unrestrictedSearchResults():
+            obj = brain._unrestrictedGetObject()
+            # the index and the metadata of the catalog, not the
+            # modification date: reindexObject only touches it when it
+            # gets no index at all
+            obj.reindexObject(idxs=["review_state"])
+        return count
 
     def _update_categorized_elements(self):
         """Build the annex cache of every container that can hold one.
@@ -946,8 +1003,10 @@ class ImportPostProcess(BrowserView):
         return done
 
     def __call__(self):
-        folders = self._init_meeting_folders()
+        folders = init_meeting_folders()
         msg = "%s meeting folders initialized" % folders
+        objects = self._update_workflow_security()
+        msg += ", %s objects got the permissions of their state" % objects
         icons = self._update_category_icons()
         msg += ", %s annex type icons built" % icons
         if not self.request.form.get("skip_categorized_elements"):
