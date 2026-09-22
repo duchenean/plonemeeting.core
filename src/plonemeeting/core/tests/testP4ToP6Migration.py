@@ -858,6 +858,33 @@ class TestContainers(PloneMeetingTestCase):
         self.assertEqual(constrains["locally_allowed_types"], ["Folder"])
         self.assertEqual(constrains["immediately_addable_types"], [])
 
+    def test_a_tag_the_config_dropped_leaves_the_item(self):
+        """An item keeps a tag the MeetingConfig does not offer any
+           more. The other tags of the item stay."""
+        cfg = self.meetingConfig
+        self.changeUser("siteadmin")
+        cfg.all_item_tags = u"Tag1\nTag2"
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "itemTags": [{"title": u"Tag1", "token": "Tag1"},
+                             {"title": u"Test", "token": "Test"}]}
+        self.changeUser("siteadmin")
+        importer = self._importer()
+        data = importer.global_dict_hook(data)
+        importer.global_obj_hook_before_deserializing(item, data)
+        self.assertEqual(data["item_tags"], ["Tag1"])
+        # nothing the config offers means no value at all
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "itemTags": [{"title": u"Test", "token": "Test"}]}
+        data = importer.global_dict_hook(data)
+        importer.global_obj_hook_before_deserializing(item, data)
+        self.assertTrue("item_tags" not in data)
+
     def test_a_rich_text_that_was_never_set_is_dropped(self):
         """plone.restapi unescapes the data of a rich text without a
            check, and an AT TextField that was never set has none."""

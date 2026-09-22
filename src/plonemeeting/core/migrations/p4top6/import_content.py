@@ -278,22 +278,38 @@ def _untokenize_choices(obj, item):
             item.pop(name)
             continue
         # a term the config does not offer any more has a fallback
-        fallback = mappings.CHOICE_FALLBACKS.get(name, {}).get(value)
-        if fallback is not None and not _in_vocabulary(field, obj, value):
-            logger.info("%s: %r is not offered any more, using %r",
-                        name, value, fallback)
-            value = fallback
+        fallbacks = mappings.CHOICE_FALLBACKS.get(name)
+        if fallbacks and not isinstance(value, list):
+            fallback = fallbacks.get(value)
+            if fallback is not None and not _in_vocabulary(field, obj, value):
+                logger.info("%s: %r is not offered any more, using %r",
+                            name, value, fallback)
+                value = fallback
         # a term the new site does not offer is not a value either
         if name in mappings.DROP_UNKNOWN_CHOICE_FIELDS and \
                 not _in_vocabulary(field, obj, value):
             item.pop(name)
             continue
+        # or, for a list, only the values it does not offer leave
+        if name in mappings.DROP_UNKNOWN_CHOICE_VALUES and \
+                isinstance(value, list):
+            kept = [sub for sub in value if _in_vocabulary(field, obj, sub)]
+            if len(kept) != len(value):
+                logger.info("%s: %s is not offered any more", name,
+                            sorted(set(value) - set(kept)))
+            if not kept:
+                item.pop(name)
+                continue
+            value = kept
         item[name] = value
     return item
 
 
 def _in_vocabulary(field, obj, value):
     """Does the vocabulary of p_field, read on p_obj, hold p_value?"""
+    value_type = getattr(field, "value_type", None)
+    if IChoice.providedBy(value_type):
+        field = value_type
     try:
         vocabulary = field.bind(obj).vocabulary
         vocabulary.getTermByToken(value)

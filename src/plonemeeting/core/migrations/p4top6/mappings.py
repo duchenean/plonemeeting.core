@@ -492,6 +492,14 @@ CHOICE_FALLBACKS = {
 }
 
 
+# List fields whose values the new site can refuse one by one. A tag an
+# item carries can have left the MeetingConfig; the other tags of the
+# item stay, and the dropped ones are logged. Only for a field whose
+# values are informative: a value that carries a right or a state is
+# kept, with a fallback if needed (see CHOICE_FALLBACKS).
+DROP_UNKNOWN_CHOICE_VALUES = ("item_tags", )
+
+
 # Choice fields whose exported value can be a term the new site does
 # not offer. Every Archetypes object of the 4.3 site carries a
 # "language", and a site that was never multilingual holds "fr-be",

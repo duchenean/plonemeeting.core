@@ -5782,6 +5782,10 @@ class MeetingItem(Container):
                predecessor.adviceIndex.get(adviserId) and
                predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.get_predecessor()
+            # the chain can be broken, an item imported from another
+            # site keeps the link but the predecessor may not be there
+            if predecessor is None:
+                return None
             inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
         res = inheritedAdviceInfo
