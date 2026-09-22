@@ -1085,6 +1085,57 @@ class TestContainers(PloneMeetingTestCase):
         self.assertTrue("observations" not in data)
         self.assertEqual(data["motivation"]["data"], u"<p>Motivation</p>")
 
+    def test_a_grid_rich_text_that_was_never_set_is_dropped(self):
+        """A rich text column of a data grid is a null in the row, and
+           plone.restapi unescapes it without a check."""
+        self.changeUser("pmManager")
+        meeting = self.create("Meeting")
+        self.changeUser("siteadmin")
+        data = {"@id": meeting.absolute_url(),
+                "@type": meeting.portal_type,
+                "id": meeting.getId(),
+                "committees": [{"row_id": "committee_1",
+                                "assembly": None,
+                                "committee_observations": None,
+                                "attendees": []}]}
+        self._importer().global_obj_hook_before_deserializing(meeting, data)
+        row = data["committees"][0]
+        self.assertFalse("assembly" in row)
+        self.assertFalse("committee_observations" in row)
+        self.assertEqual(row["row_id"], "committee_1")
+
+    def test_a_title_with_a_line_break_keeps_one_line(self):
+        """The Archetypes field behind a Dexterity TextLine took a line
+           break, the Dexterity one refuses it."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        annex = self.addAnnex(item)
+        data = {"@id": annex.absolute_url(),
+                "@type": annex.portal_type,
+                "id": annex.getId(),
+                "title": u"07\n- D\u00e9cision d'Octroi du Permis\nd'Urbanisme"}
+        self.changeUser("siteadmin")
+        self._importer().global_obj_hook_before_deserializing(annex, data)
+        self.assertEqual(
+            data["title"], u"07 - D\u00e9cision d'Octroi du Permis d'Urbanisme")
+
+    def test_a_deferred_value_is_there_when_the_vocabulary_reads_it(self):
+        """A PloneMeeting vocabulary keeps the value the object already
+           holds, and the import writes an empty object first."""
+        from plonemeeting.core.migrations.p4top6.import_content import MISSING
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            _seed_value
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.changeUser("siteadmin")
+
+        previous = _seed_value(item, "preferred_meeting", u"a-meeting-uid")
+        self.assertEqual(item.preferred_meeting, u"a-meeting-uid")
+        # what the object held before comes back when the value is refused
+        _seed_value(item, "preferred_meeting", previous)
+        self.assertEqual(getattr(item.aq_base, "preferred_meeting", MISSING),
+                         previous)
+
     def test_dublin_core_text_fields_are_unwrapped(self):
         """Every Archetypes type of the 4.3 site exports "description"
            and "rights" as a TextField dict."""

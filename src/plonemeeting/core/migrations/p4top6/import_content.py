@@ -43,6 +43,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema import getFields
 from zope.schema.interfaces import IChoice
 from zope.schema.interfaces import IText
+from zope.schema.interfaces import ITextLine
 
 import json
 import logging
@@ -187,7 +188,8 @@ def apply_deferred_fields(request):
                 value = _remap_uids(value, uids)
             # a deferred value is taken out of the data before the hook
             # that gives a Choice its token reads it
-            data = _untokenize_choices(obj, {"@id": path, name: value})
+            data = _adapt_text_fields(
+                obj, _untokenize_choices(obj, {"@id": path, name: value}))
             data.pop("@id")
             if name not in data:
                 applied += 1
@@ -196,9 +198,11 @@ def apply_deferred_fields(request):
             # hold back the others
             deserializer = getMultiAdapter((obj, request),
                                            IDeserializeFromJson)
+            previous = _seed_value(obj, name, data[name])
             try:
                 deserializer(validate_all=False, data=data)
             except Exception as error:
+                _seed_value(obj, name, previous)
                 logger.info("%s of %s deferred again: %s",
                             name, path, error)
                 still_deferred[name] = value
@@ -210,6 +214,36 @@ def apply_deferred_fields(request):
         else:
             del store[uid]
     return applied, remaining, missing
+
+
+class _Missing(object):
+    """The object had no value at all."""
+
+
+MISSING = _Missing()
+
+
+def _seed_value(obj, name, value):
+    """Write a value on the object before the deserializer reads it.
+
+       A PloneMeeting vocabulary keeps the value the object already
+       holds, so a term the config does not offer any more stays
+       selectable. The import writes an empty object and its fields
+       after, so such a vocabulary has nothing to keep and the value
+       does not validate. Returns what the object held before, to put
+       back when the value does not validate anyway."""
+    previous = getattr(aq_base(obj), name, MISSING)
+    if value is MISSING:
+        try:
+            delattr(obj, name)
+        except AttributeError:
+            pass
+    else:
+        try:
+            setattr(obj, name, value)
+        except Exception:
+            return MISSING
+    return previous
 
 
 def _untokenize(value):
@@ -384,6 +418,11 @@ def _adapt_text_fields(obj, item):
         field = fields.get(name)
         if field is None:
             continue
+        row_schema = getattr(getattr(field, "value_type", None),
+                             "schema", None)
+        if row_schema is not None and isinstance(value, list):
+            _adapt_grid_texts(row_schema, value)
+            continue
         if IRichText.providedBy(field):
             # an AT TextField that was never set comes out as a null, or
             # as a mapping with a null in it. The deserializer of
@@ -397,10 +436,39 @@ def _adapt_text_fields(obj, item):
             allowed = field.allowed_mime_types
             if allowed and value.get("content-type") not in allowed:
                 value["content-type"] = field.default_mime_type
+        elif ITextLine.providedBy(field) and isinstance(value, str):
+            # the AT field behind it took a line break, the Dexterity
+            # one refuses it
+            if "\n" in value or "\r" in value:
+                item[name] = " ".join(value.split())
         elif IText.providedBy(field) and isinstance(value, dict) and \
                 "data" in value:
             item[name] = value["data"]
     return item
+
+
+def _adapt_grid_texts(row_schema, rows):
+    """Do what _adapt_text_fields does for the columns of a data grid.
+
+       A rich text column the 4.3 site never set is a null in the row,
+       and the deserializer of plone.restapi unescapes it without a
+       check."""
+    columns = getFields(row_schema)
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        for column, value in list(row.items()):
+            sub = columns.get(column)
+            if sub is None:
+                continue
+            if IRichText.providedBy(sub):
+                if value is None or (isinstance(value, dict) and
+                                     value.get("data") is None):
+                    row.pop(column)
+            elif IText.providedBy(sub) and isinstance(value, dict) and \
+                    "data" in value:
+                row[column] = value["data"]
+    return rows
 
 
 def _known_constrained_types(item, type_ids):

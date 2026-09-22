@@ -32,7 +32,13 @@ Changelog
   the data before the hook that gives a Choice its token reads it, so
   the deferred pass now untokenizes it: 6 444 items of the demo copy
   deferred their ``preferred_meeting`` for ever on
-  ``unhashable type: 'dict'``.
+  ``unhashable type: 'dict'``. A rich text column of a data grid gets
+  the same treatment as a rich text field: a null in a ``committees``
+  row was losing the whole meeting. A Dexterity ``TextLine`` refuses the
+  line break its Archetypes field took, so the import puts the value on
+  one line. The deferred pass writes the value on the object before it
+  validates it, because a PloneMeeting vocabulary keeps the value the
+  object already holds and an imported object holds nothing yet.
   [aduchene]
 
 - D.6 data migration: the objects the configs and the folders steps were
