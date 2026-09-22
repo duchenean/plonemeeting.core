@@ -8,26 +8,195 @@ at import time — the exported JSON stays faithful to the Plone 4.3
 source (see MIGRATION_DATA.md at the buildout root).
 """
 
-import json
-import logging
-
 from Acquisition import aq_base
-from Products.Five import BrowserView
-from collective.iconifiedcategory.utils import update_all_categorized_elements
-from plone import api
-from zope.event import notify
-from zope.lifecycleevent import ObjectModifiedEvent
-
 from collective.exportimport.import_content import ImportContent
-
+from collective.iconifiedcategory.utils import update_all_categorized_elements
+from persistent.mapping import PersistentMapping
+from plone import api
+from plone.app.textfield.interfaces import IRichText
+from plone.dexterity.utils import iterSchemata
+from plone.registry.interfaces import IRegistry
+from plone.restapi.interfaces import IDeserializeFromJson
 from plonemeeting.core.config import ROOT_FOLDER
+from plonemeeting.core.config import TOOL_ID
 from plonemeeting.core.content.meetingconfig import IMeetingConfig
 from plonemeeting.core.interfaces import IMeeting
 from plonemeeting.core.interfaces import IMeetingItem
 from plonemeeting.core.migrations.p4top6 import extra_state
 from plonemeeting.core.migrations.p4top6 import mappings
+from Products.Five import BrowserView
+from urllib.parse import unquote
+from urllib.parse import urlparse
+from zope import schema
+from zope.annotation import IAnnotations
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.schema import getFields
+from zope.schema.interfaces import IChoice
+from zope.schema.interfaces import IText
+
+import json
+import logging
+import re
+
 
 logger = logging.getLogger("plonemeeting.core: p4top6 import")
+
+# where the values of DEFERRED_FIELDS wait for their targets
+DEFERRED_KEY = "plonemeeting.core.p4top6.deferred_fields"
+
+# UID of the 4.3 site -> UID of the new site, for the content the
+# profile creates again instead of importing it
+UID_MAP_KEY = "plonemeeting.core.p4top6.uid_map"
+
+
+def _site_url_pattern(site_id):
+    """Match a URL of the exported site, whatever host wrote it.
+
+       The export runs as a script, and a serializer that resolves its
+       object outside the request acquisition chain writes another host
+       than the one of the exported item. The plone.restapi relation
+       deserializer only resolves a URL that starts with the portal URL
+       of the *importing* site, so every host is normalized here."""
+    return re.compile(r"^https?://[^/]+/{0}(?=/|$)".format(re.escape(site_id)))
+
+
+# a string that holds one of these is text, not a URL
+NOT_A_URL = re.compile(r"[\s<>\"\']")
+
+
+def _rewrite_urls(value, pattern, portal_url):
+    """Replace the site URL of p_value by p_portal_url.
+
+       Only a string that is a URL on its own is rewritten: a URL inside
+       a rich text keeps the host it was written with, the import does
+       not know the public URL of the new site."""
+    if isinstance(value, dict):
+        return dict((key, _rewrite_urls(sub, pattern, portal_url))
+                    for key, sub in value.items())
+    if isinstance(value, list):
+        return [_rewrite_urls(sub, pattern, portal_url) for sub in value]
+    if isinstance(value, str):
+        if NOT_A_URL.search(value):
+            return value
+        return pattern.sub(portal_url, value)
+    return value
+
+
+def _target_object(item):
+    """Get the object p_item is imported into, when it is already there.
+
+       collective.exportimport builds the target path from the "@id" of
+       an item: it drops the id of the site and resolves the rest
+       against the new site."""
+    path = urlparse(unquote(item["@id"])).path.strip("/").split("/")[1:]
+    if not path:
+        return None
+    portal = api.portal.get()
+    obj = portal.unrestrictedTraverse("/".join(path), None)
+    # traversal also finds a view or an acquired attribute
+    if obj is None or getattr(obj, "getPhysicalPath", None) is None:
+        return None
+    if obj.getPhysicalPath() != portal.getPhysicalPath() + tuple(path):
+        return None
+    return obj
+
+
+def deferred_store(create=False):
+    """Get the deferred values, kept on the portal so they survive the
+       commit between two import steps."""
+    annotations = IAnnotations(api.portal.get())
+    store = annotations.get(DEFERRED_KEY)
+    if store is None and create:
+        store = annotations[DEFERRED_KEY] = PersistentMapping()
+    return store
+
+
+def uid_map(create=False):
+    """Get the UID translation, kept on the portal so it survives the
+       commit between two import steps."""
+    annotations = IAnnotations(api.portal.get())
+    store = annotations.get(UID_MAP_KEY)
+    if store is None and create:
+        store = annotations[UID_MAP_KEY] = PersistentMapping()
+    return store
+
+
+def _remap_uids(value, uids):
+    """Replace every UID of the 4.3 site by the one of the new site."""
+    if isinstance(value, dict):
+        return dict((key, _remap_uids(sub, uids))
+                    for key, sub in value.items())
+    if isinstance(value, list):
+        return [_remap_uids(sub, uids) for sub in value]
+    if isinstance(value, str):
+        return uids.get(value, value)
+    return value
+
+
+def apply_deferred_fields(request):
+    """Apply every deferred value whose targets exist by now. A value
+       that still does not validate stays in the store for a later pass.
+
+       Returns (applied, remaining, missing) counts."""
+    store = deferred_store()
+    if not store:
+        return 0, 0, 0
+    applied = remaining = missing = 0
+    for uid, fields in list(store.items()):
+        obj = api.content.get(UID=uid)
+        if obj is None:
+            missing += 1
+            continue
+        still_deferred = {}
+        uids = uid_map() or {}
+        for name, value in fields.items():
+            if uids:
+                value = _remap_uids(value, uids)
+            # one call per field: a field that does not validate must not
+            # hold back the others
+            deserializer = getMultiAdapter((obj, request),
+                                           IDeserializeFromJson)
+            try:
+                deserializer(validate_all=False, data={name: value})
+            except Exception as error:
+                logger.info("%s of %s deferred again: %s",
+                            name, "/".join(obj.getPhysicalPath()), error)
+                still_deferred[name] = value
+            else:
+                applied += 1
+        if still_deferred:
+            store[uid] = still_deferred
+            remaining += len(still_deferred)
+        else:
+            del store[uid]
+    return applied, remaining, missing
+
+
+def _untokenize(value):
+    """Get the value behind its JSON form.
+
+       plone.restapi serializes a Choice as {"token": ..., "title": ...}
+       and a List of Choice as a list of those."""
+    if isinstance(value, dict) and "token" in value:
+        return value["token"]
+    if isinstance(value, list):
+        return [_untokenize(sub) for sub in value]
+    return value
+
+
+def _factory_kwargs(item, names):
+    """The values the content factory must set before the object is
+       added to its container."""
+    kwargs = {}
+    for name in names:
+        value = item.get(name)
+        if value is None:
+            continue
+        kwargs[name] = _untokenize(value)
+    return kwargs
 
 
 def _rename_keys(item, name_map):
@@ -46,6 +215,122 @@ def _unwrap_plain_text(item, field_names):
         if isinstance(value, dict) and "data" in value:
             item[name] = value["data"]
     return item
+
+
+def _untokenize_choices(obj, item):
+    """Give a Choice field its token instead of the whole term.
+
+       plone.restapi serializes a Choice as {"token": ..., "title": ...}
+       and reads both forms back, but plonemeeting.restapi stores the
+       value before it checks the vocabulary (an AT validator ran after
+       the mutator, and the PloneMeeting vocabularies include the stored
+       value). The term dict then sits in the field and the next
+       vocabulary that reads it fails."""
+    fields = {}
+    for schema_ in iterSchemata(obj):
+        fields.update(getFields(schema_))
+    for name, value in list(item.items()):
+        field = fields.get(name)
+        if field is None:
+            continue
+        value_type = getattr(field, "value_type", None)
+        if not (IChoice.providedBy(field) or IChoice.providedBy(value_type)):
+            continue
+        value = _untokenize(value)
+        if value in ("", None) and name in mappings.DROP_EMPTY_CHOICE_FIELDS:
+            item.pop(name)
+            continue
+        item[name] = value
+    return item
+
+
+def _drop_missing_required(obj, item):
+    """Take out the fields the 4.3 site left empty and Plone 6 requires.
+
+       The plone.restapi deserializer refuses a null for a required
+       field. The Dexterity default is the right value for a field the
+       source never filled."""
+    fields = {}
+    for schema_ in iterSchemata(obj):
+        fields.update(getFields(schema_))
+    for name, value in list(item.items()):
+        if value is not None:
+            continue
+        field = fields.get(name)
+        if field is not None and field.required:
+            item.pop(name)
+    return item
+
+
+def _adapt_text_fields(obj, item):
+    """Give an Archetypes TextField the form its Dexterity field wants.
+
+       The 4.3 export writes {"content-type": ..., "data": ...} for every
+       AT TextField. A plain schema.Text wants the string; a RichText
+       field wants one of its mime types, and the AT field of an empty
+       value says "text/plain", which RichText refuses."""
+    fields = {}
+    for schema_ in iterSchemata(obj):
+        fields.update(getFields(schema_))
+    for name, value in list(item.items()):
+        if not isinstance(value, dict) or "data" not in value:
+            continue
+        field = fields.get(name)
+        if field is None:
+            continue
+        if IRichText.providedBy(field):
+            if value.get("content-type") not in field.allowed_mime_types:
+                value["content-type"] = field.default_mime_type
+        elif IText.providedBy(field):
+            item[name] = value["data"]
+    return item
+
+
+def _rename_values(item, field_names, name_map):
+    """Rename the *values* of p_field_names, which are AT field names."""
+    for name in field_names:
+        values = item.get(name)
+        if not values:
+            continue
+        item[name] = [_renamed_token(value, name_map) for value in values]
+    return item
+
+
+def _rename_column_values(item, column_map, name_map):
+    """Rename the values of a DataGrid column that holds a field name."""
+    for field_name, columns in column_map.items():
+        rows = item.get(field_name)
+        if not rows:
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            for column in columns:
+                if column in row:
+                    row[column] = _renamed_token(row[column], name_map)
+    return item
+
+
+def _rename_prefixed_values(item, field_names, name_map):
+    """The same, for values that read "MeetingItem.<field name>"."""
+    for name in field_names:
+        values = item.get(name)
+        if not values:
+            continue
+        item[name] = [_renamed_token(value, name_map, prefixed=True)
+                      for value in values]
+    return item
+
+
+def _renamed_token(value, name_map, prefixed=False):
+    """Rename a value that is a field name, in both its JSON forms."""
+    if isinstance(value, dict) and "token" in value:
+        token = _renamed_token(value["token"], name_map, prefixed)
+        return token == value["token"] and value or dict(value, token=token)
+    if prefixed and isinstance(value, str) and "." in value:
+        prefix, name = value.split(".", 1)
+        return "%s.%s" % (prefix, _renamed_token(name, name_map))
+    return name_map.get(value, value)
 
 
 def _remap_row_keys(item, row_key_maps):
@@ -67,14 +352,173 @@ class PMImportContent(ImportContent):
 
     def start(self):
         self._imported_configs = []
+        self._raw_fields = {}
+        portal = api.portal.get()
+        self._url_pattern = _site_url_pattern(portal.getId())
+        self._portal_url = portal.absolute_url()
+        deferred_store(create=True)
+        uid_map(create=True)
+
+    def _map_uid(self, item):
+        """Note the UID an object of the 4.3 site has in the new one.
+
+           Content the profile already created keeps the UID of the new
+           site: the contacts directory, the sub-folders of a
+           MeetingConfig and every DashboardCollection of its searches.
+           A field that points at one of them carries the UID of the 4.3
+           site and would not resolve."""
+        old_uid = item.get("UID")
+        if not old_uid:
+            return
+        obj = _target_object(item)
+        if obj is None:
+            # not there: the import creates it with the exported UID
+            return
+        new_uid = getattr(obj, "UID", None) and obj.UID()
+        if new_uid and new_uid != old_uid:
+            uid_map(create=True)[old_uid] = new_uid
+
+    def _set_raw_fields(self, obj, item):
+        """Set the fields the deserializer cannot validate."""
+        fields = self._raw_fields.pop(item.get("UID"), None)
+        if not fields:
+            return
+        for name, value in fields.items():
+            setattr(obj, name, value)
+        logger.info("Set %s on %s without the deserializer",
+                    ", ".join(sorted(fields)),
+                    "/".join(obj.getPhysicalPath()))
+
+    def _import_directory(self, item):
+        """Apply the fields of the contacts directory on the directory
+           the profile already created.
+
+           The import skips existing content, and the directory is the
+           first entry of the contacts export, so this runs before the
+           held_positions of the same file are deserialized against the
+           position_types."""
+        directory = _target_object(item)
+        if directory is None:
+            # not there yet: the import creates it with its fields
+            return
+        applied = []
+        for name in mappings.DIRECTORY_FIELDS:
+            value = item.get(name)
+            if value is None:
+                continue
+            setattr(directory, name, value)
+            applied.append("%s (%s)" % (name, len(value)))
+        if applied:
+            logger.info("Set %s on the existing %s",
+                        ", ".join(applied),
+                        "/".join(directory.getPhysicalPath()))
+
+    def _defer_fields(self, item):
+        """Take the fields that point at content which does not exist
+           yet out of p_item, and keep them for a later pass."""
+        names = mappings.DEFERRED_FIELDS.get(item.get("@type"), ())
+        uid = item.get("UID")
+        if not names or not uid:
+            return item
+        deferred = {}
+        for name in names:
+            # an empty value needs no second pass
+            if item.get(name):
+                deferred[name] = item.pop(name)
+        if deferred:
+            store = deferred_store(create=True)
+            store[uid] = deferred
+        return item
+
+    def global_obj_hook_before_deserializing(self, obj, item):
+        """Write the blobs before the deserializer runs.
+
+           collective.exportimport sets a blob_path field after
+           deserialization. An invariant that wants a file then fails on
+           an object that has none yet — a POD template wants an
+           odt_file or a template to reuse — and the whole object is
+           lost. Write the blob first and take the key out of the data:
+           an invariant reads the object for a field the data does not
+           carry."""
+        blob_fields = [name for name, value in item.items()
+                       if isinstance(value, dict) and value.get("blob_path")]
+        if blob_fields:
+            self.import_blob_paths(obj, item)
+            for name in blob_fields:
+                item.pop(name)
+        item = _adapt_text_fields(obj, item)
+        item = _drop_missing_required(obj, item)
+        item = _untokenize_choices(obj, item)
+        if IMeetingConfig.providedBy(obj):
+            self._apply_wf_adaptations(obj, item)
+        return obj, item
+
+    def _apply_wf_adaptations(self, cfg, item):
+        """Adapt the workflows of a config before its fields are read.
+
+           Many fields of a config point at item states that only exist
+           once the workflow adaptations are applied.
+           onConfigInitialized() cannot apply them: they are read by
+           _performWorkflowAdaptations(), which walks the "searches"
+           folders of the config, and that same handler creates those
+           folders after it calls registerPortalTypes(). Here they
+           exist."""
+        value = _untokenize(item.get(mappings.CONFIG_WF_ADAPTATIONS_FIELD))
+        if not value:
+            return
+        setattr(cfg, mappings.CONFIG_WF_ADAPTATIONS_FIELD, value)
+        cfg.registerPortalTypes()
+        logger.info("Applied %s workflow adaptations on %s",
+                    len(value), "/".join(cfg.getPhysicalPath()))
+
+    def get_parent_as_container(self, item):
+        """portal_plonemeeting is a tool: the profile creates it, so it
+           is not imported content and its UID is not the one of the 4.3
+           site. The MeetingConfigs live in it."""
+        if item.get("parent", {}).get("@type") == "ToolPloneMeeting":
+            return api.portal.get_tool(TOOL_ID)
+        return super(PMImportContent, self).get_parent_as_container(item)
+
+    def create_container(self, item):
+        """Never invent a container.
+
+           The stock import creates the folders a path needs. Here a
+           missing container means the export is incomplete or a step ran
+           out of order, and the invented Folder would sit where the real
+           object belongs. Report it and skip the item."""
+        logger.warning("No container for %s %s: its parent %s is not "
+                       "imported", item["@type"], item["@id"],
+                       item["parent"].get("@id"))
+        return None
 
     def global_dict_hook(self, item):
+        item = _rewrite_urls(item, self._url_pattern, self._portal_url)
+        item = _unwrap_plain_text(
+            item, mappings.DUBLIN_CORE_PLAIN_TEXT_FIELDS)
         portal_type = item.get("@type", "")
+        self._map_uid(item)
         if portal_type == "MeetingConfig":
             item = _rename_keys(item, mappings.MEETINGCONFIG_AT_TO_DX)
             item = _unwrap_plain_text(
                 item, mappings.MEETINGCONFIG_PLAIN_TEXT_FIELDS)
             item = _remap_row_keys(item, mappings.ROW_KEY_MAPS)
+            names = dict(mappings.MEETINGITEM_AT_TO_DX)
+            names.update(mappings.MEETINGITEM_EXTRA_ATTRIBUTE_NAMES)
+            item = _rename_values(
+                item, mappings.MEETINGCONFIG_ITEM_FIELD_NAME_FIELDS, names)
+            item = _rename_prefixed_values(
+                item, mappings.MEETINGCONFIG_PREFIXED_ITEM_FIELD_FIELDS, names)
+            item = _rename_column_values(
+                item, mappings.MEETINGCONFIG_ITEM_FIELD_NAME_COLUMNS, names)
+            item["factory_kwargs"] = _factory_kwargs(
+                item, mappings.CONFIG_FACTORY_FIELDS)
+            raw = {}
+            for name in (mappings.MEETINGCONFIG_RAW_GRIDS +
+                         mappings.MEETINGCONFIG_RAW_FIELDS):
+                if item.get(name):
+                    raw[name] = _untokenize(item.pop(name))
+            if raw and item.get("UID"):
+                self._raw_fields[item["UID"]] = raw
         elif portal_type.startswith("MeetingItem"):
             # covers per-config cloned FTIs (MeetingItemCollege, ...) and
             # the MeetingItemTemplate/MeetingItemRecurring subtypes
@@ -83,11 +527,14 @@ class PMImportContent(ImportContent):
                 item, mappings.MEETINGITEM_PLAIN_TEXT_FIELDS)
             for name in mappings.MEETINGITEM_DROP_AT_IMPORT:
                 item.pop(name, None)
+        elif portal_type == "directory":
+            self._import_directory(item)
         # Meeting* (non item), meetingadvice, annex/annexDecision and
         # contacts types were already DX on Plone 4.3: no rename needed.
-        return item
+        return self._defer_fields(item)
 
     def global_obj_hook(self, obj, item):
+        self._set_raw_fields(obj, item)
         # non-schema persistent attributes and annotations dumped by
         # export_p43.py (see extra_state.py)
         extra_state.load_extra_state(obj, item.get(extra_state.EXTRA_STATE_KEY))
@@ -105,6 +552,12 @@ class PMImportContent(ImportContent):
                 logger.info("Notifying ObjectModifiedEvent for %s",
                             "/".join(cfg.getPhysicalPath()))
                 notify(ObjectModifiedEvent(cfg))
+        # the configs are there now, so the item states an organization
+        # points at are known: retry what this file deferred, and what an
+        # earlier file left behind
+        applied, remaining, missing = apply_deferred_fields(self.request)
+        logger.info("Deferred fields: %s applied, %s waiting, %s objects "
+                    "not imported", applied, remaining, missing)
 
 
 class ImportManuallyLinkedItems(BrowserView):
@@ -170,6 +623,69 @@ class ImportToolSettings(BrowserView):
                 value = tuple(value)
             setattr(tool, name, value)
         msg = "portal_plonemeeting: %s attributes set" % len(settings)
+        logger.info(msg)
+        return msg
+
+
+class ImportRegistry(BrowserView):
+    """Set the plone.registry records exported by export_other_p43.py.
+
+    The records come as a list, in the order they must be written:
+    "organizations" first, because the rows of "functions" point at
+    selected organizations. Writing them fires the
+    collective.contact.plonegroup subscriber that creates the Plone
+    groups of every organization, so the contacts must be imported
+    first.
+
+    Call as @@import_pm_registry?path=/path/to/registry.json
+    """
+
+    def __call__(self):
+        path = self.request.form.get("path")
+        if not path:
+            return "Pass ?path=/absolute/path/to/registry.json"
+        with open(path) as f:
+            records = json.load(f)
+        registry = getUtility(IRegistry)
+        done = []
+        for record in records:
+            name = record["name"]
+            value = record["value"]
+            if name not in registry.records:
+                logger.warning("The registry has no record %s", name)
+                continue
+            field = registry.records[name].field
+            # JSON has no tuple
+            if isinstance(field, schema.Tuple) and isinstance(value, list):
+                value = tuple(value)
+            try:
+                registry[name] = value
+            except Exception as error:
+                # a value that points at content which is not imported
+                # does not validate; the other records must still be set
+                logger.warning("The registry record %s was not set: %s",
+                               name, error)
+                continue
+            done.append(name)
+            logger.info("Set the registry record %s", name)
+        msg = "registry: %s of %s records set" % (len(done), len(records))
+        logger.info(msg)
+        return msg
+
+
+class ImportDeferredFields(BrowserView):
+    """Apply the fields the content import could not set because their
+    targets did not exist yet (see mappings.DEFERRED_FIELDS).
+
+    Every import run already retries them when it ends. Call this view
+    for a last pass once every file is imported, and to see what is
+    left:  @@import_pm_deferred_fields
+    """
+
+    def __call__(self):
+        applied, remaining, missing = apply_deferred_fields(self.request)
+        msg = "deferred fields: %s applied, %s still waiting, %s on " \
+            "objects that were not imported" % (applied, remaining, missing)
         logger.info(msg)
         return msg
 

@@ -5,6 +5,87 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.6 data migration: three blockers of the Plone 4.3 -> 6.1 import.
+  The selected organizations and the function suffixes of
+  ``collective.contact.plonegroup`` are ``plone.registry`` records, not
+  content, and ``collective.exportimport`` has no registry exporter, so
+  ``export_other_p43.py`` dumps ``REGISTRY_RECORDS`` and
+  ``@@import_pm_registry`` writes them back between the contacts and the
+  configs. The ``contacts`` directory of the profile already exists when
+  the contacts are imported, so ``PMImportContent`` applies its
+  ``position_types``, ``organization_types`` and ``organization_levels``
+  on the existing object and the ``held_position`` constraints pass.
+  Fields whose target is not imported yet (``mappings.DEFERRED_FIELDS``:
+  ``groups_in_charge``, ``certified_signatures``, ``item_advice_*``,
+  ``primary_organization``, ``position``, ``voting_group``,
+  ``represented_organizations``) travel in a deferred store on the portal
+  and are applied again at the end of every import run and by
+  ``@@import_pm_deferred_fields``: the references are circular, no import
+  order satisfies them, and one field that does not validate loses the
+  whole object.
+  [aduchene]
+
+- D.6 import: ``wfAdaptations`` was the wrong Archetypes name in the
+  migration mapping. The 4.2 field is ``workflowAdaptations``;
+  ``wfAdaptations`` is a class attribute that lists every *available*
+  adaptation, so every config imported without its workflow adaptations.
+  A test now compares the migration mapping with the
+  ``_AT_CAMEL_TO_DX_SNAKE`` table of the MeetingConfig class.
+  ``mappings.CONFIG_FACTORY_FIELDS`` also travels in the
+  ``factory_kwargs`` of the item: PloneMeeting builds the portal types
+  and duplicates the workflows of a config when it is added, and
+  ``collective.exportimport`` creates an empty object, so the
+  deserializer raised ``IndexError`` in ``getItemWorkflow()``. The
+  workflow adaptations are applied on the created config just before it
+  is deserialized, since ``_performWorkflowAdaptations()`` reads the
+  ``searches`` folders that the add handler creates after it registers
+  the portal types, and the fields of a config point at item states that
+  only exist once they are applied. Blobs are
+  written before deserializing, so an invariant that wants a file (a POD
+  template wants an ``odt_file``) sees one; ``portal_plonemeeting`` is
+  the container of the configs, which the UID of the 4.3 tool cannot
+  find; a missing container is reported instead of invented; and the
+  Dublin Core ``description`` and ``rights`` of every Archetypes type are
+  unwrapped from their TextField form, against the real schema, so a
+  RichText field gets one of its own mime types instead of the
+  ``text/plain`` an empty AT field reports.
+  [aduchene]
+
+- D.6 import, MeetingConfig values: a config stores MeetingItem field
+  *names* as values (``used_item_attributes``,
+  ``historized_item_attributes``, the column lists, the
+  ``MeetingItem.<name>`` form of ``xhtml_transform_fields``,
+  ``item_fields_config.name``); they travel in AT camelCase and go
+  through the same rename table now. The DataGrid fields whose row
+  ``Choice`` columns read the config are set with ``setattr``:
+  ``DictRow`` validates a row with the row as context, so those
+  vocabularies come back empty and refuse every value. A UID map on the
+  portal records the content the profile creates again — the ``searches``
+  folders and the ``DashboardCollection`` objects of a config keep the
+  UID of the new site — and the deferred pass rewrites a value before
+  applying it.
+  [aduchene]
+
+- D.6 import, the last shapes the 4.3 JSON takes: a ``Choice`` value is
+  reduced to its token before deserializing, because
+  ``plonemeeting.restapi`` stores a value before it checks the
+  vocabulary and the term dict would stay in the field; a ``null`` on a
+  field Plone 6 requires is dropped so the Dexterity default stands; the
+  ``language`` of a 4.3 object is the empty token, which Plone 6 does not
+  offer.
+  [aduchene]
+
+- D.6 export: rewrite every URL of the exported site, whatever host wrote
+  it. A serializer that resolves its object outside the acquisition chain
+  of the request, a relation field for example, writes another host than
+  the one of the exported item, and the ``plone.restapi`` relation
+  deserializer only resolves a URL that starts with the portal URL of the
+  site it imports into. The import normalizes the host a second time. The
+  unexported paths also go to their own file now: appended to the content
+  file they became an entry without an ``@id``, which the import reads on
+  every entry.
+  [aduchene]
+
 - Restore the PloneMeeting portlet template. The renderer inherits from
   ``collective.eeafaceted.dashboard``, whose ``render()`` picks its own
   template, so the rail lost the configuration name, the home and gear

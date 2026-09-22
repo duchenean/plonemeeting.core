@@ -5,17 +5,23 @@ Dict-transform tests and mapping invariants against the DX schemas
 (no Plone layer), plus extra-state round-trips on real content.
 """
 
-import unittest
-
-from zope.schema import getFieldNames
-
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from plone.behavior.interfaces import IBehavior
+from plone.dexterity.interfaces import IDexterityFTI
 from plonemeeting.core.content.meetingconfig import IMeetingConfig
 from plonemeeting.core.content.meetingitem import IMeetingItem
 from plonemeeting.core.migrations.p4top6 import mappings
 from plonemeeting.core.migrations.p4top6.import_content import _remap_row_keys
 from plonemeeting.core.migrations.p4top6.import_content import _rename_keys
+from plonemeeting.core.migrations.p4top6.import_content import _rewrite_urls
+from plonemeeting.core.migrations.p4top6.import_content import _site_url_pattern
 from plonemeeting.core.migrations.p4top6.import_content import _unwrap_plain_text
 from plonemeeting.core.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.component import getUtility
+from zope.component import queryUtility
+from zope.schema import getFieldNames
+
+import unittest
 
 
 class TestMappingInvariants(unittest.TestCase):
@@ -40,9 +46,44 @@ class TestMappingInvariants(unittest.TestCase):
             mappings.MEETINGCONFIG_PLAIN_TEXT_FIELDS -
             set(getFieldNames(IMeetingConfig)), set())
 
+    def test_meetingconfig_field_tables_exist(self):
+        """Every table that names MeetingConfig fields must name real
+           ones: a name that no longer exists is a value the import
+           silently leaves behind."""
+        schema_names = set(getFieldNames(IMeetingConfig))
+        for table in (mappings.MEETINGCONFIG_RAW_GRIDS,
+                      mappings.MEETINGCONFIG_RAW_FIELDS,
+                      mappings.MEETINGCONFIG_ITEM_FIELD_NAME_FIELDS,
+                      mappings.MEETINGCONFIG_PREFIXED_ITEM_FIELD_FIELDS,
+                      tuple(mappings.MEETINGCONFIG_ITEM_FIELD_NAME_COLUMNS)):
+            self.assertEqual(set(table) - schema_names, set())
+
     def test_row_key_map_grids_exist(self):
         self.assertEqual(
             set(mappings.ROW_KEY_MAPS) - set(getFieldNames(IMeetingConfig)),
+            set())
+
+    def test_meetingconfig_mapping_agrees_with_the_class(self):
+        """content/meetingconfig.py keeps its own AT -> DX table for the
+           dynamic lookups. Two tables that disagree mean a field that
+           the import renames to nothing: "wfAdaptations" is a class
+           attribute of the 4.2 MeetingConfig (every available
+           adaptation), the field is "workflowAdaptations"."""
+        from plonemeeting.core.content.meetingconfig import _AT_CAMEL_TO_DX_SNAKE
+
+        disagree = {}
+        for at_name, dx_name in _AT_CAMEL_TO_DX_SNAKE.items():
+            if at_name == dx_name:
+                # identity pairs are left out of the migration mapping
+                continue
+            if mappings.MEETINGCONFIG_AT_TO_DX.get(at_name) != dx_name:
+                disagree[at_name] = dx_name
+        self.assertEqual(disagree, {})
+
+    def test_directory_fields_exist(self):
+        from collective.contact.core.content.directory import IDirectory
+        self.assertEqual(
+            set(mappings.DIRECTORY_FIELDS) - set(getFieldNames(IDirectory)),
             set())
 
     def test_no_duplicate_targets(self):
@@ -89,8 +130,9 @@ class TestExtraStateCodec(unittest.TestCase):
     """encode()/decode() round-trips for the non-schema state codec."""
 
     def _round_trip(self, value):
-        import json
         from plonemeeting.core.migrations.p4top6 import extra_state
+
+        import json
         return extra_state.decode(json.loads(json.dumps(extra_state.encode(value))))
 
     def test_scalars_and_text(self):
@@ -100,8 +142,9 @@ class TestExtraStateCodec(unittest.TestCase):
         self.assertEqual(self._round_trip(u"héhé".encode("utf-8")), u"héhé")
 
     def test_dates(self):
-        import datetime
         from DateTime import DateTime
+
+        import datetime
         dt = DateTime("2024/03/05 14:15:16.123456 GMT+2")
         res = self._round_trip(dt)
         self.assertTrue(isinstance(res, DateTime))
@@ -149,6 +192,133 @@ class TestExtraStateCodec(unittest.TestCase):
         self.assertEqual(extra_state.attrs_for_portal_type("Folder"), ())
 
 
+class TestFactoryKwargs(unittest.TestCase):
+    """A MeetingConfig must carry the fields PloneMeeting reads when the
+       object is added, before the deserializer runs."""
+
+    def test_tokens_are_decoded(self):
+        from plonemeeting.core.migrations.p4top6.import_content import _factory_kwargs
+
+        item = {"short_name": "College",
+                "item_workflow": {"title": "meetingitem_workflow",
+                                  "token": "meetingitem_workflow"},
+                "wf_adaptations": [{"title": "Refused (refused)",
+                                    "token": "refused"}],
+                "config_group": {"title": "None", "token": ""},
+                "meeting_workflow": None,
+                "title": u"Coll\xe8ge"}
+        res = _factory_kwargs(item, ("short_name", "title", "item_workflow",
+                                     "meeting_workflow", "wf_adaptations",
+                                     "config_group", "absent"))
+        self.assertEqual(res, {"short_name": "College",
+                               "title": u"Coll\xe8ge",
+                               "item_workflow": "meetingitem_workflow",
+                               "wf_adaptations": ["refused"],
+                               "config_group": ""})
+
+
+class TestValueRenaming(unittest.TestCase):
+    """A MeetingConfig also stores MeetingItem field *names* as values."""
+
+    def test_rename_values(self):
+        from plonemeeting.core.migrations.p4top6.import_content import _rename_values
+
+        item = {"used_item_attributes": [
+            {"title": "Description (description)", "token": "description"},
+            {"title": "x", "token": "sendToAuthority"},
+            "toDiscuss",
+            "already_snake"]}
+        res = _rename_values(item, ("used_item_attributes", "absent"),
+                             mappings.MEETINGITEM_AT_TO_DX)
+        self.assertEqual(
+            [v["token"] if isinstance(v, dict) else v
+             for v in res["used_item_attributes"]],
+            ["description", "send_to_authority", "to_discuss",
+             "already_snake"])
+
+    def test_rename_prefixed_values(self):
+        from plonemeeting.core.migrations.p4top6.import_content import _rename_prefixed_values
+
+        item = {"xhtml_transform_fields": [
+            {"title": "x", "token": "MeetingItem.detailedDescription"},
+            "MeetingItem.copyGroups",
+            "Meeting.observations"]}
+        res = _rename_prefixed_values(item, ("xhtml_transform_fields", ),
+                                      mappings.MEETINGITEM_AT_TO_DX)
+        self.assertEqual(
+            [v["token"] if isinstance(v, dict) else v
+             for v in res["xhtml_transform_fields"]],
+            ["MeetingItem.detailed_description", "MeetingItem.copy_groups",
+             "Meeting.observations"])
+
+    def test_rename_column_values(self):
+        from plonemeeting.core.migrations.p4top6.import_content import _rename_column_values
+
+        item = {"item_fields_config": [{"name": "neededFollowUp",
+                                        "view": "python: True"}]}
+        res = _rename_column_values(
+            item, {"item_fields_config": ("name", )},
+            mappings.MEETINGITEM_AT_TO_DX)
+        self.assertEqual(res["item_fields_config"][0]["name"],
+                         "needed_follow_up")
+        self.assertEqual(res["item_fields_config"][0]["view"], "python: True")
+
+
+class TestUidRemapping(unittest.TestCase):
+    """Content the profile creates again keeps the UID of the new site."""
+
+    def test_remap_uids(self):
+        from plonemeeting.core.migrations.p4top6.import_content import _remap_uids
+
+        uids = {"old-uid": "new-uid"}
+        value = [{"token": "old-uid", "title": "A search"},
+                 "old-uid", "another-uid", 3, None]
+        self.assertEqual(
+            _remap_uids(value, uids),
+            [{"token": "new-uid", "title": "A search"},
+             "new-uid", "another-uid", 3, None])
+
+
+class TestUrlRewriting(unittest.TestCase):
+    """Export and import must agree on the URL of the site, whatever
+       host the serializer that wrote a value used."""
+
+    def test_export_pattern_matches_any_host(self):
+        from plonemeeting.core.migrations.p4top6.export_p43 import flatten_urls
+        from plonemeeting.core.migrations.p4top6.export_p43 import site_url_pattern
+
+        pattern = site_url_pattern("/demo/demo")
+        item = {"@id": "http://nohost/demo/demo/contacts",
+                "position": {"@id": "http://foo/demo/demo/contacts/org"},
+                "rows": [{"url": "https://delib.example.be/demo/demo/x"}],
+                "other": "http://nohost/demo/demofoo/keep",
+                "number": 3}
+        res = flatten_urls(item, pattern, "http://nohost/Plone")
+        self.assertEqual(res["@id"], "http://nohost/Plone/contacts")
+        self.assertEqual(res["position"]["@id"],
+                         "http://nohost/Plone/contacts/org")
+        self.assertEqual(res["rows"][0]["url"], "http://nohost/Plone/x")
+        # "/demo/demofoo" is another path, not the site
+        self.assertEqual(res["other"], "http://nohost/demo/demofoo/keep")
+        self.assertEqual(res["number"], 3)
+
+    def test_import_rewrites_whole_urls_only(self):
+        pattern = _site_url_pattern("Plone")
+        item = {"@id": "http://nohost/Plone/contacts",
+                "position": {"@id": "http://foo/Plone/contacts/org"},
+                "text": u'see <a href="http://nohost/Plone/x">x</a>',
+                "keep": "http://nohost/Plonebis/x"}
+        res = _rewrite_urls(item, pattern, "http://site.be/Plone")
+        self.assertEqual(res["@id"], "http://site.be/Plone/contacts")
+        self.assertEqual(res["position"]["@id"],
+                         "http://site.be/Plone/contacts/org")
+        # a URL inside a rich text keeps its host, the import does not
+        # know the public URL of the new site
+        self.assertEqual(res["text"],
+                         u'see <a href="http://nohost/Plone/x">x</a>')
+        self.assertEqual(res["keep"], "http://nohost/Plonebis/x")
+
+
 class TestExportScriptHelpers(unittest.TestCase):
     """export_p43 helpers that must work before the export view runs."""
 
@@ -171,7 +341,9 @@ class TestExportScriptHelpers(unittest.TestCase):
         self.assertEqual(request.method, "POST")
         self.assertTrue(request.form["form.submitted"])
         self.assertEqual(request.form["filename"], "pm.json")
-        self.assertTrue(request.form["write_errors"])
+        # the unexported paths go to their own file, not into the
+        # content file the import reads
+        self.assertTrue("write_errors" not in request.form)
         self.assertEqual(request["ACTUAL_URL"], "http://nohost/plone")
 
     def test_portal_types_with_content_sets_query_attributes(self):
@@ -336,3 +508,210 @@ class TestImportPostProcess(PloneMeetingTestCase):
         msg = self.portal.restrictedTraverse("@@import_pm_post_process")()
         self.assertTrue("categorized_elements updated" in msg)
         self.assertTrue(annex.UID() in item.categorized_elements)
+
+
+class TestDirectoryImport(PloneMeetingTestCase):
+    """The contacts directory already exists when the contacts are
+       imported, so its fields are applied on the existing object."""
+
+    def _importer(self):
+        from plonemeeting.core.migrations.p4top6.import_content import PMImportContent
+        importer = PMImportContent(self.portal, self.request)
+        importer.start()
+        return importer
+
+    def test_directory_fields_land_on_the_existing_directory(self):
+        self.changeUser('siteadmin')
+        directory = self.portal.contacts
+        position_types = [{"name": u"Bourgmestre", "token": "bourgmestre"},
+                          {"name": u"Échevin", "token": "alderman"}]
+        item = {"@id": "http://nohost/plone/contacts",
+                "@type": "directory",
+                "id": "contacts",
+                "UID": directory.UID(),
+                "position_types": position_types,
+                "organization_types": [{"name": u"Service", "token": "srv"}]}
+        self._importer().global_dict_hook(item)
+        self.assertEqual(directory.position_types, position_types)
+        self.assertEqual(directory.organization_types,
+                         [{"name": u"Service", "token": "srv"}])
+        # a field the export does not carry is left alone
+        self.assertTrue(directory.organization_levels)
+
+    def test_missing_directory_is_left_to_the_import(self):
+        self.changeUser('siteadmin')
+        item = {"@id": "http://nohost/plone/other-contacts",
+                "@type": "directory",
+                "id": "other-contacts",
+                "UID": "nothing",
+                "position_types": [{"name": u"X", "token": "x"}]}
+        # no exception, and the fields stay in the item so the import
+        # creates the directory with them
+        res = self._importer().global_dict_hook(item)
+        self.assertEqual(res["position_types"], [{"name": u"X", "token": "x"}])
+
+
+class TestDeferredFields(PloneMeetingTestCase):
+    """Fields that point at content which is not imported yet are taken
+       out of the item and applied again later."""
+
+    def _schema_names(self, portal_type):
+        """Every field name of a type, its behaviors included."""
+        fti = getUtility(IDexterityFTI, name=portal_type)
+        names = set(getFieldNames(fti.lookupSchema()))
+        for behavior_id in fti.behaviors:
+            behavior = queryUtility(IBehavior, behavior_id)
+            if behavior is not None and behavior.interface is not None:
+                names.update(getFieldNames(behavior.interface))
+        return names
+
+    def test_deferred_fields_exist(self):
+        """A deferred field that no schema declares is data loss: the
+           import drops it and nothing puts it back."""
+        for portal_type, names in mappings.DEFERRED_FIELDS.items():
+            self.assertEqual(set(names) - self._schema_names(portal_type),
+                             set(), "on %s" % portal_type)
+
+    def test_config_factory_fields_exist(self):
+        """A factory kwarg that createContent() cannot place is set as a
+           plain attribute and shadows nothing: the value is lost."""
+        import inspect
+        from plone.dexterity.content import DexterityContent
+
+        names = self._schema_names("MeetingConfig")
+        # createContent() also accepts the named parameters of the
+        # Dexterity constructor, "title" among them
+        names.update(inspect.signature(DexterityContent.__init__).parameters)
+        self.assertEqual(set(mappings.CONFIG_FACTORY_FIELDS) - names, set())
+        self.assertTrue(mappings.CONFIG_WF_ADAPTATIONS_FIELD in
+                        self._schema_names("MeetingConfig"))
+
+    def _importer(self):
+        from plonemeeting.core.migrations.p4top6.import_content import PMImportContent
+        importer = PMImportContent(self.portal, self.request)
+        importer.start()
+        return importer
+
+    def test_deferred_then_applied(self):
+        from plonemeeting.core.migrations.p4top6.import_content import apply_deferred_fields
+        from plonemeeting.core.migrations.p4top6.import_content import deferred_store
+        self.changeUser('siteadmin')
+        vendors = self.portal.contacts[PLONEGROUP_ORG]['vendors']
+        self.assertEqual(vendors.groups_in_charge, [])
+        item = {"@id": vendors.absolute_url(),
+                "@type": "organization",
+                "id": "vendors",
+                "UID": self.vendors_uid,
+                "title": u"Vendors",
+                "groups_in_charge": [self.developers_uid],
+                # an empty value needs no second pass
+                "item_advice_states": []}
+        res = self._importer().global_dict_hook(item)
+        self.assertTrue("groups_in_charge" not in res)
+        self.assertEqual(res["item_advice_states"], [])
+        self.assertEqual(deferred_store()[self.vendors_uid],
+                         {"groups_in_charge": [self.developers_uid]})
+
+        applied, remaining, missing = apply_deferred_fields(self.request)
+        self.assertEqual((applied, remaining, missing), (1, 0, 0))
+        self.assertEqual(vendors.groups_in_charge, [self.developers_uid])
+        self.assertEqual(deferred_store(), {})
+
+    def test_value_that_still_does_not_validate_waits(self):
+        from plonemeeting.core.migrations.p4top6.import_content import apply_deferred_fields
+        from plonemeeting.core.migrations.p4top6.import_content import deferred_store
+        self.changeUser('siteadmin')
+        item = {"@id": self.portal.contacts.absolute_url(),
+                "@type": "organization",
+                "id": "vendors",
+                "UID": self.vendors_uid,
+                "groups_in_charge": ["a-uid-that-does-not-exist"]}
+        self._importer().global_dict_hook(item)
+        applied, remaining, missing = apply_deferred_fields(self.request)
+        self.assertEqual((applied, remaining, missing), (0, 1, 0))
+        self.assertTrue(self.vendors_uid in deferred_store())
+
+    def test_object_that_was_not_imported_is_reported(self):
+        from plonemeeting.core.migrations.p4top6.import_content import apply_deferred_fields
+        from plonemeeting.core.migrations.p4top6.import_content import deferred_store
+        self.changeUser('siteadmin')
+        deferred_store(create=True)["unknown-uid"] = {"groups_in_charge": []}
+        applied, remaining, missing = apply_deferred_fields(self.request)
+        self.assertEqual((applied, remaining, missing), (0, 0, 1))
+
+
+class TestImportRegistry(PloneMeetingTestCase):
+    """@@import_pm_registry writes the records the export carries."""
+
+    def test_records_are_set_and_unknown_ones_skipped(self):
+        from plone import api
+
+        import json
+        import os
+        import tempfile
+
+        self.changeUser('siteadmin')
+        records = [{"name": "plone.email_from_name", "value": u"iA.Delib"},
+                   {"name": "plonemeeting.no.such.record", "value": 1}]
+        handle, path = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(handle, "w") as dump:
+            json.dump(records, dump)
+        try:
+            self.request.form["path"] = path
+            view = self.portal.restrictedTraverse("@@import_pm_registry")
+            msg = view()
+        finally:
+            os.remove(path)
+        self.assertEqual(msg, "registry: 1 of 2 records set")
+        self.assertEqual(
+            api.portal.get_registry_record("plone.email_from_name"),
+            u"iA.Delib")
+
+
+class TestContainers(PloneMeetingTestCase):
+    """Where an imported object lands."""
+
+    def _importer(self):
+        from plonemeeting.core.migrations.p4top6.import_content import PMImportContent
+        importer = PMImportContent(self.portal, self.request)
+        importer.start()
+        return importer
+
+    def test_the_tool_is_the_container_of_a_config(self):
+        """portal_plonemeeting is not imported content: its UID is the
+           one of the new site, so the UID of the export finds nothing
+           and the stock import creates a Folder beside it."""
+        self.changeUser('siteadmin')
+        item = {"@id": "http://nohost/plone/portal_plonemeeting/new-cfg",
+                "@type": "MeetingConfig",
+                "id": "new-cfg",
+                "parent": {"@id": "http://nohost/plone/portal_plonemeeting",
+                           "@type": "ToolPloneMeeting",
+                           "UID": "the-uid-of-the-43-tool"}}
+        self.assertEqual(self._importer().get_parent_as_container(item),
+                         self.tool)
+
+    def test_a_missing_container_is_not_invented(self):
+        self.changeUser('siteadmin')
+        item = {"@id": "http://nohost/plone/gone/item",
+                "@type": "Folder",
+                "id": "item",
+                "parent": {"@id": "http://nohost/plone/gone",
+                           "@type": "Folder",
+                           "UID": "no-such-uid"}}
+        self.assertIsNone(self._importer().get_parent_as_container(item))
+        self.assertTrue("gone" not in self.portal.objectIds())
+
+    def test_dublin_core_text_fields_are_unwrapped(self):
+        """Every Archetypes type of the 4.3 site exports "description"
+           and "rights" as a TextField dict."""
+        self.changeUser('siteadmin')
+        item = {"@id": "http://nohost/plone/a-folder",
+                "@type": "Folder",
+                "id": "a-folder",
+                "description": {"content-type": "text/plain",
+                                "data": u"Une description"},
+                "rights": {"content-type": "text/plain", "data": u""}}
+        res = self._importer().global_dict_hook(item)
+        self.assertEqual(res["description"], u"Une description")
+        self.assertEqual(res["rights"], u"")

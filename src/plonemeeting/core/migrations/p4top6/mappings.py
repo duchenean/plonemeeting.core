@@ -230,7 +230,10 @@ MEETINGCONFIG_AT_TO_DX = {
     "usersHiddenInDashboardFilter": "users_hidden_in_dashboard_filter",
     "usingGroups": "using_groups",
     "validationDeadlineDefault": "validation_deadline_default",
-    "wfAdaptations": "wf_adaptations",
+    # the AT field is "workflowAdaptations"; "wfAdaptations" is a class
+    # attribute of the 4.2 MeetingConfig that lists every *available*
+    # adaptation, not the selected ones
+    "workflowAdaptations": "wf_adaptations",
     "xhtmlTransformFields": "xhtml_transform_fields",
     "xhtmlTransformTypes": "xhtml_transform_types",
     "yearlyInitMeetingNumbers": "yearly_init_meeting_numbers",
@@ -304,3 +307,157 @@ ROW_KEY_MAPS = {
 # field is dropped at import and rebuilt from the @@export_relations JSON
 # (see @@import_pm_manually_linked_items).
 MEETINGITEM_DROP_AT_IMPORT = ["manually_linked_items"]
+
+# The contacts directory of the Plone 6 profile already exists when the
+# contacts are imported, so collective.exportimport skips it and the
+# position types of the 4.3 site are lost. Every held_position then
+# fails the position_type constraint. These fields are applied on the
+# existing directory instead (see PMImportContent._import_directory).
+DIRECTORY_FIELDS = ("position_types",
+                    "organization_types",
+                    "organization_levels")
+
+# Fields that point at content which does not exist yet when their own
+# object is imported. collective.exportimport writes one object at a
+# time, the plone.restapi deserializer refuses the whole object when one
+# field does not validate, and the references are circular: an
+# organization carries the advice settings of a MeetingConfig while a
+# MeetingConfig carries organization UIDs. No import order satisfies
+# both. These fields travel in a deferred store instead and are applied
+# again when their targets exist (see @@import_pm_deferred_fields).
+DEFERRED_FIELDS = {
+    # organization -> other organizations (groups_in_charge), a
+    # held_position (certified_signatures) and MeetingConfig item
+    # states (item_advice_*)
+    "organization": ("groups_in_charge",
+                     "certified_signatures",
+                     "item_advice_states",
+                     "item_advice_edit_states",
+                     "item_advice_view_states"),
+    # person -> organization
+    "person": ("primary_organization", ),
+    # held_position -> organization. The export is sorted by path, so a
+    # person that sorts before "plonegroup-organization" holds positions
+    # in organizations that are not imported yet.
+    "held_position": ("position",
+                      "voting_group",
+                      "represented_organizations"),
+    # a dashboard template -> the DashboardCollections it is shown on,
+    # which live in the searches folder of a MeetingConfig
+    "DashboardPODTemplate": ("dashboard_collections", ),
+    # a config -> the DashboardCollections of its own searches folder.
+    # onConfigInitialized() creates those collections, so the import
+    # skips them as existing content and they keep the UID of the new
+    # site: the value also goes through the UID map.
+    # a config -> objects that are imported after it, or that it stores
+    # in another field of its own:
+    #   ordered_contacts: held_position UIDs;
+    #   advices_kept_on_sent_to_other_mc: rows of its own custom_advisers,
+    #     which the deserializer has not stored yet;
+    #   meeting_item_templates_to_store_as_annex: its POD templates,
+    #     which come after it in the same file.
+    "MeetingConfig": ("to_do_list_searches",
+                      "ordered_contacts",
+                      "advices_kept_on_sent_to_other_mc",
+                      "meeting_item_templates_to_store_as_annex"),
+}
+
+# Dublin Core text fields of every Archetypes type. The 4.3 export
+# serializes an AT TextField as {"content-type": ..., "data": ...}; the
+# Dexterity types of Plone 6 want a plain string. Without this every
+# Folder, Image, File and Document of the 4.3 site fails on
+# "description: Object is of wrong type".
+DUBLIN_CORE_PLAIN_TEXT_FIELDS = {"description", "rights"}
+
+
+# The MeetingConfig fields that must be set when the object is created.
+# collective.exportimport creates an empty object and deserializes it
+# afterwards, but PloneMeeting builds the portal types and the workflows
+# of a config on ObjectAddedEvent (tool.invokeFactory("MeetingConfig",
+# **data) is the supported path) and the vocabulary of several config
+# fields is read from the item workflow. Without these the config gets
+# the *base* portal type names, no workflow, and the deserializer raises
+# IndexError in getItemWorkflow(). The remaining fields are applied by
+# the deserializer and the ObjectModifiedEvent of finish().
+CONFIG_FACTORY_FIELDS = ("short_name",
+                         "title",
+                         "folder_title",
+                         "config_group",
+                         "item_icon_color",
+                         "item_workflow",
+                         "meeting_workflow",
+                         "item_wf_validation_levels")
+
+# The workflow adaptations cannot travel with CONFIG_FACTORY_FIELDS:
+# _performWorkflowAdaptations() reads the "searches" folders of the
+# config, and onConfigInitialized() creates them *after* it calls
+# registerPortalTypes(). PMImportContent applies them on the created
+# object instead, before deserializing, because the item states an
+# imported config points at only exist once they are applied.
+CONFIG_WF_ADAPTATIONS_FIELD = "wf_adaptations"
+
+
+# MeetingConfig fields whose *value* is a list of MeetingItem field
+# names. They travel in AT camelCase and the Plone 6 vocabulary lists
+# the Dexterity names, so the values go through MEETINGITEM_AT_TO_DX
+# like the field names themselves.
+MEETINGCONFIG_ITEM_FIELD_NAME_FIELDS = (
+    "used_item_attributes",
+    "historized_item_attributes",
+    "item_columns",
+    "items_list_visible_columns",
+    "available_items_list_visible_columns",
+)
+
+# ... the same, with a "MeetingItem." prefix on every value.
+MEETINGCONFIG_PREFIXED_ITEM_FIELD_FIELDS = (
+    "items_list_visible_fields",
+    "items_visible_fields",
+    "xhtml_transform_fields",
+)
+
+# ... and the DataGrid column that holds one.
+MEETINGCONFIG_ITEM_FIELD_NAME_COLUMNS = {"item_fields_config": ("name", )}
+
+# Values of the fields above that are not field names: they place a
+# field somewhere else in the item view.
+MEETINGITEM_EXTRA_ATTRIBUTE_NAMES = {
+    "votesResult_after_motivation": "votes_result_after_motivation",
+    "votesResult_after_decision_end": "votes_result_after_decision_end",
+}
+
+# DataGrid fields of a MeetingConfig that are set with setattr instead
+# of going through the plone.restapi deserializer.
+#
+# Their rows hold Choice columns whose vocabulary reads the
+# MeetingConfig (its item states, its labels, its item fields, the other
+# configs), and DictRow validates a row with the row itself as context:
+# the vocabulary comes back empty and every value of the column is
+# refused. A row is stored as a plain dict of plain values, which is
+# exactly what the export carries, and PloneMeeting builds a config the
+# same way (tool.invokeFactory("MeetingConfig", **data)).
+#
+# Only the grids that need it are listed: a grid with a Date or a file
+# column does need the deserializer. Add a grid here if a pilot site
+# reports it as "Constraint not satisfied" or "Wrong contained type".
+MEETINGCONFIG_RAW_GRIDS = ("power_observers",
+                           "labels_config",
+                           "item_fields_config",
+                           "meeting_configs_to_clone_to",
+                           "certified_signatures",
+                           "committees")
+
+# MeetingConfig fields, grids apart, that are also set with setattr.
+#   used_poll_types: its vocabulary is built from its own stored value,
+#     so an imported value can never be in it;
+#   historized_item_attributes: the Plone 6 vocabulary of item
+#     attributes does not offer "title" any more.
+MEETINGCONFIG_RAW_FIELDS = ("used_poll_types",
+                            "historized_item_attributes")
+
+
+# Choice fields whose exported value is an empty token. The Plone 4.3
+# content is language neutral and Plone 6 has no term for it, so the
+# key is dropped and the site language applies. Every Archetypes object
+# of the 4.3 site carries one.
+DROP_EMPTY_CHOICE_FIELDS = ("language", )
