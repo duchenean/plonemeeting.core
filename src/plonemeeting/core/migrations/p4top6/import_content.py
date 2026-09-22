@@ -812,7 +812,12 @@ class ImportDeferredFields(BrowserView):
     """
 
     def __call__(self):
-        applied, remaining, missing = apply_deferred_fields(self.request)
+        # the deferred values are 4.3 data like the rest of the import
+        self.request.set(SKIP_VALIDATORS_KEY, True)
+        try:
+            applied, remaining, missing = apply_deferred_fields(self.request)
+        finally:
+            self.request.set(SKIP_VALIDATORS_KEY, False)
         msg = "deferred fields: %s applied, %s still waiting, %s on " \
             "objects that were not imported" % (applied, remaining, missing)
         logger.info(msg)

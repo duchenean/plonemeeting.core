@@ -5,6 +5,20 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.6 data migration: the objects the configs and the folders steps were
+  losing. A POD template that names another one (``style_template``,
+  ``merge_templates``, ``mailing_loop_template``, ``pod_template_to_use``,
+  ``store_as_annex``), an annex type that names another annex type and a
+  category that maps categories of another config now travel in the
+  deferred store, like the other circular references. The category
+  vocabulary read another MeetingConfig with an unguarded ``getattr`` on
+  the tool, which acquired the attribute from the parents. A folder that
+  allows a 4.3 type (``MeetingFile``, ``Large Plone Folder``) lost every
+  one of its constrained types, and a rich text field with no mime type
+  restriction lost its object. The AT-compat validators of
+  ``plonemeeting.restapi`` are off for the time of the import.
+  [aduchene]
+
 - D.6 data migration: the content step of the dry run. The annex cache
   (``categorized_elements``) cannot be built while the import is running:
   ``collective.iconifiedcategory`` rebuilds it on every add, and an
