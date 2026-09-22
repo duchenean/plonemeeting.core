@@ -544,6 +544,22 @@ class TestImportPostProcess(PloneMeetingTestCase):
         view()
         self.assertEqual(mc_folder.getProperty(MEETING_CONFIG), cfg_id)
 
+    def test_a_meeting_is_found_by_the_meeting_interface(self):
+        """@@import_pm_post_process reads the catalog to know what holds
+           an annex. A Dexterity meeting must answer to the interface
+           the item already answers to."""
+        from plonemeeting.core.interfaces import IMeeting
+        from plonemeeting.core.interfaces import IMeetingItem
+        self.changeUser("pmManager")
+        meeting = self.create("Meeting")
+        item = self.create("MeetingItem")
+        self.assertTrue(IMeeting.providedBy(meeting))
+        self.assertTrue(IMeetingItem.providedBy(item))
+        catalog = self.portal.portal_catalog
+        found = catalog.unrestrictedSearchResults(
+            object_provides=IMeeting.__identifier__)
+        self.assertTrue(meeting.UID() in [brain.UID for brain in found])
+
     def test_post_process_updates_categorized_elements(self):
         self.changeUser("pmCreator1")
         item = self.create("MeetingItem")
