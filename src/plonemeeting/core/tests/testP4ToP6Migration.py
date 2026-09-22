@@ -793,6 +793,31 @@ class TestDeferredFields(PloneMeetingTestCase):
         self.assertEqual(vendors.groups_in_charge, [self.developers_uid])
         self.assertEqual(deferred_store(), {})
 
+    def test_a_deferred_choice_keeps_its_token(self):
+        """A deferred value leaves the data before the hook that gives a
+           Choice its token reads it."""
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            apply_deferred_fields
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            deferred_store
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.changeUser("siteadmin")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "UID": item.UID(),
+                "preferred_meeting": {"title": u"No preference",
+                                      "token": "whatever"}}
+        res = self._importer().global_dict_hook(data)
+        self.assertTrue("preferred_meeting" not in res)
+
+        applied, remaining, missing = apply_deferred_fields(self.request)
+
+        self.assertEqual((applied, remaining, missing), (1, 0, 0))
+        self.assertEqual(item.preferred_meeting, "whatever")
+        self.assertEqual(deferred_store(), {})
+
     def test_value_that_still_does_not_validate_waits(self):
         from plonemeeting.core.migrations.p4top6.import_content import apply_deferred_fields
         from plonemeeting.core.migrations.p4top6.import_content import deferred_store

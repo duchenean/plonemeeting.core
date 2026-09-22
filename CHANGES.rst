@@ -28,7 +28,11 @@ Changelog
   or of a category of another MeetingConfig, keeps no category instead
   of being lost, and the import logs the value it drops. A rich text
   that the 4.3 site never set can also come out of the export as a plain
-  null, not only as a mapping with a null in it.
+  null, not only as a mapping with a null in it. A deferred value leaves
+  the data before the hook that gives a Choice its token reads it, so
+  the deferred pass now untokenizes it: 6 444 items of the demo copy
+  deferred their ``preferred_meeting`` for ever on
+  ``unhashable type: 'dict'``.
   [aduchene]
 
 - D.6 data migration: the objects the configs and the folders steps were

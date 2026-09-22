@@ -181,18 +181,26 @@ def apply_deferred_fields(request):
             continue
         still_deferred = {}
         uids = uid_map() or {}
+        path = "/".join(obj.getPhysicalPath())
         for name, value in fields.items():
             if uids:
                 value = _remap_uids(value, uids)
+            # a deferred value is taken out of the data before the hook
+            # that gives a Choice its token reads it
+            data = _untokenize_choices(obj, {"@id": path, name: value})
+            data.pop("@id")
+            if name not in data:
+                applied += 1
+                continue
             # one call per field: a field that does not validate must not
             # hold back the others
             deserializer = getMultiAdapter((obj, request),
                                            IDeserializeFromJson)
             try:
-                deserializer(validate_all=False, data={name: value})
+                deserializer(validate_all=False, data=data)
             except Exception as error:
                 logger.info("%s of %s deferred again: %s",
-                            name, "/".join(obj.getPhysicalPath()), error)
+                            name, path, error)
                 still_deferred[name] = value
             else:
                 applied += 1
