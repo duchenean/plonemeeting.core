@@ -5,6 +5,25 @@ Changelog
 6.0.0 (unreleased)
 ------------------
 
+- D.6 data migration: the content step of the dry run. The annex cache
+  (``categorized_elements``) cannot be built while the import is running:
+  ``collective.iconifiedcategory`` rebuilds it on every add, and an
+  object the import just created has no ``content_category`` yet, which
+  raised ``AttributeError: 'NoneType' object has no attribute 'split'``
+  and stopped the step. ``PMImportContent`` defers it the way
+  ``ToolPloneMeeting.pasteItems`` does and ``@@import_pm_post_process``
+  builds the cache of every container that holds an annex, an advice
+  included. An empty text column of a data grid comes back from the REST
+  deserializer as ``None`` where Archetypes stored ``''``, which broke
+  ``getAutomaticAdvisersData`` on every ``custom_advisers`` row, so the
+  import puts the empty strings back. An empty Choice is taken out of the
+  data instead of being imported as an empty string. A JSON float is a
+  ``Decimal`` (``simplejson``), so ``extra_state`` casts the timestamps
+  back. An item whose predecessor is not there inherits nothing instead
+  of raising, and the optional advisers vocabulary reads an adviceIndex
+  that has no entry for a stored adviser.
+  [aduchene]
+
 - D.6 data migration: three blockers of the Plone 4.3 -> 6.1 import.
   The selected organizations and the function suffixes of
   ``collective.contact.plonegroup`` are ``plone.registry`` records, not
@@ -71,8 +90,25 @@ Changelog
   ``plonemeeting.restapi`` stores a value before it checks the
   vocabulary and the term dict would stay in the field; a ``null`` on a
   field Plone 6 requires is dropped so the Dexterity default stands; the
-  ``language`` of a 4.3 object is the empty token, which Plone 6 does not
-  offer.
+  ``language`` of a 4.3 object can be a term the new site does not offer
+  (an empty token, ``fr-be``, ``en``) and is dropped when its vocabulary
+  does not know it, so the site language applies.
+  [aduchene]
+
+- ``MeetingItem.get_predecessor()`` reads ``linked_predecessor_path``
+  through ``aq_base`` and falls back to the UID. The attribute is a cache
+  set beside ``linked_predecessor_uid``; an item that comes from another
+  site only has the UID, and the unguarded read walked the parents up to
+  the ``RequestContainer``.
+  [aduchene]
+
+- D.6 import: ``mappings.PACKAGE_RENAMES`` rewrites the dotted names a
+  MeetingConfig stores for its workflow conditions and actions
+  (``Products.MeetingCommunes.interfaces.*`` ->
+  ``plonemeeting.communes.interfaces.*``); ``preferred_meeting`` is
+  deferred, since a meeting can come after the item in the same file;
+  and the deferred table has one ``MeetingItem`` entry for every cloned
+  item type.
   [aduchene]
 
 - D.6 export: rewrite every URL of the exported site, whatever host wrote

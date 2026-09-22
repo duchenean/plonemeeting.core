@@ -3332,8 +3332,16 @@ class MeetingItem(Container):
         res = getattr(self, 'linked_predecessor_uid', None)
         if res and the_object:
             portal = api.portal.get()
-            predecessor_path = self.linked_predecessor_path
-            res = portal.unrestrictedTraverse(predecessor_path)
+            # the path is a cache of the UID, set beside it. An item
+            # that comes from another site, a JSON import for example,
+            # only has the UID; and an unguarded read would acquire the
+            # attribute from the parents.
+            predecessor_path = getattr(
+                aq_base(self), 'linked_predecessor_path', None)
+            if predecessor_path:
+                res = portal.unrestrictedTraverse(predecessor_path, None)
+            else:
+                res = api.content.get(UID=res)
         return res
 
     security.declarePublic('get_predecessors')
@@ -5389,6 +5397,10 @@ class MeetingItem(Container):
         """ """
         predecessor = self.get_predecessor()
         res = []
+        # the predecessor can be missing, an item imported from another
+        # site keeps the link but the predecessor may not be there
+        if predecessor is None:
+            return res
         for adviserUid in adviserUids:
             # adviserId could not exist if we removed an inherited initiative advice for example
             if not predecessor.adviceIndex.get(adviserUid, None) or \

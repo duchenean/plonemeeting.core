@@ -9,7 +9,11 @@ source (see MIGRATION_DATA.md at the buildout root).
 """
 
 from Acquisition import aq_base
+from Acquisition import aq_inner
+from Acquisition import aq_parent
 from collective.exportimport.import_content import ImportContent
+from collective.iconifiedcategory.behaviors.iconifiedcategorization import \
+    IIconifiedCategorizationMarker
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -45,6 +49,15 @@ import re
 logger = logging.getLogger("plonemeeting.core: p4top6 import")
 
 # where the values of DEFERRED_FIELDS wait for their targets
+# collective.iconifiedcategory rebuilds the annex cache
+# (categorized_elements) of a container each time an object is added in
+# it. The import adds an object with no field, so its content_category is
+# empty and the rebuild fails. These two REQUEST keys stop it, the same
+# way ToolPloneMeeting.pasteItems does. @@import_pm_post_process builds
+# the cache once every annex is there.
+DEFER_CATEGORIZED_KEYS = ("defer_update_categorized_elements",
+                          "defer_categorized_content_created_event")
+
 DEFERRED_KEY = "plonemeeting.core.p4top6.deferred_fields"
 
 # UID of the 4.3 site -> UID of the new site, for the content the
@@ -199,6 +212,20 @@ def _factory_kwargs(item, names):
     return kwargs
 
 
+def _rename_packages(value, renames):
+    """Rewrite a dotted name whose package moved in Plone 6."""
+    if isinstance(value, dict):
+        return dict((key, _rename_packages(sub, renames))
+                    for key, sub in value.items())
+    if isinstance(value, list):
+        return [_rename_packages(sub, renames) for sub in value]
+    if isinstance(value, str):
+        for old_prefix, new_prefix in renames.items():
+            if value.startswith(old_prefix):
+                return new_prefix + value[len(old_prefix):]
+    return value
+
+
 def _rename_keys(item, name_map):
     for at_name, dx_name in name_map.items():
         if at_name in item and at_name != dx_name:
@@ -237,11 +264,29 @@ def _untokenize_choices(obj, item):
         if not (IChoice.providedBy(field) or IChoice.providedBy(value_type)):
             continue
         value = _untokenize(value)
-        if value in ("", None) and name in mappings.DROP_EMPTY_CHOICE_FIELDS:
+        # an empty Choice means "not set" on the 4.3 side. Keeping the
+        # empty value would also run the AT validator of the field, and
+        # the 4.3 site has items with no category.
+        if value in ("", None):
+            item.pop(name)
+            continue
+        # a term the new site does not offer is not a value either
+        if name in mappings.DROP_UNKNOWN_CHOICE_FIELDS and \
+                not _in_vocabulary(field, obj, value):
             item.pop(name)
             continue
         item[name] = value
     return item
+
+
+def _in_vocabulary(field, obj, value):
+    """Does the vocabulary of p_field, read on p_obj, hold p_value?"""
+    try:
+        vocabulary = field.bind(obj).vocabulary
+        vocabulary.getTermByToken(value)
+    except Exception:
+        return False
+    return True
 
 
 def _drop_missing_required(obj, item):
@@ -347,12 +392,43 @@ def _remap_row_keys(item, row_key_maps):
     return item
 
 
+def _restore_grid_strings(obj):
+    """Put back the empty strings of a data grid row.
+
+       The REST deserializer writes the missing value (None) for an empty
+       text column, the 4.3 site stored an empty string, and the code
+       that reads a row does row.get(column, '')."""
+    for schema_ in iterSchemata(obj):
+        for name, field in getFields(schema_).items():
+            row_schema = getattr(getattr(field, "value_type", None),
+                                 "schema", None)
+            if row_schema is None:
+                continue
+            rows = getattr(aq_base(obj), name, None)
+            if not rows:
+                continue
+            columns = [column for column, sub in getFields(row_schema).items()
+                       if IText.providedBy(sub)]
+            changed = False
+            for row in rows:
+                if not hasattr(row, "get"):
+                    continue
+                for column in columns:
+                    if row.get(column, u"") is None:
+                        row[column] = u""
+                        changed = True
+            if changed:
+                setattr(obj, name, rows)
+
+
 class PMImportContent(ImportContent):
     """Import content exported from a Products.PloneMeeting 4.3 site."""
 
     def start(self):
         self._imported_configs = []
         self._raw_fields = {}
+        for key in DEFER_CATEGORIZED_KEYS:
+            self.request.set(key, True)
         portal = api.portal.get()
         self._url_pattern = _site_url_pattern(portal.getId())
         self._portal_url = portal.absolute_url()
@@ -416,7 +492,12 @@ class PMImportContent(ImportContent):
     def _defer_fields(self, item):
         """Take the fields that point at content which does not exist
            yet out of p_item, and keep them for a later pass."""
-        names = mappings.DEFERRED_FIELDS.get(item.get("@type"), ())
+        portal_type = item.get("@type", "")
+        # the item types are cloned per config: MeetingItemCollege,
+        # MeetingItemTemplatebp, ...
+        if portal_type.startswith("MeetingItem"):
+            portal_type = "MeetingItem"
+        names = mappings.DEFERRED_FIELDS.get(portal_type, ())
         uid = item.get("UID")
         if not names or not uid:
             return item
@@ -502,6 +583,7 @@ class PMImportContent(ImportContent):
             item = _unwrap_plain_text(
                 item, mappings.MEETINGCONFIG_PLAIN_TEXT_FIELDS)
             item = _remap_row_keys(item, mappings.ROW_KEY_MAPS)
+            item = _rename_packages(item, mappings.PACKAGE_RENAMES)
             names = dict(mappings.MEETINGITEM_AT_TO_DX)
             names.update(mappings.MEETINGITEM_EXTRA_ATTRIBUTE_NAMES)
             item = _rename_values(
@@ -535,6 +617,7 @@ class PMImportContent(ImportContent):
 
     def global_obj_hook(self, obj, item):
         self._set_raw_fields(obj, item)
+        _restore_grid_strings(obj)
         # non-schema persistent attributes and annotations dumped by
         # export_p43.py (see extra_state.py)
         extra_state.load_extra_state(obj, item.get(extra_state.EXTRA_STATE_KEY))
@@ -558,6 +641,8 @@ class PMImportContent(ImportContent):
         applied, remaining, missing = apply_deferred_fields(self.request)
         logger.info("Deferred fields: %s applied, %s waiting, %s objects "
                     "not imported", applied, remaining, missing)
+        for key in DEFER_CATEGORIZED_KEYS:
+            self.request.set(key, False)
 
 
 class ImportManuallyLinkedItems(BrowserView):
@@ -728,14 +813,25 @@ class ImportPostProcess(BrowserView):
         return done
 
     def _update_categorized_elements(self):
+        """Build the annex cache of every container that can hold one.
+
+           Every item and meeting gets one, empty when it has no annex.
+           An annex can also be in an advice, so add the parent of each
+           annex that is not in an item or a meeting."""
         catalog = api.portal.get_tool("portal_catalog")
-        done = 0
+        containers = {}
         for brain in catalog.unrestrictedSearchResults(
                 object_provides=[IMeetingItem.__identifier__,
                                  IMeeting.__identifier__]):
-            update_all_categorized_elements(brain._unrestrictedGetObject())
-            done += 1
-        return done
+            obj = brain._unrestrictedGetObject()
+            containers["/".join(obj.getPhysicalPath())] = obj
+        for brain in catalog.unrestrictedSearchResults(
+                object_provides=IIconifiedCategorizationMarker.__identifier__):
+            parent = aq_parent(aq_inner(brain._unrestrictedGetObject()))
+            containers.setdefault("/".join(parent.getPhysicalPath()), parent)
+        for container in containers.values():
+            update_all_categorized_elements(container)
+        return len(containers)
 
     def __call__(self):
         folders = self._init_meeting_folders()

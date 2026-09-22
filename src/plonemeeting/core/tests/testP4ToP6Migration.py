@@ -6,6 +6,7 @@ Dict-transform tests and mapping invariants against the DX schemas
 """
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from plone import api
 from plone.behavior.interfaces import IBehavior
 from plone.dexterity.interfaces import IDexterityFTI
 from plonemeeting.core.content.meetingconfig import IMeetingConfig
@@ -449,6 +450,51 @@ class TestExtraStateRoundTrip(PloneMeetingTestCase):
         self.assertEqual(target.adviceIndex, item.adviceIndex)
 
 
+class TestExtraStateDecoding(unittest.TestCase):
+    """The JSON reader of collective.exportimport is simplejson: every
+    JSON float comes back as a Decimal."""
+
+    def test_a_json_float_is_read_back_as_a_float(self):
+        from decimal import Decimal
+        from DateTime import DateTime
+        from plonemeeting.core.migrations.p4top6 import extra_state
+        value = extra_state.decode(
+            {extra_state.TYPE_KEY: "DateTime",
+             "ts": Decimal("1668676176.549931"),
+             "tz": "GMT+1"})
+        self.assertTrue(isinstance(value, DateTime))
+        self.assertEqual(value.timezone(), "GMT+1")
+        self.assertEqual(extra_state.decode(Decimal("1.5")), 1.5)
+        self.assertEqual(extra_state.decode([Decimal("2")]), [2.0])
+
+
+class TestGridStrings(PloneMeetingTestCase):
+    """The REST deserializer writes None for an empty text column, the
+    4.3 site stored an empty string."""
+
+    def test_empty_grid_columns_are_strings_again(self):
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            _restore_grid_strings
+        cfg = self.meetingConfig
+        self.changeUser("siteadmin")
+        cfg.custom_advisers = [
+            {"row_id": "unique_id_001",
+             "org": self.vendors_uid,
+             "gives_auto_advice_on": None,
+             "gives_auto_advice_on_help_message": None,
+             "for_item_created_from": "2020/01/01",
+             "delay": None}]
+        _restore_grid_strings(cfg)
+        row = cfg.custom_advisers[0]
+        self.assertEqual(row["gives_auto_advice_on"], u"")
+        self.assertEqual(row["delay"], u"")
+        # a column that holds a value and a column that is not there are
+        # left alone
+        self.assertEqual(row["for_item_created_from"], "2020/01/01")
+        self.assertEqual(row["org"], self.vendors_uid)
+        self.assertFalse("available_on" in row)
+
+
 class TestImportPostProcess(PloneMeetingTestCase):
     """@@import_pm_post_process re-initializes imported user folders."""
 
@@ -508,6 +554,22 @@ class TestImportPostProcess(PloneMeetingTestCase):
         msg = self.portal.restrictedTraverse("@@import_pm_post_process")()
         self.assertTrue("categorized_elements updated" in msg)
         self.assertTrue(annex.UID() in item.categorized_elements)
+
+    def test_the_import_defers_the_annex_cache(self):
+        """The cache of a container cannot be built while the annexes of
+           the container are still created empty."""
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            DEFER_CATEGORIZED_KEYS
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            PMImportContent
+        self.changeUser("siteadmin")
+        importer = PMImportContent(self.portal, self.request)
+        importer.start()
+        for key in DEFER_CATEGORIZED_KEYS:
+            self.assertTrue(self.request.get(key))
+        importer.finish()
+        for key in DEFER_CATEGORIZED_KEYS:
+            self.assertFalse(self.request.get(key))
 
 
 class TestDirectoryImport(PloneMeetingTestCase):
@@ -575,8 +637,9 @@ class TestDeferredFields(PloneMeetingTestCase):
     def test_config_factory_fields_exist(self):
         """A factory kwarg that createContent() cannot place is set as a
            plain attribute and shadows nothing: the value is lost."""
-        import inspect
         from plone.dexterity.content import DexterityContent
+
+        import inspect
 
         names = self._schema_names("MeetingConfig")
         # createContent() also accepts the named parameters of the
@@ -630,6 +693,22 @@ class TestDeferredFields(PloneMeetingTestCase):
         applied, remaining, missing = apply_deferred_fields(self.request)
         self.assertEqual((applied, remaining, missing), (0, 1, 0))
         self.assertTrue(self.vendors_uid in deferred_store())
+
+    def test_item_types_share_one_entry(self):
+        """The item types are cloned per config, the table has one
+           "MeetingItem" entry for all of them."""
+        self.changeUser('siteadmin')
+        importer = self._importer()
+        item = {"@id": "http://nohost/plone/an-item",
+                "@type": self.meetingConfig.getItemTypeName(),
+                "id": "an-item",
+                "UID": "the-uid-of-an-item",
+                "preferred_meeting": "the-uid-of-a-meeting"}
+        res = importer.global_dict_hook(item)
+        self.assertTrue("preferred_meeting" not in res)
+        from plonemeeting.core.migrations.p4top6.import_content import deferred_store
+        self.assertEqual(deferred_store()["the-uid-of-an-item"],
+                         {"preferred_meeting": "the-uid-of-a-meeting"})
 
     def test_object_that_was_not_imported_is_reported(self):
         from plonemeeting.core.migrations.p4top6.import_content import apply_deferred_fields
@@ -701,6 +780,21 @@ class TestContainers(PloneMeetingTestCase):
                            "UID": "no-such-uid"}}
         self.assertIsNone(self._importer().get_parent_as_container(item))
         self.assertTrue("gone" not in self.portal.objectIds())
+
+    def test_a_language_the_site_does_not_offer_is_dropped(self):
+        """A 4.3 site that was never multilingual still holds "fr-be",
+           "en" and the neutral empty token."""
+        self.changeUser('siteadmin')
+        importer = self._importer()
+        folder = api.content.create(
+            container=self.portal, type="Folder", id="a-folder",
+            title=u"A folder")
+        item = {"@id": folder.absolute_url(),
+                "@type": "Folder",
+                "id": "a-folder",
+                "language": {"title": "French (Belgium)", "token": "fr-be"}}
+        importer.global_obj_hook_before_deserializing(folder, item)
+        self.assertTrue("language" not in item)
 
     def test_dublin_core_text_fields_are_unwrapped(self):
         """Every Archetypes type of the 4.3 site exports "description"

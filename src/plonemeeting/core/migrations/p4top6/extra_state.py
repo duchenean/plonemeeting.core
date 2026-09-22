@@ -16,6 +16,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import datetime
+import decimal
 import logging
 
 from collections import OrderedDict
@@ -170,6 +171,10 @@ def _parse_datetime(text):
 
 def decode(value):
     """Inverse of encode()."""
+    if isinstance(value, decimal.Decimal):
+        # the JSON reader of collective.exportimport is simplejson, it
+        # reads every JSON float as a Decimal
+        return float(value)
     if isinstance(value, list):
         return [decode(v) for v in value]
     if not isinstance(value, dict):
@@ -180,7 +185,7 @@ def decode(value):
         return dict((k, decode(v)) for k, v in value.items())
     if type_name == "DateTime":
         if "ts" in value:
-            return DateTime(value["ts"]).toZone(value["tz"])
+            return DateTime(float(value["ts"])).toZone(value["tz"])
         return DateTime(value["value"])
     if type_name == "datetime":
         return _parse_datetime(value["value"])

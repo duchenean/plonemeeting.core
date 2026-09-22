@@ -356,6 +356,10 @@ DEFERRED_FIELDS = {
     #     which the deserializer has not stored yet;
     #   meeting_item_templates_to_store_as_annex: its POD templates,
     #     which come after it in the same file.
+    # an item -> the meeting it is meant for, which can come later in
+    # the same file. The key is the prefix: the item types are cloned
+    # per config (MeetingItemCollege, MeetingItemTemplatebp, ...).
+    "MeetingItem": ("preferred_meeting", ),
     "MeetingConfig": ("to_do_list_searches",
                       "ordered_contacts",
                       "advices_kept_on_sent_to_other_mc",
@@ -456,8 +460,20 @@ MEETINGCONFIG_RAW_FIELDS = ("used_poll_types",
                             "historized_item_attributes")
 
 
-# Choice fields whose exported value is an empty token. The Plone 4.3
-# content is language neutral and Plone 6 has no term for it, so the
-# key is dropped and the site language applies. Every Archetypes object
-# of the 4.3 site carries one.
-DROP_EMPTY_CHOICE_FIELDS = ("language", )
+# Choice fields whose exported value can be a term the new site does
+# not offer. Every Archetypes object of the 4.3 site carries a
+# "language", and a site that was never multilingual holds "fr-be",
+# "en" and the neutral empty token beside its own language. The key is
+# dropped and the site language applies.
+DROP_UNKNOWN_CHOICE_FIELDS = ("language", )
+
+
+# A MeetingConfig stores the dotted name of the interfaces that carry
+# its workflow conditions and actions
+# (Products.MeetingCommunes.interfaces.IMeetingItemCommunesWorkflowConditions
+# and the three others). Only the package moved; the class names are
+# the same. Add a line for every profile package a pilot site uses.
+PACKAGE_RENAMES = {
+    "Products.PloneMeeting.": "plonemeeting.core.",
+    "Products.MeetingCommunes.": "plonemeeting.communes.",
+}

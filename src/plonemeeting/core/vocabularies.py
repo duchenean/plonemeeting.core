@@ -1218,8 +1218,12 @@ class ItemOptionalAdvicesVocabulary(object):
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = decodeDelayAwareId(org_uid)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                            delay_label = context.adviceIndex[org_uid]['delay_label']
-                            is_delay_calendar_days = context.adviceIndex[org_uid].get(
+                            # the adviceIndex is empty while the item is
+                            # created, and an adviser that was removed
+                            # from the item has no entry either
+                            advice_infos = context.adviceIndex.get(org_uid) or {}
+                            delay_label = advice_infos.get('delay_label', '')
+                            is_delay_calendar_days = advice_infos.get(
                                 'is_delay_calendar_days', False)
                             org = get_organization(org_uid)
                             if not org:
