@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
+from Acquisition import aq_base
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import uuidsToObjects
 from plone import api
@@ -224,7 +225,11 @@ class CategoriesOfOtherMCsVocabulary(object):
         catType = self._get_type(context)
         cat_ids = []
         for otherMC in otherMCs:
-            otherMCObj = getattr(tool, otherMC['meeting_config'])
+            # the config can be missing, an unguarded read would acquire
+            # the attribute from the parents of the tool
+            if getattr(aq_base(tool), otherMC['meeting_config'], None) is None:
+                continue
+            otherMCObj = tool[otherMC['meeting_config']]
             if 'category' not in otherMCObj.used_item_attributes:
                 continue
             otherMCId = otherMCObj.getId()

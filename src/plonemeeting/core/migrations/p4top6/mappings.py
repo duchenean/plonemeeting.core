@@ -342,9 +342,32 @@ DEFERRED_FIELDS = {
     "held_position": ("position",
                       "voting_group",
                       "represented_organizations"),
+    # a POD template -> other POD templates of the same config (the
+    # style, the templates it merges, the mailing loop, the template it
+    # reuses) and an annex type of the config, all of them written after
+    # it or in another config
+    "ConfigurablePODTemplate": ("style_template",
+                                "merge_templates",
+                                "mailing_loop_template",
+                                "pod_template_to_use",
+                                "store_as_annex"),
     # a dashboard template -> the DashboardCollections it is shown on,
-    # which live in the searches folder of a MeetingConfig
-    "DashboardPODTemplate": ("dashboard_collections", ),
+    # which live in the searches folder of a MeetingConfig, plus the POD
+    # template references above
+    "DashboardPODTemplate": ("dashboard_collections",
+                             "style_template",
+                             "merge_templates",
+                             "mailing_loop_template",
+                             "pod_template_to_use"),
+    # an annex type -> another annex type, of this config or of the one
+    # the items are sent to
+    "ItemAnnexContentCategory": ("after_scan_change_annex_type_to",
+                                 "other_mc_correspondences"),
+    # a category -> the organizations of the plonegroup registry and the
+    # categories of the configs the items are sent to
+    "meetingcategory": ("category_mapping_when_cloning_to_other_mc",
+                        "groups_in_charge",
+                        "using_groups"),
     # a config -> the DashboardCollections of its own searches folder.
     # onConfigInitialized() creates those collections, so the import
     # skips them as existing content and they keep the UID of the new
