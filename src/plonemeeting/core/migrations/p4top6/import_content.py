@@ -342,10 +342,33 @@ def _adapt_text_fields(obj, item):
                 # of plone.restapi unescapes the data without a check
                 item.pop(name)
                 continue
-            if value.get("content-type") not in field.allowed_mime_types:
+            allowed = field.allowed_mime_types
+            if allowed and value.get("content-type") not in allowed:
                 value["content-type"] = field.default_mime_type
         elif IText.providedBy(field):
             item[name] = value["data"]
+    return item
+
+
+def _known_constrained_types(item, type_ids):
+    """Take the types the new site does not have out of the constraints.
+
+       ISelectableConstrainTypes refuses the whole list when one id is
+       unknown, so a folder that allows a 4.3 type (MeetingFile, Large
+       Plone Folder) would keep none of its types."""
+    constrains = item.get("exportimport.constrains")
+    if not constrains:
+        return item
+    for key in ("locally_allowed_types", "immediately_addable_types"):
+        values = constrains.get(key)
+        if not values:
+            continue
+        kept = [value for value in values if value in type_ids]
+        if len(kept) != len(values):
+            logger.info("%s: %s of %s is not a type of the new site",
+                        item.get("@id"),
+                        sorted(set(values) - set(kept)), key)
+        constrains[key] = kept
     return item
 
 
@@ -445,6 +468,8 @@ class PMImportContent(ImportContent):
     def start(self):
         self._imported_configs = []
         self._raw_fields = {}
+        self._type_ids = set(
+            api.portal.get_tool("portal_types").objectIds())
         for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, ):
             self.request.set(key, True)
         portal = api.portal.get()
@@ -592,6 +617,7 @@ class PMImportContent(ImportContent):
 
     def global_dict_hook(self, item):
         item = _rewrite_urls(item, self._url_pattern, self._portal_url)
+        item = _known_constrained_types(item, self._type_ids)
         item = _unwrap_plain_text(
             item, mappings.DUBLIN_CORE_PLAIN_TEXT_FIELDS)
         portal_type = item.get("@type", "")

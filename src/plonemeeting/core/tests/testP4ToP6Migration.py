@@ -842,6 +842,22 @@ class TestContainers(PloneMeetingTestCase):
         self._importer().global_obj_hook_before_deserializing(item, data)
         self.assertEqual(data["privacy"], "secret")
 
+    def test_a_type_the_new_site_does_not_have_leaves_the_constraints(self):
+        """A 4.3 folder allows MeetingFile or Large Plone Folder.
+           ISelectableConstrainTypes refuses the whole list when one id
+           is unknown."""
+        self.changeUser("siteadmin")
+        data = {"@id": "http://nohost/plone/a-folder",
+                "@type": "Folder",
+                "id": "a-folder",
+                "exportimport.constrains": {
+                    "locally_allowed_types": ["Folder", "MeetingFile"],
+                    "immediately_addable_types": ["Large Plone Folder"]}}
+        res = self._importer().global_dict_hook(data)
+        constrains = res["exportimport.constrains"]
+        self.assertEqual(constrains["locally_allowed_types"], ["Folder"])
+        self.assertEqual(constrains["immediately_addable_types"], [])
+
     def test_a_rich_text_that_was_never_set_is_dropped(self):
         """plone.restapi unescapes the data of a rich text without a
            check, and an AT TextField that was never set has none."""
