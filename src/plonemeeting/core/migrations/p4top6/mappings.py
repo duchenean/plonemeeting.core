@@ -459,6 +459,15 @@ MEETINGCONFIG_RAW_GRIDS = ("power_observers",
 MEETINGCONFIG_RAW_FIELDS = ("used_poll_types",
                             "historized_item_attributes")
 
+# A value the new site does not offer, and the value to use instead.
+# A 4.3 MeetingConfig can drop a privacy while items keep it; a heading
+# privacy is a sub-kind of the base one, so the base one is kept and the
+# item stays as closed as it was.
+CHOICE_FALLBACKS = {
+    "privacy": {"public_heading": "public",
+                "secret_heading": "secret"},
+}
+
 
 # Choice fields whose exported value can be a term the new site does
 # not offer. Every Archetypes object of the 4.3 site carries a

@@ -563,12 +563,15 @@ class TestImportPostProcess(PloneMeetingTestCase):
         from plonemeeting.core.migrations.p4top6.import_content import \
             PMImportContent
         self.changeUser("siteadmin")
+        from plonemeeting.core.migrations.p4top6.import_content import \
+            SKIP_VALIDATORS_KEY
+        keys = DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, )
         importer = PMImportContent(self.portal, self.request)
         importer.start()
-        for key in DEFER_CATEGORIZED_KEYS:
+        for key in keys:
             self.assertTrue(self.request.get(key))
         importer.finish()
-        for key in DEFER_CATEGORIZED_KEYS:
+        for key in keys:
             self.assertFalse(self.request.get(key))
 
 
@@ -795,6 +798,66 @@ class TestContainers(PloneMeetingTestCase):
                 "language": {"title": "French (Belgium)", "token": "fr-be"}}
         importer.global_obj_hook_before_deserializing(folder, item)
         self.assertTrue("language" not in item)
+
+    def test_an_empty_value_is_not_imported(self):
+        """The 4.3 site has items with no category and no group in
+           charge; an empty value would run the validator of the
+           field."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "category": {"title": None, "token": ""},
+                "groupsInCharge": [],
+                "proposingGroup": {"title": u"Developers",
+                                   "token": self.developers_uid}}
+        self.changeUser("siteadmin")
+        importer = self._importer()
+        # the item keys are the Archetypes ones until global_dict_hook
+        data = importer.global_dict_hook(data)
+        importer.global_obj_hook_before_deserializing(item, data)
+        self.assertTrue("category" not in data)
+        self.assertTrue("groups_in_charge" not in data)
+        self.assertEqual(data["proposing_group"], self.developers_uid)
+
+    def test_a_privacy_the_config_dropped_falls_back(self):
+        """An item keeps a privacy its MeetingConfig does not offer any
+           more. A heading privacy is a sub-kind of the base one."""
+        cfg = self.meetingConfig
+        self.changeUser("siteadmin")
+        cfg.selectable_privacies = ("public", "secret")
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "privacy": {"title": u"Closed door (heading)",
+                            "token": "secret_heading"}}
+        self.changeUser("siteadmin")
+        self._importer().global_obj_hook_before_deserializing(item, data)
+        self.assertEqual(data["privacy"], "secret")
+        # a value the config offers is left alone
+        data["privacy"] = {"title": u"Closed door", "token": "secret"}
+        self._importer().global_obj_hook_before_deserializing(item, data)
+        self.assertEqual(data["privacy"], "secret")
+
+    def test_a_rich_text_that_was_never_set_is_dropped(self):
+        """plone.restapi unescapes the data of a rich text without a
+           check, and an AT TextField that was never set has none."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        data = {"@id": item.absolute_url(),
+                "@type": item.portal_type,
+                "id": item.getId(),
+                "description": {"content-type": "text/html", "data": None},
+                "decision": {"content-type": "text/html", "data": None},
+                "motivation": {"content-type": "text/html",
+                               "data": u"<p>Motivation</p>"}}
+        self.changeUser("siteadmin")
+        self._importer().global_obj_hook_before_deserializing(item, data)
+        self.assertTrue("decision" not in data)
+        self.assertEqual(data["motivation"]["data"], u"<p>Motivation</p>")
 
     def test_dublin_core_text_fields_are_unwrapped(self):
         """Every Archetypes type of the 4.3 site exports "description"

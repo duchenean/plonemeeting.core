@@ -58,6 +58,13 @@ logger = logging.getLogger("plonemeeting.core: p4top6 import")
 DEFER_CATEGORIZED_KEYS = ("defer_update_categorized_elements",
                           "defer_categorized_content_created_event")
 
+# plonemeeting.restapi reads this one: the AT-compat validators
+# (validate_<fieldName>) guard what a user types, and the 4.3 site holds
+# values they refuse, an item with an optional adviser that is both
+# delay aware and not for example. The data of a site that ran for ten
+# years is the reference here, not the validators.
+SKIP_VALIDATORS_KEY = "skip_at_compat_validators"
+
 DEFERRED_KEY = "plonemeeting.core.p4top6.deferred_fields"
 
 # UID of the 4.3 site -> UID of the new site, for the content the
@@ -264,12 +271,18 @@ def _untokenize_choices(obj, item):
         if not (IChoice.providedBy(field) or IChoice.providedBy(value_type)):
             continue
         value = _untokenize(value)
-        # an empty Choice means "not set" on the 4.3 side. Keeping the
-        # empty value would also run the AT validator of the field, and
-        # the 4.3 site has items with no category.
-        if value in ("", None):
+        # an empty value means "not set" on the 4.3 side. Keeping it
+        # would also run the AT validator of the field, and the 4.3 site
+        # has items with no category and no group in charge.
+        if value in ("", None) or (isinstance(value, list) and not value):
             item.pop(name)
             continue
+        # a term the config does not offer any more has a fallback
+        fallback = mappings.CHOICE_FALLBACKS.get(name, {}).get(value)
+        if fallback is not None and not _in_vocabulary(field, obj, value):
+            logger.info("%s: %r is not offered any more, using %r",
+                        name, value, fallback)
+            value = fallback
         # a term the new site does not offer is not a value either
         if name in mappings.DROP_UNKNOWN_CHOICE_FIELDS and \
                 not _in_vocabulary(field, obj, value):
@@ -324,6 +337,11 @@ def _adapt_text_fields(obj, item):
         if field is None:
             continue
         if IRichText.providedBy(field):
+            if value.get("data") is None:
+                # an AT TextField that was never set: the deserializer
+                # of plone.restapi unescapes the data without a check
+                item.pop(name)
+                continue
             if value.get("content-type") not in field.allowed_mime_types:
                 value["content-type"] = field.default_mime_type
         elif IText.providedBy(field):
@@ -427,7 +445,7 @@ class PMImportContent(ImportContent):
     def start(self):
         self._imported_configs = []
         self._raw_fields = {}
-        for key in DEFER_CATEGORIZED_KEYS:
+        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, ):
             self.request.set(key, True)
         portal = api.portal.get()
         self._url_pattern = _site_url_pattern(portal.getId())
@@ -641,7 +659,7 @@ class PMImportContent(ImportContent):
         applied, remaining, missing = apply_deferred_fields(self.request)
         logger.info("Deferred fields: %s applied, %s waiting, %s objects "
                     "not imported", applied, remaining, missing)
-        for key in DEFER_CATEGORIZED_KEYS:
+        for key in DEFER_CATEGORIZED_KEYS + (SKIP_VALIDATORS_KEY, ):
             self.request.set(key, False)
 
 
