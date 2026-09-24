@@ -12,22 +12,17 @@
  <object name="plonemeeting_plone"
          meta_type="Filesystem Directory View"
          directory="plonemeeting.core:skins/plonemeeting_plone"/>
- <object name="plonemeeting_styles"
-         meta_type="Filesystem Directory View"
-         directory="plonemeeting.core:skins/plonemeeting_styles"/>
  <object name="plonemeeting_templates"
          meta_type="Filesystem Directory View"
          directory="plonemeeting.core:skins/plonemeeting_templates"/>
 
  <skin-path name="*">
   <layer name="plonemeeting_images"
-         insert-after="imioapps_styles" />
+         insert-after="custom" />
   <layer name="plonemeeting_plone"
          insert-after="plonemeeting_images" />
-  <layer name="plonemeeting_styles"
-         insert-after="plonemeeting_plone" />
   <layer name="plonemeeting_templates"
-         insert-after="plonemeeting_styles" />
+         insert-after="plonemeeting_plone" />
  </skin-path>
 
 </object>

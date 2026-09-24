@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
-from collective.z3cform.datagridfield import DataGridFieldFactory
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldFactory
 from plone import api
 from plonemeeting.core.interfaces import IToolPloneMeeting
 from z3c.form import button

@@ -62,6 +62,7 @@ from plonemeeting.core.indexes import REAL_ORG_UID_PATTERN
 from plonemeeting.core.interfaces import IConfigElement
 from plonemeeting.core.interfaces import IMeetingContent
 from plonemeeting.core.utils import _addManagedPermissions
+from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import addDataChange
 from plonemeeting.core.utils import AdviceAfterAddEvent
 from plonemeeting.core.utils import AdviceAfterModifyEvent
@@ -104,7 +105,7 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Code executed after a workflow transition has been triggered
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.getTagName()
+    objectType = _resolve_adaptable_key(getattr(event.object, 'portal_type', None))
     actionsAdapter = event.object.wfActions()
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
@@ -320,12 +321,15 @@ def onConfigBeforeTransition(config, event):
                 continue
             meetingConfigs = [v['meeting_config'] for v in other_cfg.meeting_configs_to_clone_to]
             if config_id in meetingConfigs:
-                msg = _('Can not disable a meeting configuration used in another, '
-                        'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
-                        mapping={'field_title': translate('PloneMeeting_label_meetingConfigsToCloneTo',
-                                                          domain='PloneMeeting',
-                                                          context=config.REQUEST),
-                                 'other_cfg_title': safe_unicode(other_cfg.Title())})
+                msg = translate(
+                    'Can not disable a meeting configuration used in another, '
+                    'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
+                    domain='PloneMeeting',
+                    mapping={'field_title': translate('PloneMeeting_label_meetingConfigsToCloneTo',
+                                                      domain='PloneMeeting',
+                                                      context=config.REQUEST),
+                             'other_cfg_title': safe_unicode(other_cfg.Title())},
+                    context=config.REQUEST)
                 raise WorkflowException(msg)
 
 
@@ -645,6 +649,8 @@ def onConfigWillBeRemoved(config, event):
     # Check that every meetingConfig folder of Members is empty.
     membershipTool = api.portal.get_tool('portal_membership')
     members = membershipTool.getMembersFolder()
+    if members is None:
+        return
     meetingConfigId = config.getId()
     searches_folder_ids = [info[0] for info in config.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
     for member in members.objectValues():
@@ -947,6 +953,14 @@ def onAdviceAdded(advice, event):
     if advice.REQUEST.get('currentlyPastingItems', False):
         return
 
+    # the import of a 4.3 site writes the row id, the history and the
+    # advices index of the item itself, and the advice was given years
+    # ago: no mail. The permissions this handler computes are the only
+    # thing the import cannot give back.
+    if advice.REQUEST.get('importingPloneMeetingContent', False):
+        _addManagedPermissions(advice)
+        return
+
     # Add a place to store advice_given_history
     advice.advice_given_history = PersistentList()
 
@@ -986,6 +1000,11 @@ def onAdviceAdded(advice, event):
 def onAdviceModified(advice, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
     if advice.REQUEST.get('currentlyStoringExternalImages', False) is True:
+        return
+
+    # the import of a 4.3 site writes the fields of the advice one after
+    # the other: see onAdviceAdded
+    if advice.REQUEST.get('importingPloneMeetingContent', False):
         return
 
     if not isinstance(event, ContainerModifiedEvent):
@@ -1112,7 +1131,7 @@ def onAnnexFileChanged(annex, event):
        - if ++add++annex in REQUEST, should not really happen, it means we are adding
          a new annex and defining a scan_id for it (power user);
        - or annex is signed (it means that we are updating the annex thru the AMQP WS).'''
-    if annex.scan_id and \
+    if getattr(annex, 'scan_id', None) and \
        not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or
             annex.REQUEST.get('currentlyPastingItems', False) or
             '/++add++annex' in annex.REQUEST.getURL() or
@@ -1534,7 +1553,7 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
         if held_pos_uid in [row['held_position'] for row
                             in obj.certified_signatures or ()]:
             res = True
-    elif obj.getTagName() == 'Meeting':
+    elif IMeeting.providedBy(obj):
         ordered_contacts = getattr(obj, 'ordered_contacts', {})
         if held_pos_uid in ordered_contacts:
             res = True
@@ -1651,6 +1670,12 @@ def onCategoryWillBeMovedOrRemoved(category, event):
        IObjectWillBeAddedEvent.providedBy(event):
         return
 
+    # When called as a sublocation dispatch (e.g. during parent config deletion),
+    # event.object is the parent being deleted, not the category itself.
+    # The whole tree is being deleted together, so no constraint applies.
+    if category is not event.object:
+        return
+
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(category)
     catalog = api.portal.get_tool('portal_catalog')
@@ -1711,8 +1736,9 @@ def onMeetingWillBeRemoved(meeting, event):
     if event.object.meta_type == 'Plone Site':
         return
 
-    # We can remove an meeting directly but not "through" his container.
-    if event.object.getTagName() != 'Meeting':
+    # We can remove a meeting directly but not "through" its container.
+    # Use IMeeting.providedBy to cover all meeting subtypes (Meeting, MeetingCouncil, etc.)
+    if not IMeeting.providedBy(event.object):
         msg = translate(
             u"can_not_delete_meeting_container",
             domain='PloneMeeting',

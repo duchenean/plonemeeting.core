@@ -7,7 +7,7 @@
   <element value="collective.contact.core.behaviors.IContactDetails" />
   <element value="collective.contact.core.behaviors.IBirthday" />
   <element value="collective.contact.plonegroup.behaviors.IPlonegroupUserLink" />
-  <element value="collective.dexteritytextindexer.behavior.IDexterityTextIndexer" />
+  <element value="plone.app.dexterity.textindexer.behavior.IDexterityTextIndexer" />
  </property>
  <property name="schema_policy">schema_policy_pm_person</property>
 </object>

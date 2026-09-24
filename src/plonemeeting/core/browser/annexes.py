@@ -34,12 +34,6 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         """
         if not super(AnnexActionsPanelView, self).showHistoryForContext():
             return False
-
-        # check isManager on parent (item) so caching is used as context is a key
-        # used in the caching invalidation
-        parent = self.context.aq_inner.aq_parent
-        while parent.__class__.__name__ not in ('MeetingItem', 'Meeting'):
-            parent = parent.aq_inner.aq_parent
         return self.tool.isManager(realManagers=True)
 
 

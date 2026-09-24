@@ -30,7 +30,7 @@ from plonemeeting.core.config import PROJECTNAME
 from plonemeeting.core.config import WriteRiskyConfig
 from plonemeeting.core.utils import getCustomAdapter
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 from . import interfaces
 
@@ -122,11 +122,11 @@ for field in MeetingCategory_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 
 
+@implementer(interfaces.IMeetingCategory)
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeetingCategory)
 
     meta_type = 'MeetingCategory'
     _at_rename_after_creation = True

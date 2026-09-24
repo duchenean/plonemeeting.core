@@ -3,6 +3,12 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
+  <!-- Scripts and styles loaded through the bundle records of registry.xml -->
+  <browser:resourceDirectory
+      name="plonemeeting.core"
+      directory="static" />
+
+
     <!-- Viewlets -->
     <!-- Display workflow state on the Meeting, MeetingItem, meetingadvice and some elements of the config -->
     <browser:viewlet
@@ -249,6 +255,44 @@
         provides="zope.publisher.interfaces.browser.IBrowserPage"
         factory="plonemeeting.core.browser.meeting.MeetingAdd"
         name="meeting" />
+
+    <!-- MeetingItem custom Add/Edit forms — port AT visibility helpers
+         (attribute_is_used, show_*) to a DX form layer. -->
+    <browser:page
+      for="plonemeeting.core.interfaces.IMeetingItem"
+      name="edit"
+      class="plonemeeting.core.browser.meetingitem.MeetingItemEditForm"
+      permission="cmf.ModifyPortalContent" />
+    <!-- ++add++ traversal looks the AddView up by FTI.factory; base FTIs
+         have factory=meetingitem / meetingitemtemplate / meetingitemrecurring,
+         and per-config FTIs (MeetingItemPma etc.) inherit those names from
+         their typeinfo, so all variants land on this view. -->
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitem" />
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitemtemplate" />
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="plonemeeting.core.browser.meetingitem.MeetingItemAddView"
+        name="meetingitemrecurring" />
+    <class class="plonemeeting.core.browser.meetingitem.MeetingItemAddView">
+        <require
+            permission="cmf.AddPortalContent"
+            interface="zope.publisher.interfaces.browser.IBrowserPage" />
+    </class>
     <class class="plonemeeting.core.browser.meeting.MeetingAdd">
         <require
             permission="cmf.AddPortalContent"
@@ -384,6 +428,14 @@
           name="display-group-users"
           template="templates/display_group_users.pt"
           class="plonemeeting.core.browser.views.PMDisplayGroupUsersView"
+          permission="zope2.View" />
+        <!-- Override site-root registration for Plone 6 ID-based member deduplication -->
+        <browser:page
+          for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+          name="display-group-users"
+          template="templates/display_group_users.pt"
+          class="plonemeeting.core.browser.views.PMDisplayGroupUsersViewBase"
+          layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
           permission="zope2.View" />
     </configure>
 
@@ -525,7 +577,7 @@
 
     <!-- Overlays views -->
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+        for="plone.dexterity.interfaces.IDexterityContainer"
         name="createitemfromtemplate"
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
@@ -997,7 +1049,8 @@
         class=".views_unrestricted.ItemUnrestrictedMethodsView"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
         allowed_attributes="getLinkedMeetingTitle
-                            getLinkedMeetingDate"
+                            getLinkedMeetingDate
+                            getLinkedMeetingDateStr"
         permission="zope2.View" />
     <browser:page
         for="plonemeeting.core.content.meeting.IMeeting"
@@ -1033,7 +1086,7 @@
         for="*"
         class=".macros.PloneMeetingMacros"
         template="templates/macros.pt"
-        permission="zope2.View"
+        permission="zope.Public"
         allowed_attributes="callMacro"/>
     <browser:page
         name="advices-icons"
@@ -1174,7 +1227,7 @@
 
     <!-- collective.documentgenerator helper view for Folder -->
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+        for="plone.dexterity.interfaces.IDexterityContainer"
         class=".views.FolderDocumentGenerationHelperView"
         permission="zope2.View"
         name="document_generation_helper_view" />
@@ -1278,6 +1331,13 @@
           class="plonemeeting.core.browser.overrides.PMCSSIconifiedCategory" />
     </configure>
 
+    <!-- P6 migration: replaces CPUtils folder_position_typeaware External Method -->
+    <browser:page
+      for="plonemeeting.core.interfaces.IMeetingItem"
+      name="folder_position_typeaware"
+      class=".annexposition.FolderPositionTypeawareView"
+      permission="zope2.View" />
+
     <!-- batchactions viewlet for categorized elements (annexes) -->
     <browser:viewlet
         name="collective.iconifiedcategory.belowcategorizedelements"
@@ -1286,12 +1346,13 @@
         class=".batchactions.AnnexesBatchActionsViewlet"
         permission="zope2.View" />
 
+    <!-- P6 migration: AT reference browser removed
     <browser:page
         name="refbrowser_popup"
         permission="zope2.Public"
         for="plonemeeting.core.interfaces.IMeetingItem"
         class=".overrides.PMReferenceBrowserPopup"
-        />
+        /> -->
 
     <!-- Override @@historyview for IMeetingItem and IMeeting -->
     <browser:view
@@ -1334,24 +1395,24 @@
     </configure>
 
     <!-- Override @@usergroup-userprefs -->
-    <configure package="plone.app.controlpanel">
+    <configure package="Products.CMFPlone.controlpanel">
         <browser:page
             name="usergroup-userprefs"
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="plonemeeting.core.browser.overrides.PMUsersOverviewControlPanel"
             permission="plone.app.controlpanel.UsersAndGroups"
-            template="usergroups_usersoverview.pt"
+            template="browser/usergroups_usersoverview.pt"
             layer="plonemeeting.core.interfaces.IPloneMeetingLayer" />
     </configure>
 
     <!-- Override @@usergroup-groupprefs -->
-    <configure package="plone.app.controlpanel">
+    <configure package="Products.CMFPlone.controlpanel">
         <browser:page
             name="usergroup-groupprefs"
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="plonemeeting.core.browser.overrides.PMGroupsOverviewControlPanel"
             permission="plone.app.controlpanel.UsersAndGroups"
-            template="usergroups_groupsoverview.pt"
+            template="browser/usergroups_groupsoverview.pt"
             layer="plonemeeting.core.interfaces.IPloneMeetingLayer" />
     </configure>
 

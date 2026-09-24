@@ -15,10 +15,11 @@ from Products.CMFCore import DirectoryView
 from Products.CMFPlone.utils import ToolInit
 from plonemeeting.core.config import product_globals
 from plonemeeting.core.config import PROJECTNAME
-from Products.validation import validation
-from Products.validation.validators.BaseValidators import baseValidators
-from Products.validation.validators.BaseValidators import protocols
-from .validators import ATCertifiedSignaturesValidator
+# P6 migration: Products.validation (AT validators) dropped.
+# from Products.validation import validation
+# from Products.validation.validators.BaseValidators import baseValidators
+# from Products.validation.validators.BaseValidators import protocols
+# from .validators import ATCertifiedSignaturesValidator
 
 import logging
 
@@ -27,20 +28,6 @@ DirectoryView.registerDirectory('skins', product_globals)
 
 logger = logging.getLogger('PloneMeeting')
 logger.debug('Installing Product')
-
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
-
-protocols += ('file',)
-for valid in baseValidators:
-    if valid.name == 'isURL':
-        del valid.regex[0]
-        valid.regex_strings = (r'(%s)s?://[^\s\r\n]+' % '|'.join(protocols),)
-        valid.compileRegex()
-
-validation.register(ATCertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
 
 
 # this is necessary to be able to register custom validator for datagridfield

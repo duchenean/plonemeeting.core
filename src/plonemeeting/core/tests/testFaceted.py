@@ -168,7 +168,7 @@ class testFaceted(PloneMeetingTestCase):
         dev = cfg.categories.development
         dev.title = u'New title'
         terms = vocab(pmFolder)
-        self.assertNotEquals(terms.by_token['development'].title,
+        self.assertNotEqual(terms.by_token['development'].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
         notify(ObjectModifiedEvent(dev))
@@ -225,7 +225,7 @@ class testFaceted(PloneMeetingTestCase):
         classifier1.title = u'New title'
         terms = vocab(pmFolder)
         classifier1_id = classifier1.getId()
-        self.assertNotEquals(terms.by_token[classifier1_id].title,
+        self.assertNotEqual(terms.by_token[classifier1_id].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
         notify(ObjectModifiedEvent(classifier1))

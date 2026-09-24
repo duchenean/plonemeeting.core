@@ -35,7 +35,7 @@ from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import getAdapter
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -143,10 +143,10 @@ def get_advice_label(advice_info):
     return res
 
 
+@implementer(IMeetingAdvice)
 class MeetingAdvice(Container):
     """ """
 
-    implements(IMeetingAdvice)
     # avoid inherited roles from the item or the item editor may edit the advice...
     __ac_local_roles_block__ = True
 
@@ -335,8 +335,8 @@ class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
         return (IMeetingAdvice, )
 
 
+@implementer(IVocabularyFactory)
 class AdviceGroupVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context, advice_portal_type=None, alterable_advice_org_uids=[]):
         """ """
@@ -374,8 +374,8 @@ class AdviceGroupVocabulary(object):
         return SimpleVocabulary(terms)
 
 
+@implementer(IVocabularyFactory)
 class AdviceTypeVocabulary(object):
-    implements(IVocabularyFactory)
 
     def __call__(self, context, advice_portal_type=None):
         """ """

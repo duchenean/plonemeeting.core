@@ -8,8 +8,8 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
-from App.class_init import InitializeClass
-from appy.gen import No
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -83,7 +83,7 @@ from plonemeeting.core.utils import validate_item_assembly_value
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 
 import copy
 from . import interfaces
@@ -104,9 +104,9 @@ BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
 
 
 # Adapters ---------------------------------------------------------------------
+@implementer(IMeetingWorkflowConditions)
 class MeetingWorkflowConditions(object):
     '''Adapts a meeting to interface IMeetingWorkflowConditions.'''
-    implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
     def __init__(self, meeting):
@@ -188,9 +188,9 @@ class MeetingWorkflowConditions(object):
 InitializeClass(MeetingWorkflowConditions)
 
 
+@implementer(IMeetingWorkflowActions)
 class MeetingWorkflowActions(object):
     '''Adapts a meeting to interface IMeetingWorkflowActions.'''
-    implements(IMeetingWorkflowActions)
     security = ClassSecurityInfo()
 
     def __init__(self, meeting):
@@ -726,10 +726,10 @@ Meeting_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
 
+@implementer(interfaces.IMeeting)
 class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     """ A meeting made of items """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeeting)
 
     meta_type = 'Meeting'
     _at_rename_after_creation = True

@@ -9,7 +9,7 @@ from plonemeeting.core.external.forms import projects_default
 from plonemeeting.core.external.forms import tasks_default
 from plonemeeting.core.external.utils import send_vision_json_request
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -17,9 +17,9 @@ from zope.schema.vocabulary import SimpleVocabulary
 import requests
 
 
+@implementer(IVocabularyFactory)
 class BaseVisionVocabulary(object):
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context, endpoint, selected_values=[]):
         """ """
@@ -56,9 +56,9 @@ class BaseVisionVocabulary(object):
         return SimpleVocabulary(terms)
 
 
+@implementer(IVocabularyFactory)
 class VisionProjectsVocabulary(BaseVisionVocabulary):
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
@@ -70,9 +70,9 @@ class VisionProjectsVocabulary(BaseVisionVocabulary):
 VisionProjectsVocabularyFactory = VisionProjectsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class VisionTasksVocabulary(BaseVisionVocabulary):
 
-    implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """

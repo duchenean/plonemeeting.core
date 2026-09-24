@@ -35,7 +35,7 @@ class ItemEmergencyView(BrowserView):
         '''Returns a list of emergencies the current user can set the item to.'''
         # we base our actions on avaialble terms in the MeetingItem.emergency field vocabulary
         emergencies = self.context.listEmergencies()
-        emergencyKeys = emergencies.keys()
+        emergencyKeys = list(emergencies.keys())
         currentEmergency = self.context.emergency
         # now check if user can ask emergency if it is not already the case
         if not self.context.adapted().mayAskEmergency():

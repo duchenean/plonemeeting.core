@@ -309,7 +309,7 @@
                      title="Edit attributes of this group of categories"
                      i18n:attributes="title"
                      tal:attributes="href string:${cat_group_url}/edit">
-                    <img src="#" tal:attributes="src string:$portal_url/edit.png" />
+                    <img src="#" tal:attributes="src string:$portal_url/++plone++bootstrap-icons/pencil.svg" />
                   </a>
                 </tal:forRealManagers>
                 <tal:additionalInformations
@@ -1082,7 +1082,7 @@
               <td>
                 <a tal:attributes="href string:${obj/absolute_url}/view/++widget++form.widgets.odt_file/@@download"
                    tal:condition="python: obj.odt_file">
-                  <img tal:attributes="src string:${portal_url}/download_icon.png;
+                  <img tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/download.svg;
                                        title string:Download"
                        i18n:domain="plone"
                        i18n:attributes="title" />

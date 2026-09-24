@@ -66,8 +66,7 @@ class Discuss(BrowserView):
             name = 'discussYes'
             title_msgid = 'to_discuss_no_edit'
 
-        title = self.context.translate(title_msgid,
-                                       domain="PloneMeeting")
+        title = translate(title_msgid, domain="PloneMeeting", context=self.request)
 
         portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
@@ -129,11 +128,12 @@ class TakenOverBy(BrowserView):
            not currentlyTakenOverBy == memberId:
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(
-                self.context.translate("The item you tried to take over was already taken "
-                                       "over in between by ${fullname}. You can take it over "
-                                       "now if you are sure that the other user do not handle it.",
-                                       mapping={'fullname': get_user_fullname(currentlyTakenOverBy)},
-                                       domain="PloneMeeting"),
+                translate("The item you tried to take over was already taken "
+                          "over in between by ${fullname}. You can take it over "
+                          "now if you are sure that the other user do not handle it.",
+                          mapping={'fullname': get_user_fullname(currentlyTakenOverBy)},
+                          domain="PloneMeeting",
+                          context=self.request),
                 type='warning')
             self.request.RESPONSE.status = 500
             return

@@ -148,7 +148,7 @@
                                target='_parent'
                                tal:attributes="href string:${obj_absolute_url}/edit">
                               <img i18n:attributes="title" title="advice_edit"
-                                   tal:attributes="src string:${portal_url}/edit.png;" />
+                                   tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/pencil.svg;" />
                             </a>
                             <a href="view"
                                tal:condition="adviceIsLocked"
@@ -156,7 +156,7 @@
                                tal:attributes="href string:${obj_absolute_url}/view">
                               <img i18n:attributes="title" title="Locked"
                                    i18n:domain="plone"
-                                   tal:attributes="src string:${portal_url}/lock_icon.png;" />
+                                   tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/lock.svg;" />
                             </a>
                           </td>
                           <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
@@ -189,7 +189,7 @@
                                tal:attributes="href string:${obj_absolute_url}/@@delete_with_comments?uid=${advice/advice_uid};"
                                tal:condition="python: mayDelete">
                               <img i18n:attributes="title" title="Delete advice"
-                                   tal:attributes="src string:${portal_url}/delete_icon.png;" />
+                                   tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/trash.svg;" />
                             </a>
                             <img tal:condition="python: not mayDelete"
                                  i18n:attributes="title" title="Advice not deletable"
@@ -278,7 +278,7 @@
                                            target='_parent'
                                            tal:attributes="href string:${item_url}/advice_proposing_group_comment_form?advice_id=${advice/id}">
                                           <img i18n:attributes="title" title="advice_proposing_group_comment_edit"
-                                               tal:attributes="src string:${portal_url}/edit.png;" />
+                                               tal:attributes="src string:${portal_url}/++plone++bootstrap-icons/pencil.svg;" />
                                         </a>
                                      </legend>
                                      <tal:proposing_group_comment define="readmore_text proposing_group_comment">

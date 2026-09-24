@@ -12,7 +12,7 @@ from collective.contact.plonegroup.utils import get_plone_group
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
-from plone.app.controlpanel.events import ConfigurationChangedEvent
+from imio.helpers.cache import cleanRamCache
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
@@ -30,7 +30,6 @@ from plonemeeting.core.utils import set_dx_value
 from plonemeeting.core.utils import set_field_from_ajax
 from plonemeeting.core.utils import transformAllRichTextFields
 from plonemeeting.core.utils import validate_item_assembly_value
-from zope.event import notify
 from zope.schema._bootstrapinterfaces import WrongType
 
 
@@ -136,10 +135,10 @@ class testUtils(PloneMeetingTestCase):
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
                          ['pmCreator1', 'pmCreator1b', 'pmManager'])
-        # not sent to action triggerer
+        # not sent to action triggerer (order follows getMemberIds)
         self.assertEqual(recipients,
-                         [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
-                          u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
+                         [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                          u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'])
         self.assertEqual(
             subject,
             u"{0} - Item has been inserted into a meeting - My item".format(
@@ -180,11 +179,11 @@ class testUtils(PloneMeetingTestCase):
                          ['pmCreator1', 'pmCreator1b', 'pmManager'])
         vendors_creators = get_plone_group(self.vendors_uid, 'creators')
         self.assertEqual(vendors_creators.getMemberIds(), ['pmCreator2'])
-        # not sent to action triggerer
-        self.assertEqual(recipients,
-                         [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
-                          u'M. PMCreator One <pmcreator1@plonemeeting.org>',
-                          u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
+        # not sent to action triggerer (order is iteration-dependent in Py3)
+        self.assertCountEqual(recipients,
+                              [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                               u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                               u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
 
     def test_pm_SendMailIfRelevantIsUserIds(self):
         """ """
@@ -201,10 +200,10 @@ class testUtils(PloneMeetingTestCase):
                   "debug": True}
 
         recipients, subject, body = sendMailIfRelevant(**params)
-        # not sent to action triggerer
-        self.assertEqual(recipients,
-                         [u'M. PMObserver One <pmobserver1@plonemeeting.org>',
-                          u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
+        # not sent to action triggerer (order is iteration-dependent in Py3)
+        self.assertCountEqual(recipients,
+                              [u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+                               u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
 
     def _default_permission_mail_recipents(self):
         return [u'M. Budget Impact Editor <budgetimpacteditor@plonemeeting.org>',
@@ -330,7 +329,7 @@ class testUtils(PloneMeetingTestCase):
         self.member.setMemberProperties({"fullname": "M. PMManager New"})
         # still not changed as cache was not invalidated
         self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
-        notify(ConfigurationChangedEvent(self.portal, self.request))
+        cleanRamCache()
         self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager New')
 
     def test_pm_TransformAllRichTextFields(self):
@@ -342,7 +341,7 @@ class testUtils(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # add image
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        file_handler = open(file_path, 'r')
+        file_handler = open(file_path, 'rb')
         data = file_handler.read()
         file_handler.close()
         img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)

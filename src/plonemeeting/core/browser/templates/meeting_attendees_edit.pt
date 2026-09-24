@@ -228,7 +228,7 @@
                                   tal:condition="python: ouid != muid"
                                   tal:content="python:view.get_attendee_short_title(oUser, view.cfg)"
                                   tal:attributes="value value;
-                                                  data-icon string:${view/portal_url}/held_position_icon.png;
+                                                  data-icon string:${view/portal_url}/++plone++bootstrap-icons/person-badge.svg;
                                                   style python: not show and 'display:none' or '';
                                                   selected python: ('meeting_replacements' in request and value in request.get('meeting_replacements', [])) or ('meeting_attendees' not in request and muid in user_replacements and user_replacements[muid]==ouid)" >
                           </option>

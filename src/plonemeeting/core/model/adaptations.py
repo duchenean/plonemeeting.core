@@ -472,13 +472,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         transition = wf.transitions[transition_id]
         # manage translation of transition title when using validations
         if transition_id == "backTo_returned_to_proposing_group":
-            # stored as utf-8
             transition_title = translate(
                 'back_to_returned_to_proposing_group',
                 domain="plone",
-                context=meetingConfig.REQUEST).encode('utf-8')
+                context=meetingConfig.REQUEST)
         else:
-            # stored as utf-8
             transition_title = translate(
                 'back_to_returned_to_proposing_group_with_validation_state',
                 domain="plone",
@@ -486,7 +484,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     translate(leading_state_title,
                               domain='plone',
                               context=meetingConfig.REQUEST), },
-                context=meetingConfig.REQUEST).encode('utf-8')
+                context=meetingConfig.REQUEST)
         image_url = '%(portal_url)s/{0}.png'.format(transition_id)
         transition.setProperties(
             title=transition_title,
@@ -537,7 +535,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 translate(leading_state_title,
                           domain='plone',
                           context=meetingConfig.REQUEST), },
-            context=meetingConfig.REQUEST).encode('utf-8')
+            context=meetingConfig.REQUEST)
         new_state = wf.states[new_state_id]
         cloned_permissions = dict(base_state.permission_roles)
         new_state.permission_roles = cloned_permissions
@@ -595,7 +593,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_title = translate(
                 'returned_to_proposing_group',
                 domain="plone",
-                context=meetingConfig.REQUEST).encode('utf-8')
+                context=meetingConfig.REQUEST)
             new_state.setProperties(
                 title=new_state_title, description='',
                 transitions=newTransitionNames)

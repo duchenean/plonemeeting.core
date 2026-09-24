@@ -13,7 +13,7 @@
     </div>
     <div tal:attributes="id string:$css_id" class="collapsible-content discreet">
       <div class="collapsible-inner-content">
-       <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
+       <img tal:attributes="src string:${view/portal_url}/++plone++bootstrap-icons/arrow-repeat.svg" />
       </div>
     </div>
 </div>

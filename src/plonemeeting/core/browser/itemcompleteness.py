@@ -26,7 +26,7 @@ class ItemCompletenessView(BrowserView):
         '''Returns a list of completeness the current user can set the item to.'''
         # we base our actions on avaialble terms in the MeetingItem.completeness field vocabulary
         completenesses = self.context.listCompleteness()
-        completenessKeys = completenesses.keys()
+        completenessKeys = list(completenesses.keys())
         currentCompleteness = self.context.completeness
         # now check if user can evaluate completeness
         if not self.context.adapted().mayEvaluateCompleteness():

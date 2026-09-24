@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
-from appy.gen import No
+from appy.utils import No
 from natsort import humansorted
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent

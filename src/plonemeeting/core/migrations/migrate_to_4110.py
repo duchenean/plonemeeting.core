@@ -3,8 +3,14 @@
 from __future__ import absolute_import, print_function
 
 from plone import api
-from plone.app.contenttypes.migration.dxmigration import ContentMigrator
-from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+try:
+    from plone.app.contenttypes.migration.dxmigration import ContentMigrator
+except ImportError:
+    ContentMigrator = object
+try:
+    from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+except ImportError:
+    pac_migrate = None
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from plonemeeting.core.migrations import logger

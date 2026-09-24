@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function
 from Products.Five import BrowserView
 from plonemeeting.core.interfaces import IRedirect
 from zope.component.hooks import getSite
-from zope.interface import implements
+from zope.interface import implementer
 
 
 class RedirectView(BrowserView):
@@ -22,11 +22,11 @@ class RedirectView(BrowserView):
             self.request.RESPONSE.redirect(url)
 
 
+@implementer(IRedirect)
 class Redirect(object):
     """
       Redirect to the right place, this is necessary for overlays to work correctly with z3c.form...
     """
-    implements(IRedirect)
 
     def __init__(self, request):
         self.request = request

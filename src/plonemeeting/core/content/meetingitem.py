@@ -29,14 +29,16 @@ full punch list.
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
+from functools import cmp_to_key
 from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
+from zExceptions import Unauthorized as ZUnauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from Acquisition import aq_parent
-from App.class_init import InitializeClass
-from appy.gen import No
+from AccessControl.class_init import InitializeClass
+from appy.utils import No
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -91,6 +93,8 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plonemeeting.core.browser.itemvotes import next_vote_is_linked
 from plonemeeting.core.config import AddAdvice
+from plonemeeting.core.config import AddAnnex
+from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.config import AUTO_COPY_GROUP_PREFIX
 from plonemeeting.core.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from plonemeeting.core.config import CONFIGURABLE_FIELD_NAMES
@@ -185,7 +189,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.schema import getFieldsInOrder as zope_getFieldsInOrder
 from zope.schema.interfaces import IVocabularyFactory
@@ -242,8 +246,124 @@ class IMeetingItem(IMeetingItemMarker):
     ``here.adapted().show_field(...)``, etc.) cannot be expressed at
     schema-declaration time on Dexterity. They are preserved as a comment
     above each affected field; the equivalent runtime visibility logic
-    will be ported into a form / view layer in B.2.x.
+    is ported in ``browser/meetingitem.py`` (MeetingItem{Add,Edit}Form).
     """
+
+    # ---- fieldsets ----
+    # Default fieldset (Details) holds the core fields below; named
+    # fieldsets group the rest into tabs. Field-level visibility is
+    # handled by browser/meetingitem.py:_FIELD_VISIBILITY at runtime.
+    model.fieldset(
+        'proposal',
+        label=_(u'PloneMeeting_fieldset_proposal', default=u'Proposition'),
+        fields=[
+            'proposing_group',
+            'proposing_group_with_group_in_charge',
+            'groups_in_charge',
+            'associated_groups',
+            'copy_groups',
+            'restricted_copy_groups',
+            'optional_advisers',
+            'item_initiator',
+        ],
+    )
+    model.fieldset(
+        'scheduling',
+        label=_(u'PloneMeeting_fieldset_scheduling', default=u'Inscription \xe0 s\xe9ance'),
+        fields=[
+            'list_type',
+            'emergency',
+            'emergency_motivation',
+            'preferred_meeting',
+            'meeting_deadline_date',
+            'oral_question',
+            'to_discuss',
+            'meeting_transition_inserting_me',
+            'send_to_authority',
+            'privacy',
+        ],
+    )
+    model.fieldset(
+        'budget',
+        label=_(u'PloneMeeting_fieldset_budget', default=u'Budget'),
+        fields=['budget_related', 'budget_infos'],
+    )
+    model.fieldset(
+        'decision',
+        label=_(u'PloneMeeting_fieldset_decision', default=u'D\xe9cision'),
+        fields=[
+            'motivation',
+            'decision',
+            'decision_suite',
+            'decision_end',
+            'votes_result',
+            'votes_observations',
+            'poll_type',
+            'poll_type_observations',
+        ],
+    )
+    model.fieldset(
+        'assembly',
+        label=_(u'PloneMeeting_fieldset_assembly', default=u'Assembl\xe9e'),
+        fields=[
+            'item_assembly',
+            'item_assembly_excused',
+            'item_assembly_absents',
+            'item_assembly_guests',
+            'item_signatures',
+            'in_and_out_moves',
+        ],
+    )
+    model.fieldset(
+        'mm_notes',
+        label=_(u'PloneMeeting_fieldset_mm_notes', default=u'Notes / observations'),
+        fields=[
+            'notes',
+            'meeting_managers_notes',
+            'meeting_managers_notes_suite',
+            'meeting_managers_notes_end',
+            'internal_notes',
+            'marginal_notes',
+            'observations',
+            'text_check_list',
+            'groups_in_charge_notes',
+            'needed_follow_up',
+            'provided_follow_up',
+            'committee_observations',
+            'committee_transcript',
+        ],
+    )
+    model.fieldset(
+        'clonable',
+        label=_(u'PloneMeeting_fieldset_clonable',
+                default=u'Vers autres conseils/comit\xe9s'),
+        fields=[
+            'other_meeting_configs_clonable_to',
+            'other_meeting_configs_clonable_to_emergency',
+            'other_meeting_configs_clonable_to_privacy',
+            'other_meeting_configs_clonable_to_field_title',
+            'other_meeting_configs_clonable_to_field_description',
+            'other_meeting_configs_clonable_to_field_detailed_description',
+            'other_meeting_configs_clonable_to_field_motivation',
+            'other_meeting_configs_clonable_to_field_decision',
+            'other_meeting_configs_clonable_to_field_decision_suite',
+            'other_meeting_configs_clonable_to_field_decision_end',
+        ],
+    )
+    model.fieldset(
+        'misc',
+        label=_(u'PloneMeeting_fieldset_misc', default=u'Syst\xe8me'),
+        fields=[
+            'item_number',
+            'item_reference',
+            'manually_linked_items',
+            'is_acceptable_out_of_meeting',
+            'completeness',
+            'item_is_signed',
+            'taken_over_by',
+            'template_using_groups',
+        ],
+    )
 
     # ---- default fieldset ----
 
@@ -1055,8 +1175,6 @@ class _ATFieldStub(object):
             raw = value
         else:
             return value
-        if isinstance(raw, six.text_type):
-            raw = raw.encode('utf-8')
         return raw
 
     def getRaw(self, obj, **kwargs):
@@ -1227,6 +1345,7 @@ class _ATSchemaStub(object):
 # Content class skeleton
 # ---------------------------------------------------------------------------
 
+@implementer(IMeetingItem)
 class MeetingItem(Container):
     """Meeting item content type (migrated from Archetypes OrderedBaseFolder).
 
@@ -1235,7 +1354,6 @@ class MeetingItem(Container):
     in the source tree but is no longer instantiated at runtime.
     """
 
-    implements(IMeetingItem)
     security = ClassSecurityInfo()
 
     meta_type = 'MeetingItem'
@@ -1446,6 +1564,16 @@ class MeetingItem(Container):
         from plonemeeting.core.compat import DisplayList
         return DisplayList(), False
 
+    def displayValue(self, vocab, value, field_name=None):
+        """AT-compat: return the display label(s) for a vocabulary value.
+        Handles list/tuple values by joining them (mirrors AT BaseContent.displayValue).
+        """
+        if value is None:
+            return ""
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        return ", ".join(vocab.getValue(v, v) for v in value)
+
     security.declareProtected('View', 'widget')
 
     def widget(self, field_name, mode='view', field=None, **kwargs):
@@ -1453,7 +1581,7 @@ class MeetingItem(Container):
 
         The AT widget() returned a METAL macro that rendered the field's
         content.  For DX we build a template that reads
-        ``here/_dx_widget_value`` (set just before the call) and emits
+        ``request/dxWidgetValue`` (set just before the call) and emits
         the value as raw HTML.
         """
         from Products.PageTemplates.ZopePageTemplate import ZopePageTemplate
@@ -1465,12 +1593,17 @@ class MeetingItem(Container):
                     value = value.decode('utf-8')
             else:
                 value = u''
-            self.dxWidgetValue = value or u''
+            # keep the value on the request. an attribute set on the item is a
+            # database write during a read request. plone.protect refuses this
+            # and shows the confirm-action page. the request is also specific to
+            # one thread, so two renderings of the same item can not interfere.
+            self.REQUEST.set('dxWidgetValue', value or u'')
             if MeetingItem._widget_view_pt is None:
                 MeetingItem._widget_view_pt = ZopePageTemplate(
                     'dx_widget_view',
                     '<span metal:define-macro="view"'
-                    ' tal:content="structure here/dxWidgetValue"></span>\n')
+                    ' tal:content="structure request/dxWidgetValue | nothing">'
+                    '</span>\n')
             return MeetingItem._widget_view_pt.__of__(self).macros['view']
         if MeetingItem._widget_pt is None:
             MeetingItem._widget_pt = ZopePageTemplate(
@@ -1505,6 +1638,11 @@ class MeetingItem(Container):
                 def _setter(value, **kwargs):
                     if isinstance(value, (set, frozenset)):
                         value = list(value)
+                    # AT setters accepted plain HTML strings for rich fields
+                    if dx_name in _RICH_TEXT_FIELDS and \
+                            isinstance(value, str):
+                        value = RichTextValue(
+                            value, 'text/html', 'text/x-html-safe')
                     setattr(self, dx_name, value)
                 return _setter
             return super(MeetingItem, self).__getattr__(name)
@@ -1614,8 +1752,8 @@ class MeetingItem(Container):
         data = []
         title = self.Title()
         if title:
-            if isinstance(title, six.text_type):
-                title = title.encode('utf-8')
+            if isinstance(title, bytes):
+                title = title.decode('utf-8', errors='replace')
             data.append(title)
         transforms = api.portal.get_tool('portal_transforms')
         for attr_name in self._searchable_fields:
@@ -1623,23 +1761,25 @@ class MeetingItem(Container):
             if not value:
                 continue
             if isinstance(value, RichTextValue):
-                raw = value.raw or u''
+                raw = value.raw or ''
                 if raw:
                     stream = transforms.convertTo(
                         'text/plain', safe_encode(raw),
                         mimetype='text/html')
                     text = stream.getData() if stream else ''
+                    if isinstance(text, bytes):
+                        text = text.decode('utf-8', errors='replace')
                     if text:
                         data.append(text)
             elif isinstance(value, (list, tuple)):
                 for v in value:
                     if v:
-                        if isinstance(v, six.text_type):
-                            v = v.encode('utf-8')
-                        data.append(v)
+                        if isinstance(v, bytes):
+                            v = v.decode('utf-8', errors='replace')
+                        data.append(str(v))
             else:
-                if isinstance(value, six.text_type):
-                    value = value.encode('utf-8')
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8', errors='replace')
                 data.append(str(value))
         return ' '.join(data)
 
@@ -1739,16 +1879,16 @@ class MeetingItem(Container):
                         title = title.decode('utf-8')
                     title = u"{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True))
-        if isinstance(title, six.text_type):
-            title = title.encode('utf-8')
+        if isinstance(title, bytes):
+            title = title.decode('utf-8')
         return title
 
     def Description(self):
         desc = self.description
         if isinstance(desc, RichTextValue):
-            return safe_encode(desc.output_relative_to(self) or u'')
-        if isinstance(desc, six.text_type):
-            return desc.encode('utf-8')
+            return safe_unicode(desc.output_relative_to(self) or u'')
+        if isinstance(desc, bytes):
+            return desc.decode('utf-8')
         return desc or ''
 
     security.declarePublic('getPrettyLink')
@@ -1785,11 +1925,10 @@ class MeetingItem(Container):
            (not acceptable_pos or not isPowerObserverForCfg(cfg, acceptable_pos)) and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
-            # do not return unicode as getDecision returns 'utf-8' usually
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG).encode('utf-8')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
 
     security.declarePublic('getMotivation')
 
@@ -2770,7 +2909,7 @@ class MeetingItem(Container):
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
             valueToStore = list(set(valueToStore).union(newLinkedUids))
-            valueToStore.sort(_sortByMeetingDate)
+            valueToStore.sort(key=cmp_to_key(_sortByMeetingDate))
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)
@@ -2785,7 +2924,7 @@ class MeetingItem(Container):
                 newLinkedUidsToStore = list(newLinkedUids)
                 if linkedItemUid in newLinkedUids:
                     newLinkedUidsToStore.remove(linkedItemUid)
-                newLinkedUidsToStore.sort(_sortByMeetingDate)
+                newLinkedUidsToStore.sort(key=cmp_to_key(_sortByMeetingDate))
                 linkedItem.manually_linked_items = newLinkedUidsToStore
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 linkedItem._p_changed = True
@@ -2872,6 +3011,37 @@ class MeetingItem(Container):
         """ """
         addable_states = self.adapted()._annex_decision_addable_states_after_validation(cfg, item_state)
         return addable_states == "*" or item_state in addable_states
+
+    def folder_position_typeaware(self, position='', id=None):
+        """Move an annex up/down within this item, skipping items of a different portal_type.
+        Replaces the CPUtils folder_position_typeaware External Method (Plone 4).
+        Requires AddAnnex or AddAnnexDecision permission on this item.
+        """
+        if not _checkPermission(AddAnnex, self) and not _checkPermission(AddAnnexDecision, self):
+            raise Unauthorized
+        all_ids = self.objectIds()
+        pos = all_ids.index(id)
+        portal_type = getattr(self, id).portal_type
+        same_type_ids = [ob.id for ob in self.objectValues() if ob.portal_type == portal_type]
+        delta = 1
+        if position.lower() == 'up':
+            found = False
+            while not found and (pos - delta) > 0:
+                if all_ids[pos - delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsUp(id, delta=delta)
+        elif position.lower() == 'down':
+            found = False
+            while not found and (pos + delta) < len(all_ids):
+                if all_ids[pos + delta] not in same_type_ids:
+                    delta += 1
+                else:
+                    found = True
+            if found:
+                self.moveObjectsDown(id, delta=delta)
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
@@ -3162,8 +3332,16 @@ class MeetingItem(Container):
         res = getattr(self, 'linked_predecessor_uid', None)
         if res and the_object:
             portal = api.portal.get()
-            predecessor_path = self.linked_predecessor_path
-            res = portal.unrestrictedTraverse(predecessor_path)
+            # the path is a cache of the UID, set beside it. An item
+            # that comes from another site, a JSON import for example,
+            # only has the UID; and an unguarded read would acquire the
+            # attribute from the parents.
+            predecessor_path = getattr(
+                aq_base(self), 'linked_predecessor_path', None)
+            if predecessor_path:
+                res = portal.unrestrictedTraverse(predecessor_path, None)
+            else:
+                res = api.content.get(UID=res)
         return res
 
     security.declarePublic('get_predecessors')
@@ -4262,7 +4440,7 @@ class MeetingItem(Container):
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
-        if len(item_votes) - 1 >= vote_number:
+        if vote_number != 'all' and len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.poll_type)
         else:
             poll_type = self.poll_type
@@ -5219,6 +5397,10 @@ class MeetingItem(Container):
         """ """
         predecessor = self.get_predecessor()
         res = []
+        # the predecessor can be missing, an item imported from another
+        # site keeps the link but the predecessor may not be there
+        if predecessor is None:
+            return res
         for adviserUid in adviserUids:
             # adviserId could not exist if we removed an inherited initiative advice for example
             if not predecessor.adviceIndex.get(adviserUid, None) or \
@@ -5600,6 +5782,10 @@ class MeetingItem(Container):
                predecessor.adviceIndex.get(adviserId) and
                predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.get_predecessor()
+            # the chain can be broken, an item imported from another
+            # site keeps the link but the predecessor may not be there
+            if predecessor is None:
+                return None
             inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
         res = inheritedAdviceInfo
@@ -5805,7 +5991,7 @@ class MeetingItem(Container):
 
     def _displayAdviserUsers(self, userids, portal_url, tool):
         """ """
-        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
+        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/++plone++bootstrap-icons/person.svg" />{2}'
         rendered_users = []
         help_msg = translate("adviser_userid_notified",
                              domain="PloneMeeting",
@@ -7231,7 +7417,7 @@ class MeetingItem(Container):
                         self._at_creation_flag = False
         if not is_creation:
             self.at_post_edit_script(full_edit_form=True, reindex_local_roles=True)
-        self.reindexObject()
+        reindex_object(self)
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -7565,7 +7751,7 @@ class MeetingItem(Container):
         try:
             destFolder = tool.getPloneMeetingFolder(destMeetingConfigId,
                                                     self.Creator())
-        except ValueError:
+        except (ValueError, Unauthorized, ZUnauthorized):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(

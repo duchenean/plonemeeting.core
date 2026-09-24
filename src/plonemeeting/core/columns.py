@@ -7,6 +7,7 @@
 
 from __future__ import absolute_import, print_function
 
+from Acquisition import aq_base
 from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
@@ -27,6 +28,7 @@ from Products.CMFCore.utils import _checkPermission
 from plonemeeting.core.config import AddAnnex
 from plonemeeting.core.config import AddAnnexDecision
 from plonemeeting.core.content.meeting import IMeeting
+from plonemeeting.core.utils import _resolve_adaptable_key
 from plonemeeting.core.utils import displaying_available_items
 from zope.i18n import translate
 
@@ -229,7 +231,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)
-        elif obj.getTagName() == 'Meeting':
+        elif _resolve_adaptable_key(getattr(aq_base(obj), 'portal_type', None)) == 'Meeting':
             staticInfos = obj.restrictedTraverse('@@static-infos')(
                 visibleColumns=cfg.meeting_columns)
             # check_can_view=True because permission check is not enough
@@ -255,7 +257,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         """Apply a particular class on the table row depending on the item's privacy
            if item is displayed in a meeting."""
         css_classes = super(PMPrettyLinkColumn, self).getCSSClasses(item)
-        if self.context.getTagName() == 'Meeting':
+        if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
             # for TR
             trCSSClasses = []
             trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
@@ -413,7 +415,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
         """Display the '(un)present every selected items' action depending
            on the faceted we are on, available or presented items."""
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
-        if self.context.getTagName() == 'Meeting':
+        if _resolve_adaptable_key(getattr(aq_base(self.context), 'portal_type', None)) == 'Meeting':
             if self.show_insert_or_remove_selected_items_action():
                 if displaying_available_items(self.context):
                     present_msg = translate('present_several_items',

@@ -18,7 +18,10 @@
                     <span tal:replace="structure python: context.unrestrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
                 </tal:customRenderer>
                 <tal:defaultRenderer condition="not: visibleFieldRenderer">
-                    <metal:render use-macro="context/widgets/field/macros/view" />
+                    <span tal:replace="structure python: accessor() or u''"
+                          tal:condition="python: widget and widget._is_rich" />
+                    <span tal:content="python: accessor() or u''"
+                          tal:condition="python: not (widget and widget._is_rich)" />
                 </tal:defaultRenderer>
             </tal:displayed>
         </span>

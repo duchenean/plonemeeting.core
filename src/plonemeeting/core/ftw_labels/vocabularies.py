@@ -12,19 +12,19 @@ from plonemeeting.core.ftw_labels.utils import filter_access_global_labels
 from plonemeeting.core.utils import get_context_with_request
 from zope.globalrequest import getRequest
 from zope.i18n import translate
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
+@implementer(IVocabularyFactory)
 class FTWLabelsVocabulary(object):
     """
         Vocabulary that lists available ftw.labels
         labels for the current MeetingConfig.
         Used for DashboardCollection query.
     """
-    implements(IVocabularyFactory)
 
     def __call__(self, context, include_personal_labels=True):
         res = []
@@ -78,13 +78,13 @@ class ConfigFTWLabelsVocabulary(FTWLabelsVocabulary):
 ConfigFTWLabelsVocabularyFactory = ConfigFTWLabelsVocabulary()
 
 
+@implementer(IVocabularyFactory)
 class FTWLabelsForFacetedFilterVocabulary(object):
     """
         Vocabulary that lists available ftw.labels
         labels for the current MeetingConfig.
         Use in faceted navigation, is current user aware.
     """
-    implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''

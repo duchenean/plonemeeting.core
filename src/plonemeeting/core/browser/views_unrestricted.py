@@ -33,6 +33,14 @@ class ItemUnrestrictedMethodsView(BrowserView):
         if meeting:
             return meeting.date
 
+    def getLinkedMeetingDateStr(self, format='%Y%m%d'):
+        """Return the linked meeting date formatted as a string.
+           Intended for use in python: TALES expressions (strftime is not available there)."""
+        meeting = self.context.getMeeting()
+        if meeting:
+            return meeting.date.strftime(format)
+        return ''
+
 
 class MeetingUnrestrictedMethodsView(BrowserView):
 

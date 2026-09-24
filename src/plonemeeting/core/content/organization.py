@@ -7,8 +7,8 @@ from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
-from collective.z3cform.datagridfield import DataGridFieldFactory
-from collective.z3cform.datagridfield import DictRow
+from collective.z3cform.datagridfield.datagridfield import DataGridFieldFactory
+from collective.z3cform.datagridfield.row import DictRow
 from datetime import date
 from datetime import datetime
 from DateTime import DateTime

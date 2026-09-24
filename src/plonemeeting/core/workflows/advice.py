@@ -3,19 +3,19 @@
 from __future__ import absolute_import, print_function
 
 from AccessControl import ClassSecurityInfo
-from App.class_init import InitializeClass
+from AccessControl.class_init import InitializeClass
 from plone import api
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from plonemeeting.core.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from plonemeeting.core.interfaces import IMeetingAdviceWorkflowActions
 from plonemeeting.core.interfaces import IMeetingAdviceWorkflowConditions
-from zope.interface import implements
+from zope.interface import implementer
 
 
+@implementer(IMeetingAdviceWorkflowConditions)
 class MeetingAdviceWorkflowConditions(object):
     '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowConditions.'''
-    implements(IMeetingAdviceWorkflowConditions)
     security = ClassSecurityInfo()
 
     def __init__(self, advice):
@@ -52,9 +52,9 @@ class MeetingAdviceWorkflowConditions(object):
 InitializeClass(MeetingAdviceWorkflowConditions)
 
 
+@implementer(IMeetingAdviceWorkflowActions)
 class MeetingAdviceWorkflowActions(object):
     '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowActions.'''
-    implements(IMeetingAdviceWorkflowActions)
     security = ClassSecurityInfo()
 
     def __init__(self, advice):

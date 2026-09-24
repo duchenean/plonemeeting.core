@@ -24,7 +24,7 @@
            tal:condition="python: may_edit"
            title="Edit this field"
            i18n:attributes="title fastedit_edit"
-           tal:attributes="src string:${view/portal_url}/edit.png;
+           tal:attributes="src string:${view/portal_url}/++plone++bootstrap-icons/pencil.svg;
                            onClick view/js_on_click;
                            onload view/js_on_load"/>
     </legend>

@@ -16,11 +16,17 @@ from imio.pyutils.utils import replace_in_list
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+try:
+    from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+except ImportError:
+    pac_migrate = None
 from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
-from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
+try:
+    from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
+except ImportError:
+    CMFFolderMigrator = object
 # P6 migration: cron4plone dropped in Stage A.
 # from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
@@ -31,7 +37,7 @@ from plonemeeting.core.content.meeting import IMeeting
 from plonemeeting.core.events import onHeldPositionWillBeRemoved
 from plonemeeting.core.interfaces import IMeetingDashboardBatchActionsMarker
 from plonemeeting.core.interfaces import IMeetingItemDashboardBatchActionsMarker
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
 from plonemeeting.core.migrations import logger
 from plonemeeting.core.migrations import Migrator
 from plonemeeting.core.migrations.migrate_to_4209 import Migrate_To_4209

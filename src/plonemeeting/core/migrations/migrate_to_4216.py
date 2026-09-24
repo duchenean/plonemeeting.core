@@ -5,8 +5,7 @@ from __future__ import absolute_import, print_function
 from imio.helpers.content import safe_delattr
 from imio.helpers.setup import load_type_from_package
 from Products.CMFPlone.utils import base_hasattr
-from plonemeeting.core.MeetingConfig import defValues
-from plonemeeting.core.MeetingConfig import PROPOSINGGROUPPREFIX
+from plonemeeting.core.config import PROPOSINGGROUPPREFIX
 from plonemeeting.core.migrations import logger
 from plonemeeting.core.migrations import Migrator
 
@@ -35,6 +34,7 @@ class Migrate_To_4216(Migrator):
             # this let's initialize labelsConfig with custom values before migrating
             # or we would have to migrate, change the labelsConfig, then update items
             # labels cache which is doing items labels cache update 2 times
+            from plonemeeting.core.MeetingConfig import defValues
             if cfg.getLabelsConfig() == defValues.labelsConfig:
                 # migrate MeetingConfig.itemLabelsEditableByProposingGroupForever
                 # if True, let current config, if False, define "edit_access_on"

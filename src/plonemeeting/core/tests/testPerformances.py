@@ -145,7 +145,7 @@ class testPerformances(PloneMeetingTestCase):
     def _setItemReferenceFormat(self):
         """Compute metingDate, proposingGroup acronym and item number relativeTo meeting."""
         self.meetingConfig.setItemReferenceFormat(
-            "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') + "
+            "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDateStr() + "
             "'/' + here.getProposingGroup(True).getAcronym() + '/' + "
             "str(here.getItemNumber(relativeTo='meeting', for_display=True))")
 
@@ -248,7 +248,7 @@ class testPerformances(PloneMeetingTestCase):
         self._freezeMeetingAndSendItemsToAnotherMC(meeting)
 
         # make sure meeting2 has items
-        self.assertEquals(len(meeting2.get_items()), 25)
+        self.assertEqual(len(meeting2.get_items()), 25)
 
     @timecall
     def _delaySeveralItems(self, meeting, uids):

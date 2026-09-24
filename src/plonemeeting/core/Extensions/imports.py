@@ -306,7 +306,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
                 continue
         if action == 'create':
             if doit:
-                real_id = new_id = idnormalizer.normalize(safe_encode('%s-%s' % (fname, name)))
+                real_id = new_id = idnormalizer.normalize(safe_unicode('%s-%s' % (fname, name)))
                 count = 0
                 while real_id in contacts:
                     count += 1
@@ -438,7 +438,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             continue
         if action == 'create':
             if doit:
-                real_id = new_id = idnormalizer.normalize(safe_encode('%s-%s' % (
+                real_id = new_id = idnormalizer.normalize(safe_unicode('%s-%s' % (
                     safe_unicode(title) or safe_unicode(position_type), org.title)))
                 count = 0
                 while real_id in pers:

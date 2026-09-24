@@ -22,7 +22,7 @@
         alt="select_unselect_items"
         tal:define="initialState python: len(view.value) and 1;"
         tal:attributes="checked initialState;
-                        src string:${view/portal_url}/select_all_icon.gif;
+                        src string:${view/portal_url}/++plone++bootstrap-icons/check2-square.svg;
                         onClick string:toggleSelect(this,'${view/name}:list', initialState=${initialState});
                         id string:selectButton-${view/id};
                         name string:selectButton-${view/id};"

@@ -76,6 +76,6 @@
       template="datagridfield_display.pt"
       layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
       mode="display"
-      widget="collective.z3cform.datagridfield.datagridfield.DataGridField" />
+      widget="collective.z3cform.datagridfield.datagridfield.DataGridFieldWidget" />
 
 </configure>

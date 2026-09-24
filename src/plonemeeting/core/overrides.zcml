@@ -4,6 +4,7 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
+    <!-- P6 migration: IContentViews viewlet manager removed in Plone 6
     <browser:viewlet
         name="plone.contentactions"
         for="*"
@@ -21,10 +22,14 @@
         class="plonemeeting.core.browser.overrides.PMContentActionsViewlet"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
+    -->
 
+    <!-- Plone 6: global_sections moved from IPortalHeader to IMainNavigation in
+         plone.app.layout 5.x. Override on the new manager so the override
+         actually replaces the default (otherwise both navbars render). -->
     <browser:viewlet
         name="plone.global_sections"
-        manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
+        manager="plone.app.layout.viewlets.interfaces.IMainNavigation"
         class=".browser.overrides.PMGlobalSectionsViewlet"
         template="browser/templates/sections.pt"
         layer="plonemeeting.core.interfaces.IPloneMeetingLayer"
@@ -61,7 +66,7 @@
             for="*"
             class="plonemeeting.core.browser.overrides.PMFolderContentsView"
             name="folder_contents"
-            template="browser/folder_contents.pt"
+            template="browser/contents/templates/folder_contents.pt"
             permission="cmf.ListFolderContents" />
     </configure>
 
@@ -265,10 +270,17 @@
         factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
     -->
 
+    <!-- P6 migration: AT reference browser popup removed
     <adapter
         for="Products.Five.BrowserView"
         factory=".browser.overrides.pm_default_popup_template"
         name="popup"
         provides="zope.formlib.namedtemplate.INamedTemplate" />
+    -->
+
+    <!-- Plone 6-compatible INavigationQueryBuilder for ContactSource-based sources.
+         plone.formwidget.contenttree's QueryBuilder uses portal_properties which
+         was removed in Plone 6. -->
+    <adapter factory=".content.source.Plone6NavigationQueryBuilder" />
 
 </configure>

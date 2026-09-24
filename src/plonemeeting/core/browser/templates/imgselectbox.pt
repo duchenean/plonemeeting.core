@@ -37,7 +37,7 @@
     <div class="ploneMeetingSelectBox"
          tal:attributes="id string:${select_box_name}"
          tal:define="global num python: 0">
-      <p tal:define="choose python:here.translate('make_a_choice', domain='PloneMeeting');
+      <p tal:define="choose python:translate('make_a_choice', domain='PloneMeeting');
                      choose_for_js python: view.tool.forJs(choose)"
          tal:attributes="onclick string:hidePloneMeetingSelectBox('${select_box_name}', 'idImage_${select_box_name}10', this, '', '');;"
          class="ploneMeetingSelectItem"

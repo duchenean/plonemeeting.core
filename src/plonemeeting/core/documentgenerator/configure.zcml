@@ -8,7 +8,7 @@
                   plonemeeting.core.interfaces.IMeetingContent"
              factory="plonemeeting.core.documentgenerator.condition.PMConfigurablePODTemplateCondition" />
     <adapter for="collective.eeafaceted.dashboard.content.pod_template.IDashboardPODTemplate
-                  Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+                  plone.dexterity.interfaces.IDexterityContainer"
              factory="plonemeeting.core.documentgenerator.condition.PMDashboardPODTemplateCondition" />
 
     <adapter for="plonemeeting.core.content.meetingitem._ATFieldStub

@@ -57,11 +57,11 @@ setup(name='plonemeeting.core',
           'collective.behavior.internalnumber',
           # 'collective.ckeditor',  # P6 migration: CKEditor dropped, configure stock TinyMCE in Stage D
           'collective.contact.plonegroup',
-          'collective.datagridcolumns',
-          'collective.dexteritytextindexer',
+          # 'collective.datagridcolumns',  # P6 migration: AT DataGridField column types, no longer needed
+          # 'collective.dexteritytextindexer',  # P6 migration: merged into plone.app.dexterity.textindexer
           'collective.js.fancytree',
           'collective.js.jqueryui',
-          'collective.js.tablednd',
+          # 'collective.js.tablednd',  # P6 migration: uses removed includeDependencies directive
           'collective.iconifieddocumentactions',
           'collective.messagesviewlet',
           'collective.upgrade',
@@ -83,9 +83,10 @@ setup(name='plonemeeting.core',
           'plonemeeting.restapi',
           'plonetheme.imioapps',
           'Products.CPUtils',
-          'Products.DataGridField',
-          'Products.PasswordStrength',
+          # 'Products.DataGridField',  # P6 migration: AT-only, replaced by collective.z3cform.datagridfield
+          # 'Products.PasswordStrength',  # P6 migration: dropped
           'PyPDF2',
+          'zope.formlib',
           # 'Products.cron4plone',  # P6 migration: cron4plone dropped, schedule via Plone clock-server
           ],
       entry_points={},

@@ -32,7 +32,7 @@ from plonemeeting.core.interfaces import IMeetingContent
 from plonemeeting.core.interfaces import IMeetingItem
 from plonemeeting.core.utils import get_annexes
 from plonemeeting.core.utils import get_datagridfield_column_value
-from Products.PluginIndexes.common.UnIndex import _marker
+from Products.PluginIndexes.unindex import _marker
 
 
 REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'
@@ -47,6 +47,18 @@ def getConfigId(obj):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     return cfg and cfg.getId() or EMPTY_STRING
+
+
+@indexer(IMeetingItem)
+def getIcon_item(obj):
+    """Returns the icon filename for a MeetingItem (e.g. 'MeetingItem.png').
+    Needed because Plone 6's default getIcon returns True/False (image presence),
+    but plonemeeting.core uses getIcon metadata for item icon color display."""
+    fti = api.portal.get_tool('portal_types').get(obj.portal_type)
+    if fti and fti.icon_expr:
+        # icon_expr is like 'string:${portal_url}/MeetingItem.png'
+        return fti.icon_expr.split('/')[-1]
+    return 'MeetingItem.png'
 
 
 @indexer(IMeetingItem)
@@ -253,7 +265,15 @@ def SearchableText(obj):
       Contained annex title and scan_id are indexed in the SearchableText.
     """
     res = []
-    res.append(obj.SearchableText())
+    # Prefer the object's own SearchableText() method (MeetingItem, Meeting).
+    # Fall back to the DX text indexer for other content types.
+    if callable(getattr(obj, 'SearchableText', None)):
+        base = obj.SearchableText()
+    else:
+        from plone.app.dexterity.textindexer.indexer import dynamic_searchable_text_indexer
+        base = dynamic_searchable_text_indexer(obj)()
+    if base:
+        res.append(base)
     for annex in get_annexes(obj):
         res.append(annex.Title())
         scan_id = getattr(annex, "scan_id", None)
@@ -262,6 +282,12 @@ def SearchableText(obj):
             res.append(safe_encode(scan_id))
     res = ' '.join(res)
     return res or _marker
+
+
+@indexer(IMeeting)
+def SearchableText_meeting(obj):
+    safe_delattr(obj, REINDEX_NEEDED_MARKER)
+    return SearchableText(obj)
 
 
 @indexer(IMeetingItem)
@@ -500,7 +526,10 @@ def indexAdvisers(obj):
 def get_full_title(obj):
     '''By default we hide the "My organization" level, but not in the indexed
        value as it is used in the contact widget.'''
-    return obj.get_full_title(force_separator=True)
+    try:
+        return obj.get_full_title(force_separator=True)
+    except TypeError:
+        return obj.get_full_title()
 
 
 @indexer(IMeetingItem)

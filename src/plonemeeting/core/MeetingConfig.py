@@ -14,9 +14,12 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_registry_functions
-from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
+try:
+    from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+    from collective.datagridcolumns.SelectColumn import SelectColumn
+    from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
+except ImportError:
+    MultiSelectColumn = SelectColumn = TextAreaColumn = None
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -145,7 +148,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.i18nmessageid.message import Message
 from zope.interface import alsoProvides
-from zope.interface import implements
+from zope.interface import implementer
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -154,6 +157,7 @@ import html
 import itertools
 import logging
 import os
+import re
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -2967,11 +2971,11 @@ for field in MeetingConfig_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 
 
+@implementer(IMeetingConfig)
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(IMeetingConfig)
 
     meta_type = 'MeetingConfig'
     _at_rename_after_creation = True
@@ -3699,8 +3703,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # prepend configGroup full_label
                     title = u"{0} - {1}".format(
                         safe_unicode(self.getConfigGroup(True)['full_label']), title)
-        # Title returns utf-8
-        return title.encode('utf-8')
+        return safe_unicode(title)
 
     security.declarePrivate('setAllItemTagsField')
 
@@ -3962,9 +3965,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                    if level['label_id'] in label_ids]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_label_id_singleton and len(label_ids) == 1:
             res = res and res[0] or res
         return res
@@ -3980,9 +3983,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                    if level['name'] in names]
         if data:
             res = [level[data] for level in res if level[data]]
-            # manage multivalued columns
-            if res and hasattr(res[0], "__iter__"):
-                res = itertools.chain.from_iterable(res)
+            # manage multivalued columns (str is iterable in Py3, exclude it)
+            if res and isinstance(res[0], (list, tuple)):
+                res = list(itertools.chain.from_iterable(res))
         if return_name_singleton and len(names) == 1:
             res = res and res[0] or res
         return res
@@ -4980,8 +4983,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
-                # manage multivalued columns
-                if values and hasattr(values[0], "__iter__"):
+                # manage multivalued columns (str is iterable in Py3, exclude it)
+                if values and isinstance(values[0], (list, tuple)):
                     values = itertools.chain.from_iterable(values)
             crossed_states = [v for v in values
                               for r in removed_or_disabled_states
@@ -5378,10 +5381,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # that is ignored by the workflowAdaptation
         # because leading_transition is "-"
         leading_transition_values = leading_transition_values and leading_transition_values[1:]
-        # we accept also "_"
-        if [sv for sv in state_values if not sv.replace("_", "").isalnum()] or \
-           [ltv for ltv in leading_transition_values if not ltv.replace("_", "").isalnum()] or \
-           [btv for btv in back_transition_values if not btv.replace("_", "").isalnum()]:
+        # ASCII-only identifiers (isalnum() accepts unicode letters in Py3; use explicit ASCII pattern)
+        _valid_id = re.compile(r'^[a-zA-Z0-9_]+$')
+        if [sv for sv in state_values if not _valid_id.match(sv)] or \
+           [ltv for ltv in leading_transition_values if not _valid_id.match(ltv)] or \
+           [btv for btv in back_transition_values if not _valid_id.match(btv)]:
             return translate('item_wf_val_states_wrong_identifier_format',
                              domain='PloneMeeting',
                              context=self.REQUEST)
